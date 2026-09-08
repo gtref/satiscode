@@ -5,6 +5,7 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 ## Features
 
 - C and C++ language detection by file extension
+- Web language detection for HTML, CSS/SCSS, JavaScript/JSX, TypeScript/TSX, and JSON
 - clangd diagnostics, completion, hover, and go-to-definition
 - VS Code-style Problems panel with clickable diagnostics
 - Resizable Explorer file tree for the current directory
@@ -28,7 +29,7 @@ npm install
 npm start
 ```
 
-Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
+Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. HTML, CSS, JavaScript, TypeScript, and JSON files use Monaco's built-in language support without clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
 
 ## Keyboard shortcuts
 

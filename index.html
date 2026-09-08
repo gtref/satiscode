@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Satiscode</title>
   <style>
     body { margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; color: #ccc; background: #1e1e1e; font: 13px sans-serif; }
@@ -90,6 +90,11 @@
     let clangdStarted = false;
     let currentDirectory = null;
     const cppExtensions = new Set(['.c', '.cc', '.cpp', '.cxx', '.h', '.hh', '.hpp', '.hxx']);
+    const languageByExtension = new Map([
+      ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
+      ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'], ['.cjs', 'javascript'],
+      ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json']
+    ]);
     const translations = {
       en: { newFile: 'New', openFile: 'Open', saveFile: 'Save', saveAs: 'Save As', exit: 'Exit', explorer: 'Explorer', problems: 'Problems', noProblems: 'No problems detected.' },
       es: { newFile: 'Nuevo', openFile: 'Abrir', saveFile: 'Guardar', saveAs: 'Guardar como', exit: 'Salir', explorer: 'Explorador', problems: 'Problemas', noProblems: 'No se detectaron problemas.' }
@@ -101,7 +106,13 @@
       return extensionIndex >= 0 ? fileName.slice(extensionIndex).toLowerCase() : '';
     };
     const isCppFile = (filePath) => cppExtensions.has(extensionForPath(filePath));
-    const languageForPath = (filePath) => extensionForPath(filePath) === '.c' ? 'c' : 'cpp';
+    const languageForPath = (filePath) => {
+      const extension = extensionForPath(filePath);
+      if (extension === '.c') return 'c';
+      if (cppExtensions.has(extension)) return 'cpp';
+      return languageByExtension.get(extension) || 'plaintext';
+    };
+    const hasEditorLanguage = (filePath) => isCppFile(filePath) || languageByExtension.has(extensionForPath(filePath));
     const pathToUri = (filePath) => {
       const normalized = filePath.replace(/\\/g, '/');
       return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
@@ -214,11 +225,11 @@
       currentDirectory = file.path.substring(0, Math.max(file.path.lastIndexOf('\\'), file.path.lastIndexOf('/')));
       documentVersion = 1;
       clearProblems();
-      monaco.editor.setModelLanguage(window.editor.getModel(), isCppFile(file.path) ? languageForPath(file.path) : 'plaintext');
+      monaco.editor.setModelLanguage(window.editor.getModel(), languageForPath(file.path));
       window.editor.setValue(file.content);
       await refreshFileTree(currentDirectory);
       if (isCppFile(file.path)) startLanguageServer();
-      else document.getElementById('status').textContent = 'clangd: idle';
+      else document.getElementById('status').textContent = hasEditorLanguage(file.path) ? 'language: ready' : 'language: plaintext';
     }
 
     function sendRequest(method, params) {
@@ -257,7 +268,14 @@
       }).catch(() => { document.getElementById('status').textContent = 'clangd: unavailable'; });
     }
 
-    require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' }});
+    const monacoBaseUrl = new URL('node_modules/monaco-editor/min/', window.location.href).href;
+    window.MonacoEnvironment = {
+      getWorkerUrl: () => `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+        self.MonacoEnvironment = { baseUrl: '${monacoBaseUrl}' };
+        importScripts('${monacoBaseUrl}vs/base/worker/workerMain.js');
+      `)}`
+    };
+    require.config({ paths: { 'vs': `${monacoBaseUrl}vs` }});
     require(['vs/editor/editor.main'], function() {
       window.editor = monaco.editor.create(document.getElementById('editor'), {
         value: '// Start typing CMM code or JS here...\n',
@@ -347,11 +365,12 @@
         const content = window.editor.getValue();
         const savedPath = await window.api.saveFile({ filePath: currentFilePath, content });
         if (savedPath) {
-          const previousLanguage = currentFilePath && (isCppFile(currentFilePath) ? languageForPath(currentFilePath) : 'plaintext');
+          const previousLanguage = currentFilePath ? languageForPath(currentFilePath) : 'plaintext';
           currentFilePath = savedPath;
-          const nextLanguage = isCppFile(savedPath) ? languageForPath(savedPath) : 'plaintext';
+          const nextLanguage = languageForPath(savedPath);
           if (previousLanguage !== nextLanguage) monaco.editor.setModelLanguage(window.editor.getModel(), nextLanguage);
           if (isCppFile(savedPath) && !clangdStarted) startLanguageServer();
+          if (!isCppFile(savedPath)) document.getElementById('status').textContent = hasEditorLanguage(savedPath) ? 'language: ready' : 'language: plaintext';
         }
       });
 
