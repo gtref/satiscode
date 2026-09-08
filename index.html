@@ -6,42 +6,50 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Satiscode</title>
   <style>
-    body { margin: 0; padding: 0; overflow: hidden; display: flex; flex-direction: column; height: 100vh; color: #ccc; background: #1e1e1e; font: 13px sans-serif; }
-    #toolbar { background: #1e1e1e; padding: 6px; display: flex; gap: 8px; border-bottom: 1px solid #333; }
-    button { background: #0e639c; color: white; border: none; padding: 4px 12px; cursor: pointer; border-radius: 2px; }
-    button:hover { background: #1177bb; }
-    #exit-btn { background: #8f3030; }
-    #exit-btn:hover { background: #b33b3b; }
-    #new-btn, #save-as-btn { background: #3a6f3a; }
-    #new-btn:hover, #save-as-btn:hover { background: #4b8d4b; }
-    #language-select { margin-left: 4px; background: #252526; color: #ccc; border: 1px solid #444; padding: 3px 6px; }
-    #content { flex: 1; min-height: 0; display: flex; }
-    #file-tree { width: 235px; flex: 0 0 235px; background: #181818; border-right: 1px solid #333; overflow: auto; }
-    #tree-header { padding: 9px 12px; color: #bbb; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #333; }
-    #tree-root { padding: 5px 0; }
-    .tree-entry { display: flex; align-items: center; gap: 6px; min-height: 26px; padding: 0 8px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tree-entry:hover { background: #2a2d2e; }
-    .tree-entry.active { background: #094771; color: #fff; }
-    .tree-children { padding-left: 15px; }
-    .tree-chevron { width: 12px; color: #888; }
-    .tree-icon { width: 16px; }
-    #workspace { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    #editor { flex: 1; min-height: 80px; width: 100%; }
-    #problems-panel { height: 220px; min-height: 80px; display: none; flex-direction: column; border-top: 1px solid #454545; background: #181818; }
-    #problems-resizer { height: 5px; flex: 0 0 5px; cursor: ns-resize; background: #252526; }
-    #problems-resizer:hover { background: #0e639c; }
-    #problems-header { height: 34px; display: flex; align-items: center; gap: 12px; padding: 0 12px; border-bottom: 1px solid #333; }
-    #problems-title { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
-    #problems-count { color: #999; }
-    #problems-list { flex: 1; overflow: auto; }
-    .problem { display: flex; gap: 9px; align-items: baseline; padding: 7px 12px; cursor: pointer; border-bottom: 1px solid #252525; }
-    .problem:hover { background: #2a2d2e; }
-    .problem-icon { color: #f14c4c; font-weight: bold; }
-    .problem.warning .problem-icon { color: #cca700; }
-    .problem-message { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .problem-location { color: #858585; font-size: 12px; }
-    #no-problems { color: #858585; padding: 18px 12px; }
-    #status { color: #aaa; font: 12px sans-serif; margin-left: auto; padding: 5px 10px; }
+    :root{--background:#1e1e1e;--surface:#181818;--raised:#252526;--border:#333;--border-strong:#454545;--text:#ccc;--muted:#858585;--primary:#0e639c;--primary-hover:#1177bb;--success:#3a6f3a;--success-hover:#4b8d4b;--danger:#8f3030;--danger-hover:#b33b3b;--error:#f14c4c;--warning:#cca700;--selection:#094771}
+    body{margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column;height:100vh;color:var(--text);background:var(--background);font:13px sans-serif}
+    #toolbar{background:var(--background);padding:6px;display:flex;gap:8px;border-bottom:1px solid var(--border)}
+    button{background:var(--primary);color:#fff;border:none;padding:4px 12px;cursor:pointer;border-radius:2px}
+    button:hover{background:var(--primary-hover)}
+    #exit-btn{background:var(--danger)}
+    #exit-btn:hover{background:var(--danger-hover)}
+    #new-btn,#save-as-btn{background:var(--success)}
+    #new-btn:hover,#save-as-btn:hover{background:var(--success-hover)}
+    #language-select,#source-language-btn{margin-left:4px;background:var(--raised);color:var(--text);border:1px solid #444;padding:3px 6px}
+    #source-language-menu{position:relative}
+    #source-language-btn{margin:0;min-width:110px;text-align:left}
+    #source-language-options{position:absolute;top:100%;right:0;z-index:10;min-width:180px;padding:4px;background:var(--raised);border:1px solid var(--border-strong);box-shadow:0 5px 14px #0008}
+    #source-language-options[hidden]{display:none}
+    .source-language-option{display:block;width:100%;background:transparent;text-align:left;padding:7px 9px;color:var(--text);border-radius:0}
+    .source-language-option:hover{background:var(--selection)}
+    .language-badge{display:inline-block;min-width:27px;margin-right:7px;color:#fff;font-weight:bold}
+    #content{flex:1;min-height:0;display:flex}
+    #file-tree{width:235px;flex:0 0 235px;background:var(--surface);border-right:1px solid var(--border);overflow:auto}
+    #tree-header{padding:9px 12px;color:#bbb;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
+    #tree-root{padding:5px 0}
+    .tree-entry{display:flex;align-items:center;gap:6px;min-height:26px;padding:0 8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tree-entry:hover{background:#2a2d2e}
+    .tree-entry.active{background:var(--selection);color:#fff}
+    .tree-children{padding-left:15px}
+    .tree-chevron{width:12px;color:#888}
+    .tree-icon{width:16px}
+    #workspace{flex:1;min-height:0;display:flex;flex-direction:column}
+    #editor{flex:1;min-height:80px;width:100%}
+    #problems-panel{height:220px;min-height:80px;display:none;flex-direction:column;border-top:1px solid var(--border-strong);background:var(--surface)}
+    #problems-resizer{height:5px;flex:0 0 5px;cursor:ns-resize;background:var(--raised)}
+    #problems-resizer:hover{background:var(--primary)}
+    #problems-header{height:34px;display:flex;align-items:center;gap:12px;padding:0 12px;border-bottom:1px solid var(--border)}
+    #problems-title{font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+    #problems-count{color:#999}
+    #problems-list{flex:1;overflow:auto}
+    .problem{display:flex;gap:9px;align-items:baseline;padding:7px 12px;cursor:pointer;border-bottom:1px solid #252525}
+    .problem:hover{background:#2a2d2e}
+    .problem-icon{color:var(--error);font-weight:bold}
+    .problem.warning .problem-icon{color:var(--warning)}
+    .problem-message{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .problem-location{color:var(--muted);font-size:12px}
+    #no-problems{color:var(--muted);padding:18px 12px}
+    #status{color:#aaa;font:12px sans-serif;margin-left:auto;padding:5px 10px}
   </style>
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
 </head>
@@ -52,6 +60,20 @@
     <button id="save-btn" data-i18n="saveFile">Save</button>
     <button id="save-as-btn" data-i18n="saveAs">Save As</button>
     <button id="exit-btn" data-i18n="exit">Exit</button>
+    <div id="source-language-menu">
+      <button id="source-language-btn" aria-haspopup="true" aria-expanded="false"><span class="language-badge">◇</span><span id="source-language-label">Auto</span> ▾</button>
+      <div id="source-language-options" hidden>
+        <button class="source-language-option" data-source-language="auto"><span class="language-badge">↯</span>Auto</button>
+        <button class="source-language-option" data-source-language="c"><span class="language-badge">C</span>C</button>
+        <button class="source-language-option" data-source-language="cpp"><span class="language-badge">C++</span>C++</button>
+        <button class="source-language-option" data-source-language="css"><span class="language-badge">#</span>CSS</button>
+        <button class="source-language-option" data-source-language="javascript"><span class="language-badge">JS</span>JavaScript</button>
+        <button class="source-language-option" data-source-language="html"><span class="language-badge">&lt;&gt;</span>HTML</button>
+        <button class="source-language-option" data-source-language="typescript"><span class="language-badge">TS</span>TypeScript</button>
+        <button class="source-language-option" data-source-language="json"><span class="language-badge">{ }</span>JSON</button>
+        <button class="source-language-option" data-source-language="plaintext"><span class="language-badge">Aa</span>Plain Text</button>
+      </div>
+    </div>
     <select id="language-select" aria-label="Interface language">
       <option value="en">English</option>
       <option value="es">Español</option>
@@ -89,6 +111,7 @@
     const pendingRequests = new Map();
     let clangdStarted = false;
     let currentDirectory = null;
+    let manualLanguage = null;
     const cppExtensions = new Set(['.c', '.cc', '.cpp', '.cxx', '.h', '.hh', '.hpp', '.hxx']);
     const languageByExtension = new Map([
       ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
@@ -113,6 +136,8 @@
       return languageByExtension.get(extension) || 'plaintext';
     };
     const hasEditorLanguage = (filePath) => isCppFile(filePath) || languageByExtension.has(extensionForPath(filePath));
+    const activeLanguage = (filePath) => manualLanguage || languageForPath(filePath || '');
+    const isActiveCppLanguage = () => activeLanguage(currentFilePath) === 'c' || activeLanguage(currentFilePath) === 'cpp';
     const pathToUri = (filePath) => {
       const normalized = filePath.replace(/\\/g, '/');
       return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
@@ -170,6 +195,32 @@
       document.getElementById('language-select').value = translations[language] ? language : 'en';
     }
 
+    function updateSourceLanguageLabel() {
+      const language = activeLanguage(currentFilePath);
+      const labels = { auto: 'Auto', c: 'C', cpp: 'C++', css: 'CSS', javascript: 'JavaScript', html: 'HTML', typescript: 'TypeScript', json: 'JSON', plaintext: 'Plain Text' };
+      const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', plaintext: 'Aa' };
+      document.getElementById('source-language-label').textContent = labels[language] || labels.auto;
+      document.querySelector('#source-language-btn .language-badge').textContent = icons[language] || icons.auto;
+    }
+
+    function applySourceLanguage(language) {
+      manualLanguage = language === 'auto' ? null : language;
+      const selectedLanguage = activeLanguage(currentFilePath);
+      monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
+      updateSourceLanguageLabel();
+      if (isActiveCppLanguage()) {
+        startLanguageServer();
+      } else if (clangdStarted) {
+        if (currentFilePath) sendNotification('textDocument/didClose', { textDocument: { uri: pathToUri(currentFilePath) } });
+        window.api.stopClangd();
+        clangdStarted = false;
+        clearProblems();
+        document.getElementById('status').textContent = 'language: ready';
+      } else {
+        document.getElementById('status').textContent = selectedLanguage === 'plaintext' ? 'language: plaintext' : 'language: ready';
+      }
+    }
+
     async function renderDirectory(directoryPath, container) {
       container.innerHTML = '';
       const entries = await window.api.listDirectory(directoryPath);
@@ -222,14 +273,16 @@
         clangdStarted = false;
       }
       currentFilePath = file.path;
+      manualLanguage = null;
       currentDirectory = file.path.substring(0, Math.max(file.path.lastIndexOf('\\'), file.path.lastIndexOf('/')));
       documentVersion = 1;
       clearProblems();
-      monaco.editor.setModelLanguage(window.editor.getModel(), languageForPath(file.path));
+      monaco.editor.setModelLanguage(window.editor.getModel(), activeLanguage(file.path));
       window.editor.setValue(file.content);
       await refreshFileTree(currentDirectory);
       if (isCppFile(file.path)) startLanguageServer();
       else document.getElementById('status').textContent = hasEditorLanguage(file.path) ? 'language: ready' : 'language: plaintext';
+      updateSourceLanguageLabel();
     }
 
     function sendRequest(method, params) {
@@ -243,7 +296,7 @@
     }
 
     function startLanguageServer() {
-      if (!currentFilePath || !isCppFile(currentFilePath)) return;
+      if (!currentFilePath || !isActiveCppLanguage()) return;
       if (clangdStarted) window.api.stopClangd();
       clangdStarted = true;
       document.getElementById('status').textContent = 'clangd: starting';
@@ -262,7 +315,7 @@
       }).then(() => {
         sendNotification('initialized', {});
         sendNotification('textDocument/didOpen', {
-          textDocument: { uri, languageId: languageForPath(currentFilePath), version: documentVersion, text: window.editor.getValue() }
+          textDocument: { uri, languageId: activeLanguage(currentFilePath), version: documentVersion, text: window.editor.getValue() }
         });
         document.getElementById('status').textContent = 'clangd: ready';
       }).catch(() => { document.getElementById('status').textContent = 'clangd: unavailable'; });
@@ -309,6 +362,26 @@
         document.getElementById('status').textContent = 'clangd: unavailable';
       });
       applyInterfaceLanguage('en');
+      updateSourceLanguageLabel();
+
+      document.getElementById('source-language-btn').addEventListener('click', () => {
+        const options = document.getElementById('source-language-options');
+        options.hidden = !options.hidden;
+        document.getElementById('source-language-btn').setAttribute('aria-expanded', String(!options.hidden));
+      });
+      document.querySelectorAll('[data-source-language]').forEach((option) => {
+        option.addEventListener('click', () => {
+          applySourceLanguage(option.dataset.sourceLanguage);
+          document.getElementById('source-language-options').hidden = true;
+          document.getElementById('source-language-btn').setAttribute('aria-expanded', 'false');
+        });
+      });
+      document.addEventListener('click', (event) => {
+        if (!document.getElementById('source-language-menu').contains(event.target)) {
+          document.getElementById('source-language-options').hidden = true;
+          document.getElementById('source-language-btn').setAttribute('aria-expanded', 'false');
+        }
+      });
 
       ['c', 'cpp'].forEach((language) => {
       monaco.languages.registerCompletionItemProvider(language, {
@@ -369,8 +442,8 @@
           currentFilePath = savedPath;
           const nextLanguage = languageForPath(savedPath);
           if (previousLanguage !== nextLanguage) monaco.editor.setModelLanguage(window.editor.getModel(), nextLanguage);
-          if (isCppFile(savedPath) && !clangdStarted) startLanguageServer();
-          if (!isCppFile(savedPath)) document.getElementById('status').textContent = hasEditorLanguage(savedPath) ? 'language: ready' : 'language: plaintext';
+          if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
+          if (!isActiveCppLanguage()) document.getElementById('status').textContent = hasEditorLanguage(savedPath) ? 'language: ready' : 'language: plaintext';
         }
       });
 
