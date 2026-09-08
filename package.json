@@ -7,9 +7,9 @@
     "start": "electron .",
     "dist:win": "electron-builder --win nsis"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["electron", "monaco", "clangd", "c", "cpp", "editor"],
+  "author": "gtref",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
     "monaco-editor": "0.52.2",
