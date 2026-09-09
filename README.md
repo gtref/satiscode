@@ -59,3 +59,6 @@ The renderer uses context isolation and does not have direct Node.js access. Fil
 ## License
 
 Satiscode is licensed under the [MIT License](LICENSE).
+
+## Contributers
+Thanks to all those who help in the maintenance of this project.
