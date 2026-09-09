@@ -2,6 +2,7 @@
   "theme": "style1",
   "ui": {
     "newFile": "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M9 1H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V6L9 1zm0 1.5L12.5 6H9V2.5zM4 14V3h4v4h4v7H4z\"/></svg>",
+    "folder": "<svg width=\"16\" height=\"16\" viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M1.75 2.5A1.75 1.75 0 0 0 0 4.25v7.5C0 12.716.784 13.5 1.75 13.5h12.5A1.75 1.75 0 0 0 16 11.75v-6A1.75 1.75 0 0 0 14.25 4H7.828a1.75 1.75 0 0 1-1.237-.512l-.88-.88A1.75 1.75 0 0 0 4.47 2.5H1.75z\"/></svg>",
     "openFolder": "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M1 3.5A1.5 1.5 0 0 1 2.5 2h3.879a1.5 1.5 0 0 1 1.06.44l1.122 1.12A.5.5 0 0 0 9.12 3.75H13.5A1.5 1.5 0 0 1 15 5.25v7.25a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 1 12.5v-9z\"/></svg>",
     "save": "<svg viewBox=\"0 0 16 16\" fill=\"currentColor\"><path d=\"M11 1H3a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V5l-4-4zm-3 12a2 2 0 1 1 0-4 2 2 0 0 1 0 4zm3-7H3V2h8v4z\"/></svg>"
   },
