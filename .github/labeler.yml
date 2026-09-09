@@ -1,0 +1,9 @@
+docs:
+  - "docs/**"
+  - "*.md"
+
+config:
+  - ".github/**"
+
+theme:
+  - "themes/**"
