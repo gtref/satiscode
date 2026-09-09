@@ -31,7 +31,8 @@
       "main.js",
       "preload.js",
       "package.json",
-      "node_modules/**/*"
+      "node_modules/**/*",
+      "styles/**/*"
     ],
     "win": {
       "target": "nsis"
