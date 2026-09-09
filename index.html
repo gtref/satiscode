@@ -7,6 +7,17 @@
   <title>Satiscode</title>
   <link rel="stylesheet" href="styles/style1.css">
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script type="module">
+    import { initIcons, getFileIcon, getFolderIcon, getChevronIcon } from './icons.js';
+
+    // Initialize local icon system from icons/style1/icons.json
+    await initIcons();
+
+    // Attach getters to window for internal renderer access
+    window.getFileIcon = getFileIcon;
+    window.getFolderIcon = getFolderIcon;
+    window.getChevronIcon = getChevronIcon;
+  </script>
 </head>
 <body>
   <div id="toolbar">
@@ -60,13 +71,14 @@
     window.addEventListener('unhandledrejection', (event) => {
       console.error('Unhandled renderer promise rejection:', event.reason?.stack || event.reason);
     });
+
     // Open Folder Event
     document.getElementById('open-folder-btn').addEventListener('click', async () => {
-    const folderPath = await window.api.openFolder();
-    if (folderPath) {
+      const folderPath = await window.api.openFolder();
+      if (folderPath) {
         currentDirectory = folderPath;
         await refreshFileTree(folderPath);
-    }
+      }
     });
 
     let currentFilePath = null;
@@ -195,23 +207,31 @@
         const row = document.createElement('div');
         row.className = 'tree-entry';
         row.title = entry.path;
+        
         const chevron = document.createElement('span');
         chevron.className = 'tree-chevron';
-        chevron.textContent = entry.isDirectory ? '›' : '';
+        chevron.innerHTML = entry.isDirectory ? window.getChevronIcon(false) : '';
+        
         const icon = document.createElement('span');
         icon.className = 'tree-icon';
-        icon.textContent = entry.isDirectory ? '▰' : '▱';
+        icon.innerHTML = entry.isDirectory ? window.getFolderIcon(false) : window.getFileIcon(entry.name);
+        
         const label = document.createElement('span');
         label.textContent = entry.name;
+        
         row.append(chevron, icon, label);
         container.appendChild(row);
+        
         if (entry.isDirectory) {
           const children = document.createElement('div');
           children.className = 'tree-children';
           children.hidden = true;
+          
           row.addEventListener('click', async () => {
             children.hidden = !children.hidden;
-            chevron.textContent = children.hidden ? '›' : '⌄';
+            chevron.innerHTML = window.getChevronIcon(!children.hidden);
+            icon.innerHTML = window.getFolderIcon(!children.hidden);
+            
             if (!children.hidden && !children.dataset.loaded) {
               children.dataset.loaded = 'true';
               await renderDirectory(entry.path, children);
@@ -359,32 +379,32 @@
       });
 
       ['c', 'cpp'].forEach((language) => {
-      monaco.languages.registerCompletionItemProvider(language, {
-        triggerCharacters: ['.', '>', ':'],
-        provideCompletionItems: async (_model, position) => {
-          if (!clangdStarted) return { suggestions: [] };
-          const result = await sendRequest('textDocument/completion', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
-          const items = result && (result.items || result) || [];
-          return { suggestions: items.map((item) => ({ label: item.label, kind: item.kind || monaco.languages.CompletionItemKind.Text, insertText: item.insertText || item.label, detail: item.detail })) };
-        }
-      });
-      monaco.languages.registerHoverProvider(language, {
-        provideHover: async (_model, position) => {
-          if (!clangdStarted) return null;
-          const result = await sendRequest('textDocument/hover', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
-          if (!result) return null;
-          const contents = Array.isArray(result.contents) ? result.contents : [result.contents];
-          return { contents: contents.map((item) => ({ value: typeof item === 'string' ? item : item.value })), range: result.range && rangeToMonaco(result.range) };
-        }
-      });
-      monaco.languages.registerDefinitionProvider(language, {
-        provideDefinition: async (_model, position) => {
-          if (!clangdStarted) return [];
-          const result = await sendRequest('textDocument/definition', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
-          const locations = Array.isArray(result) ? result : result ? [result] : [];
-          return locations.map((location) => ({ uri: monaco.Uri.parse(location.uri), range: rangeToMonaco(location.range) }));
-        }
-      });
+        monaco.languages.registerCompletionItemProvider(language, {
+          triggerCharacters: ['.', '>', ':'],
+          provideCompletionItems: async (_model, position) => {
+            if (!clangdStarted) return { suggestions: [] };
+            const result = await sendRequest('textDocument/completion', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+            const items = result && (result.items || result) || [];
+            return { suggestions: items.map((item) => ({ label: item.label, kind: item.kind || monaco.languages.CompletionItemKind.Text, insertText: item.insertText || item.label, detail: item.detail })) };
+          }
+        });
+        monaco.languages.registerHoverProvider(language, {
+          provideHover: async (_model, position) => {
+            if (!clangdStarted) return null;
+            const result = await sendRequest('textDocument/hover', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+            if (!result) return null;
+            const contents = Array.isArray(result.contents) ? result.contents : [result.contents];
+            return { contents: contents.map((item) => ({ value: typeof item === 'string' ? item : item.value })), range: result.range && rangeToMonaco(result.range) };
+          }
+        });
+        monaco.languages.registerDefinitionProvider(language, {
+          provideDefinition: async (_model, position) => {
+            if (!clangdStarted) return [];
+            const result = await sendRequest('textDocument/definition', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+            const locations = Array.isArray(result) ? result : result ? [result] : [];
+            return locations.map((location) => ({ uri: monaco.Uri.parse(location.uri), range: rangeToMonaco(location.range) }));
+          }
+        });
       });
 
       window.editor.onDidChangeModelContent(() => {
@@ -453,8 +473,8 @@
           event.preventDefault();
           document.getElementById('save-btn').click();
         } else if (event.key.toLowerCase() === 'k') {
-            event.preventDefault();
-            document.getElementById('open-folder-btn').click();
+          event.preventDefault();
+          document.getElementById('open-folder-btn').click();
         }
       });
 
