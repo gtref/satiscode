@@ -1,0 +1,44 @@
+name: Require Issue Description
+
+on:
+  issues:
+    types: [opened, edited]
+
+jobs:
+  check-description:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+
+    steps:
+      - name: Check if issue body is empty
+        id: check
+        run: |
+          if [ -z "${{ github.event.issue.body }}" ]; then
+            echo "empty=true" >> $GITHUB_OUTPUT
+          else
+            echo "empty=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment asking for description
+        if: steps.check.outputs.empty == 'true' && github.event.action == 'opened'
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ⚠️ **Please add a description to your issue.**
+            Issues without details cannot be triaged.  
+            Edit your issue and add more information so we can help.
+
+      - name: Lock issue until user edits
+        if: steps.check.outputs.empty == 'true' && github.event.action == 'opened'
+        uses: peter-evans/lock-threads@v4
+        with:
+          issue: ${{ github.event.issue.number }}
+          lock-reason: "resolved"
+
+      - name: Unlock issue when description is added
+        if: steps.check.outputs.empty == 'false' && github.event.action == 'edited'
+        uses: peter-evans/unlock-threads@v4
+        with:
+          issue: ${{ github.event.issue.number }}
