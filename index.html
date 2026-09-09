@@ -57,6 +57,7 @@
   <div id="toolbar">
     <button id="new-btn" data-i18n="newFile">New</button>
     <button id="open-btn" data-i18n="openFile">Open</button>
+    <button id="open-folder-btn">Open Folder</button>
     <button id="save-btn" data-i18n="saveFile">Save</button>
     <button id="save-as-btn" data-i18n="saveAs">Save As</button>
     <button id="exit-btn" data-i18n="exit">Exit</button>
@@ -104,6 +105,14 @@
     window.addEventListener('unhandledrejection', (event) => {
       console.error('Unhandled renderer promise rejection:', event.reason?.stack || event.reason);
     });
+    // Open Folder Event
+    document.getElementById('open-folder-btn').addEventListener('click', async () => {
+    const folderPath = await window.api.openFolder();
+    if (folderPath) {
+        currentDirectory = folderPath;
+        await refreshFileTree(folderPath);
+    }
+    });
 
     let currentFilePath = null;
     let clangdRequestId = 0;
@@ -112,6 +121,7 @@
     let clangdStarted = false;
     let currentDirectory = null;
     let manualLanguage = null;
+    let currentDocumentUri = null;
     const cppExtensions = new Set(['.c', '.cc', '.cpp', '.cxx', '.h', '.hh', '.hpp', '.hxx']);
     const languageByExtension = new Map([
       ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
@@ -142,6 +152,7 @@
       const normalized = filePath.replace(/\\/g, '/');
       return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
     };
+    const virtualDocumentUri = (workspacePath, language) => pathToUri(`${workspacePath}\\untitled.${language === 'c' ? 'c' : 'cpp'}`);
     const positionToLsp = (position) => ({ line: position.lineNumber - 1, character: position.column - 1 });
     const rangeToMonaco = (range) => ({
       startLineNumber: range.start.line + 1,
@@ -211,9 +222,10 @@
       if (isActiveCppLanguage()) {
         startLanguageServer();
       } else if (clangdStarted) {
-        if (currentFilePath) sendNotification('textDocument/didClose', { textDocument: { uri: pathToUri(currentFilePath) } });
+        if (currentDocumentUri) sendNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
         window.api.stopClangd();
         clangdStarted = false;
+        currentDocumentUri = null;
         clearProblems();
         document.getElementById('status').textContent = 'language: ready';
       } else {
@@ -267,12 +279,13 @@
     }
 
     async function openLoadedFile(file) {
-      if (clangdStarted && currentFilePath) {
-        sendNotification('textDocument/didClose', { textDocument: { uri: pathToUri(currentFilePath) } });
+      if (clangdStarted) {
+        if (currentDocumentUri) sendNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
         window.api.stopClangd();
         clangdStarted = false;
       }
       currentFilePath = file.path;
+      currentDocumentUri = currentFilePath ? pathToUri(currentFilePath) : null;
       manualLanguage = null;
       currentDirectory = file.path.substring(0, Math.max(file.path.lastIndexOf('\\'), file.path.lastIndexOf('/')));
       documentVersion = 1;
@@ -280,7 +293,7 @@
       monaco.editor.setModelLanguage(window.editor.getModel(), activeLanguage(file.path));
       window.editor.setValue(file.content);
       await refreshFileTree(currentDirectory);
-      if (isCppFile(file.path)) startLanguageServer();
+      if (isActiveCppLanguage()) startLanguageServer();
       else document.getElementById('status').textContent = hasEditorLanguage(file.path) ? 'language: ready' : 'language: plaintext';
       updateSourceLanguageLabel();
     }
@@ -295,30 +308,36 @@
       window.api.sendClangdMessage({ jsonrpc: '2.0', method, params });
     }
 
-    function startLanguageServer() {
-      if (!currentFilePath || !isActiveCppLanguage()) return;
+    async function startLanguageServer() {
+      if (!isActiveCppLanguage()) return;
       if (clangdStarted) window.api.stopClangd();
       clangdStarted = true;
       document.getElementById('status').textContent = 'clangd: starting';
-      const rootPath = currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/')));
-      window.api.startClangd(rootPath || undefined);
-      const uri = pathToUri(currentFilePath);
-      sendRequest('initialize', {
-        processId: null,
-        rootUri: pathToUri(rootPath),
-        capabilities: {
-          textDocument: {
-            synchronization: { didSave: true },
-            completion: { completionItem: { snippetSupport: true } }
+      const language = activeLanguage(currentFilePath);
+      const workspacePath = currentDirectory || await window.api.getWorkspacePath();
+      const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
+      currentDocumentUri = currentDocumentUri || virtualDocumentUri(workspacePath, language);
+      console.info(`Starting clangd for ${currentDocumentUri} as ${language}`);
+      window.api.startClangd(rootPath || undefined).then(() => sendRequest('initialize', {
+          processId: null,
+          rootUri: pathToUri(rootPath),
+          capabilities: {
+            textDocument: {
+              synchronization: { didSave: true },
+              completion: { completionItem: { snippetSupport: true } }
+            }
           }
-        }
-      }).then(() => {
+        })).then(() => {
         sendNotification('initialized', {});
         sendNotification('textDocument/didOpen', {
-          textDocument: { uri, languageId: activeLanguage(currentFilePath), version: documentVersion, text: window.editor.getValue() }
+          textDocument: { uri: currentDocumentUri, languageId: language, version: documentVersion, text: window.editor.getValue() }
         });
         document.getElementById('status').textContent = 'clangd: ready';
-      }).catch(() => { document.getElementById('status').textContent = 'clangd: unavailable'; });
+      }).catch((error) => {
+        clangdStarted = false;
+        console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${error.message || error}`);
+        document.getElementById('status').textContent = 'clangd: unavailable';
+      });
     }
 
     const monacoBaseUrl = new URL('node_modules/monaco-editor/min/', window.location.href).href;
@@ -361,6 +380,7 @@
         console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${message}`);
         document.getElementById('status').textContent = 'clangd: unavailable';
       });
+      window.api.onClangdStderr((message) => console.warn(`clangd: ${message.trim()}`));
       applyInterfaceLanguage('en');
       updateSourceLanguageLabel();
 
@@ -388,7 +408,7 @@
         triggerCharacters: ['.', '>', ':'],
         provideCompletionItems: async (_model, position) => {
           if (!clangdStarted) return { suggestions: [] };
-          const result = await sendRequest('textDocument/completion', { textDocument: { uri: pathToUri(currentFilePath) }, position: positionToLsp(position) });
+          const result = await sendRequest('textDocument/completion', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
           const items = result && (result.items || result) || [];
           return { suggestions: items.map((item) => ({ label: item.label, kind: item.kind || monaco.languages.CompletionItemKind.Text, insertText: item.insertText || item.label, detail: item.detail })) };
         }
@@ -396,7 +416,7 @@
       monaco.languages.registerHoverProvider(language, {
         provideHover: async (_model, position) => {
           if (!clangdStarted) return null;
-          const result = await sendRequest('textDocument/hover', { textDocument: { uri: pathToUri(currentFilePath) }, position: positionToLsp(position) });
+          const result = await sendRequest('textDocument/hover', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
           if (!result) return null;
           const contents = Array.isArray(result.contents) ? result.contents : [result.contents];
           return { contents: contents.map((item) => ({ value: typeof item === 'string' ? item : item.value })), range: result.range && rangeToMonaco(result.range) };
@@ -405,7 +425,7 @@
       monaco.languages.registerDefinitionProvider(language, {
         provideDefinition: async (_model, position) => {
           if (!clangdStarted) return [];
-          const result = await sendRequest('textDocument/definition', { textDocument: { uri: pathToUri(currentFilePath) }, position: positionToLsp(position) });
+          const result = await sendRequest('textDocument/definition', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
           const locations = Array.isArray(result) ? result : result ? [result] : [];
           return locations.map((location) => ({ uri: monaco.Uri.parse(location.uri), range: rangeToMonaco(location.range) }));
         }
@@ -413,10 +433,10 @@
       });
 
       window.editor.onDidChangeModelContent(() => {
-        if (!clangdStarted || !currentFilePath) return;
+        if (!clangdStarted || !currentDocumentUri) return;
         documentVersion++;
         sendNotification('textDocument/didChange', {
-          textDocument: { uri: pathToUri(currentFilePath), version: documentVersion },
+          textDocument: { uri: currentDocumentUri, version: documentVersion },
           contentChanges: [{ text: window.editor.getValue() }]
         });
       });
@@ -440,8 +460,15 @@
         if (savedPath) {
           const previousLanguage = currentFilePath ? languageForPath(currentFilePath) : 'plaintext';
           currentFilePath = savedPath;
+          const previousDocumentUri = currentDocumentUri;
+          currentDocumentUri = pathToUri(savedPath);
           const nextLanguage = languageForPath(savedPath);
           if (previousLanguage !== nextLanguage) monaco.editor.setModelLanguage(window.editor.getModel(), nextLanguage);
+          if (isActiveCppLanguage() && clangdStarted && previousDocumentUri !== currentDocumentUri) {
+            sendNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+            window.api.stopClangd();
+            clangdStarted = false;
+          }
           if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
           if (!isActiveCppLanguage()) document.getElementById('status').textContent = hasEditorLanguage(savedPath) ? 'language: ready' : 'language: plaintext';
         }
@@ -470,6 +497,9 @@
         } else if (event.key.toLowerCase() === 's') {
           event.preventDefault();
           document.getElementById('save-btn').click();
+        } else if (event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            document.getElementById('open-folder-btn').click();
         }
       });
 

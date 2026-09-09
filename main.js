@@ -14,6 +14,10 @@ function sendToClangd(message) {
   clangdProcess.stdin.write(body);
 }
 
+function sendToRenderer(event, channel, ...args) {
+  if (!event.sender.isDestroyed()) event.sender.send(channel, ...args);
+}
+
 function stopClangd() {
   if (clangdProcess) clangdProcess.kill();
   clangdProcess = null;
@@ -58,13 +62,20 @@ function gracefulStopClangd() {
 function startClangd(event, rootPath) {
   stopClangd();
   const projectRoot = findProjectRoot(rootPath);
-  const clangdPath = process.env.ProgramFiles
-    ? path.join(process.env.ProgramFiles, 'LLVM', 'bin', 'clangd.exe')
-    : 'clangd';
-  const clangdCommand = fs.existsSync(clangdPath) ? clangdPath : 'clangd';
+  const clangdCandidates = [
+    process.env.ProgramFiles && path.join(process.env.ProgramFiles, 'LLVM', 'bin', 'clangd.exe'),
+    process.env.ProgramW6432 && path.join(process.env.ProgramW6432, 'LLVM', 'bin', 'clangd.exe'),
+    'clangd'
+  ].filter(Boolean);
+  const clangdCommand = clangdCandidates.find((candidate) => candidate === 'clangd' || fs.existsSync(candidate)) || 'clangd';
   clangdProcess = spawn(clangdCommand, ['--background-index', '--header-insertion=never'], {
     cwd: projectRoot,
     stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  const processStarted = new Promise((resolve, reject) => {
+    clangdProcess.once('spawn', () => resolve({ projectRoot, command: clangdCommand }));
+    clangdProcess.once('error', reject);
   });
 
   clangdProcess.stdout.on('data', (chunk) => {
@@ -84,19 +95,21 @@ function startClangd(event, rootPath) {
       const body = clangdBuffer.subarray(bodyStart, bodyStart + bodyLength).toString('utf8');
       clangdBuffer = clangdBuffer.subarray(bodyStart + bodyLength);
       try {
-        event.sender.send('clangd:message', JSON.parse(body));
+        sendToRenderer(event, 'clangd:message', JSON.parse(body));
       } catch (error) {
         console.error('Invalid clangd message:', error);
       }
     }
   });
 
-  clangdProcess.stderr.on('data', (chunk) => event.sender.send('clangd:stderr', chunk.toString()));
-  clangdProcess.on('error', (error) => event.sender.send('clangd:error', error.message));
+  clangdProcess.stderr.on('data', (chunk) => sendToRenderer(event, 'clangd:stderr', chunk.toString()));
+  clangdProcess.on('error', (error) => sendToRenderer(event, 'clangd:error', error.message));
   clangdProcess.on('exit', () => {
-    event.sender.send('clangd:exit');
+    sendToRenderer(event, 'clangd:exit');
     clangdProcess = null;
   });
+
+  return processStarted;
 }
 
 function createWindow() {
@@ -133,10 +146,21 @@ ipcMain.handle('dialog:openFile', async () => {
   return { path: filePaths[0], content };
 });
 
+// Folder Open Handler
+ipcMain.handle('dialog:openFolder', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  });
+  if (canceled || filePaths.length === 0) return null;
+  return filePaths[0];
+});
+
 ipcMain.handle('file:read', async (_event, filePath) => ({
   path: filePath,
   content: await fs.promises.readFile(filePath, 'utf-8')
 }));
+
+ipcMain.handle('app:workspacePath', () => process.cwd());
 
 // File Save Handler
 ipcMain.handle('file:save', async (event, { filePath, content }) => {
@@ -158,7 +182,7 @@ ipcMain.handle('directory:list', async (_event, directoryPath) => {
     .sort((left, right) => Number(right.isDirectory) - Number(left.isDirectory) || left.name.localeCompare(right.name));
 });
 
-ipcMain.on('clangd:start', (event, rootPath) => startClangd(event, rootPath));
+ipcMain.handle('clangd:start', (event, rootPath) => startClangd(event, rootPath));
 ipcMain.on('clangd:message', (_event, message) => sendToClangd(message));
 ipcMain.on('clangd:stop', stopClangd);
 ipcMain.handle('app:exit', async () => {
