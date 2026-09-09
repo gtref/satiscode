@@ -337,3 +337,12 @@ body {
   color: var(--vscode-text-muted);
   margin-left: 12px;
 }
+
+.language-badge svg,
+.tree-icon svg {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: middle;
+  fill: currentColor; /* Inherits the parent text color */
+}
