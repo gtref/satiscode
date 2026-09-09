@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('api', {
   getWorkspacePath: () => ipcRenderer.invoke('app:workspacePath'),
   saveFile: (data) => ipcRenderer.invoke('file:save', data),
   listDirectory: (directoryPath) => ipcRenderer.invoke('directory:list', directoryPath),
+  openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
   exit: () => ipcRenderer.invoke('app:exit'),
   startClangd: (rootPath) => ipcRenderer.invoke('clangd:start', rootPath),
   sendClangdMessage: (message) => ipcRenderer.send('clangd:message', message),

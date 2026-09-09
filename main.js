@@ -146,6 +146,15 @@ ipcMain.handle('dialog:openFile', async () => {
   return { path: filePaths[0], content };
 });
 
+// Folder Open Handler
+ipcMain.handle('dialog:openFolder', async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ['openDirectory']
+  });
+  if (canceled || filePaths.length === 0) return null;
+  return filePaths[0];
+});
+
 ipcMain.handle('file:read', async (_event, filePath) => ({
   path: filePath,
   content: await fs.promises.readFile(filePath, 'utf-8')

@@ -57,6 +57,7 @@
   <div id="toolbar">
     <button id="new-btn" data-i18n="newFile">New</button>
     <button id="open-btn" data-i18n="openFile">Open</button>
+    <button id="open-folder-btn">Open Folder</button>
     <button id="save-btn" data-i18n="saveFile">Save</button>
     <button id="save-as-btn" data-i18n="saveAs">Save As</button>
     <button id="exit-btn" data-i18n="exit">Exit</button>
@@ -103,6 +104,14 @@
     });
     window.addEventListener('unhandledrejection', (event) => {
       console.error('Unhandled renderer promise rejection:', event.reason?.stack || event.reason);
+    });
+    // Open Folder Event
+    document.getElementById('open-folder-btn').addEventListener('click', async () => {
+    const folderPath = await window.api.openFolder();
+    if (folderPath) {
+        currentDirectory = folderPath;
+        await refreshFileTree(folderPath);
+    }
     });
 
     let currentFilePath = null;
@@ -488,6 +497,9 @@
         } else if (event.key.toLowerCase() === 's') {
           event.preventDefault();
           document.getElementById('save-btn').click();
+        } else if (event.key.toLowerCase() === 'k') {
+            event.preventDefault();
+            document.getElementById('open-folder-btn').click();
         }
       });
 
