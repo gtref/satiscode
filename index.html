@@ -5,52 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Satiscode</title>
-  <style>
-    :root{--background:#1e1e1e;--surface:#181818;--raised:#252526;--border:#333;--border-strong:#454545;--text:#ccc;--muted:#858585;--primary:#0e639c;--primary-hover:#1177bb;--success:#3a6f3a;--success-hover:#4b8d4b;--danger:#8f3030;--danger-hover:#b33b3b;--error:#f14c4c;--warning:#cca700;--selection:#094771}
-    body{margin:0;padding:0;overflow:hidden;display:flex;flex-direction:column;height:100vh;color:var(--text);background:var(--background);font:13px sans-serif}
-    #toolbar{background:var(--background);padding:6px;display:flex;gap:8px;border-bottom:1px solid var(--border)}
-    button{background:var(--primary);color:#fff;border:none;padding:4px 12px;cursor:pointer;border-radius:2px}
-    button:hover{background:var(--primary-hover)}
-    #exit-btn{background:var(--danger)}
-    #exit-btn:hover{background:var(--danger-hover)}
-    #new-btn,#save-as-btn{background:var(--success)}
-    #new-btn:hover,#save-as-btn:hover{background:var(--success-hover)}
-    #language-select,#source-language-btn{margin-left:4px;background:var(--raised);color:var(--text);border:1px solid #444;padding:3px 6px}
-    #source-language-menu{position:relative}
-    #source-language-btn{margin:0;min-width:110px;text-align:left}
-    #source-language-options{position:absolute;top:100%;right:0;z-index:10;min-width:180px;padding:4px;background:var(--raised);border:1px solid var(--border-strong);box-shadow:0 5px 14px #0008}
-    #source-language-options[hidden]{display:none}
-    .source-language-option{display:block;width:100%;background:transparent;text-align:left;padding:7px 9px;color:var(--text);border-radius:0}
-    .source-language-option:hover{background:var(--selection)}
-    .language-badge{display:inline-block;min-width:27px;margin-right:7px;color:#fff;font-weight:bold}
-    #content{flex:1;min-height:0;display:flex}
-    #file-tree{width:235px;flex:0 0 235px;background:var(--surface);border-right:1px solid var(--border);overflow:auto}
-    #tree-header{padding:9px 12px;color:#bbb;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border)}
-    #tree-root{padding:5px 0}
-    .tree-entry{display:flex;align-items:center;gap:6px;min-height:26px;padding:0 8px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .tree-entry:hover{background:#2a2d2e}
-    .tree-entry.active{background:var(--selection);color:#fff}
-    .tree-children{padding-left:15px}
-    .tree-chevron{width:12px;color:#888}
-    .tree-icon{width:16px}
-    #workspace{flex:1;min-height:0;display:flex;flex-direction:column}
-    #editor{flex:1;min-height:80px;width:100%}
-    #problems-panel{height:220px;min-height:80px;display:none;flex-direction:column;border-top:1px solid var(--border-strong);background:var(--surface)}
-    #problems-resizer{height:5px;flex:0 0 5px;cursor:ns-resize;background:var(--raised)}
-    #problems-resizer:hover{background:var(--primary)}
-    #problems-header{height:34px;display:flex;align-items:center;gap:12px;padding:0 12px;border-bottom:1px solid var(--border)}
-    #problems-title{font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-    #problems-count{color:#999}
-    #problems-list{flex:1;overflow:auto}
-    .problem{display:flex;gap:9px;align-items:baseline;padding:7px 12px;cursor:pointer;border-bottom:1px solid #252525}
-    .problem:hover{background:#2a2d2e}
-    .problem-icon{color:var(--error);font-weight:bold}
-    .problem.warning .problem-icon{color:var(--warning)}
-    .problem-message{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .problem-location{color:var(--muted);font-size:12px}
-    #no-problems{color:var(--muted);padding:18px 12px}
-    #status{color:#aaa;font:12px sans-serif;margin-left:auto;padding:5px 10px}
-  </style>
+  <link rel="stylesheet" href="styles/style1.css">
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
 </head>
 <body>
