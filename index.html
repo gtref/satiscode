@@ -280,7 +280,7 @@
       monaco.editor.setModelLanguage(window.editor.getModel(), activeLanguage(file.path));
       window.editor.setValue(file.content);
       await refreshFileTree(currentDirectory);
-      if (isCppFile(file.path)) startLanguageServer();
+      if (isActiveCppLanguage()) startLanguageServer();
       else document.getElementById('status').textContent = hasEditorLanguage(file.path) ? 'language: ready' : 'language: plaintext';
       updateSourceLanguageLabel();
     }
@@ -301,24 +301,27 @@
       clangdStarted = true;
       document.getElementById('status').textContent = 'clangd: starting';
       const rootPath = currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/')));
-      window.api.startClangd(rootPath || undefined);
       const uri = pathToUri(currentFilePath);
-      sendRequest('initialize', {
-        processId: null,
-        rootUri: pathToUri(rootPath),
-        capabilities: {
-          textDocument: {
-            synchronization: { didSave: true },
-            completion: { completionItem: { snippetSupport: true } }
+      window.api.startClangd(rootPath || undefined).then(() => sendRequest('initialize', {
+          processId: null,
+          rootUri: pathToUri(rootPath),
+          capabilities: {
+            textDocument: {
+              synchronization: { didSave: true },
+              completion: { completionItem: { snippetSupport: true } }
+            }
           }
-        }
-      }).then(() => {
+        })).then(() => {
         sendNotification('initialized', {});
         sendNotification('textDocument/didOpen', {
           textDocument: { uri, languageId: activeLanguage(currentFilePath), version: documentVersion, text: window.editor.getValue() }
         });
         document.getElementById('status').textContent = 'clangd: ready';
-      }).catch(() => { document.getElementById('status').textContent = 'clangd: unavailable'; });
+      }).catch((error) => {
+        clangdStarted = false;
+        console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${error.message || error}`);
+        document.getElementById('status').textContent = 'clangd: unavailable';
+      });
     }
 
     const monacoBaseUrl = new URL('node_modules/monaco-editor/min/', window.location.href).href;

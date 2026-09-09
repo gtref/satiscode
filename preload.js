@@ -6,7 +6,7 @@ contextBridge.exposeInMainWorld('api', {
   saveFile: (data) => ipcRenderer.invoke('file:save', data),
   listDirectory: (directoryPath) => ipcRenderer.invoke('directory:list', directoryPath),
   exit: () => ipcRenderer.invoke('app:exit'),
-  startClangd: (rootPath) => ipcRenderer.send('clangd:start', rootPath),
+  startClangd: (rootPath) => ipcRenderer.invoke('clangd:start', rootPath),
   sendClangdMessage: (message) => ipcRenderer.send('clangd:message', message),
   stopClangd: () => ipcRenderer.send('clangd:stop'),
   onClangdMessage: (callback) => ipcRenderer.on('clangd:message', (_event, message) => callback(message)),

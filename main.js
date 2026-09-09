@@ -67,6 +67,11 @@ function startClangd(event, rootPath) {
     stdio: ['pipe', 'pipe', 'pipe']
   });
 
+  const processStarted = new Promise((resolve, reject) => {
+    clangdProcess.once('spawn', () => resolve({ projectRoot, command: clangdCommand }));
+    clangdProcess.once('error', reject);
+  });
+
   clangdProcess.stdout.on('data', (chunk) => {
     clangdBuffer = Buffer.concat([clangdBuffer, chunk]);
     while (true) {
@@ -97,6 +102,8 @@ function startClangd(event, rootPath) {
     event.sender.send('clangd:exit');
     clangdProcess = null;
   });
+
+  return processStarted;
 }
 
 function createWindow() {
@@ -158,7 +165,7 @@ ipcMain.handle('directory:list', async (_event, directoryPath) => {
     .sort((left, right) => Number(right.isDirectory) - Number(left.isDirectory) || left.name.localeCompare(right.name));
 });
 
-ipcMain.on('clangd:start', (event, rootPath) => startClangd(event, rootPath));
+ipcMain.handle('clangd:start', (event, rootPath) => startClangd(event, rootPath));
 ipcMain.on('clangd:message', (_event, message) => sendToClangd(message));
 ipcMain.on('clangd:stop', stopClangd);
 ipcMain.handle('app:exit', async () => {
