@@ -31,6 +31,7 @@
       "main.js",
       "preload.js",
       "package.json",
+      "icons.js",
       "node_modules/**/*",
       "styles/**/*",
       "icons/**/**/*"
