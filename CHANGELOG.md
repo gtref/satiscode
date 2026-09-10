@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.1.0 - 2026-09-10
+## [1.1.0](https://github.com/gtref/satiscode/releases/tag/v1.1.0) - 2026-09-10
 
 - Added styles directory for root css files.
 - Added auto language detection and manual language selector
@@ -9,7 +9,7 @@
 - Added support for html, css and js files.
 
 
-## 1.0.0 - 2026-09-08
+## [1.0.0](https://github.com/gtref/satiscode/releases/tag/v1.0.0) - 2026-09-08
 
 - Added Monaco-based C/C++ editing
 - Added clangd diagnostics, completion, hover, and definition support
