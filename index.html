@@ -46,6 +46,10 @@
       <option value="es">Español</option>
     </select>
     <span id="status">clangd: idle</span>
+    <span id="ideStatus">
+    <span class="status-indicator"></span>
+    satiscode: Operational
+  </span>
   </div>
   <div id="content">
     <aside id="file-tree">
@@ -167,6 +171,24 @@
       currentProblems = [];
       renderProblems();
       if (window.editor) monaco.editor.setModelMarkers(window.editor.getModel(), 'clangd', []);
+    }
+
+    function setSatiscodeStatus(state, message) {
+      const status = document.getElementById('ideStatus');
+      const indicator = status?.querySelector('.status-indicator');
+
+      if (!status || !indicator) return;
+
+      status.dataset.state = state;
+
+      const labels = {
+        operational: 'satiscode: Operational',
+        starting: 'satiscode: Starting',
+        error: 'satiscode: Error',
+        offline: 'satiscode: Offline'
+      };
+
+      status.lastChild.textContent = ` ${message || labels[state] || labels.operational}`;
     }
 
     function applyInterfaceLanguage(language) {
@@ -362,6 +384,7 @@
       window.api.onClangdStderr((message) => console.warn(`clangd: ${message.trim()}`));
       applyInterfaceLanguage('en');
       updateSourceLanguageLabel();
+      setSatiscodeStatus('operational');
 
       document.getElementById('source-language-btn').addEventListener('click', () => {
         const options = document.getElementById('source-language-options');

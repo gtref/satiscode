@@ -346,3 +346,48 @@ body {
   vertical-align: middle;
   fill: currentColor; /* Inherits the parent text color */
 }
+
+/* ==========================================================================
+   STATUS BAR ITEMS
+   ========================================================================== */
+
+#status {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--vscode-text-muted);
+    padding: 2px 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+#ideStatus {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--vscode-text-main);
+    padding: 2px 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+
+#ideStatus::before {
+    content: "";
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background-color: var(--status-starting);
+}
+
+#ideStatus[data-state="operational"]::before {
+    background-color: #4ec9b0;
+}
+
+#ideStatus[data-state="error"]::before {
+    background-color: var(--status-error);
+}
+
+#ideStatus[data-state="offline"]::before {
+    background-color: var(--status-offline);
+}
