@@ -66,6 +66,10 @@
   </div>
   <script>
     window.addEventListener('error', (event) => {
+      if (event.message?.includes('ResizeObserver loop completed with undelivered notifications')) {
+        event.stopImmediatePropagation();
+        return;
+      }
       console.error(`Uncaught renderer error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`, event.error?.stack || '');
     });
     window.addEventListener('unhandledrejection', (event) => {
@@ -134,11 +138,10 @@
     }
 
     function renderProblems() {
-      const panel = document.getElementById('problems-panel');
       const list = document.getElementById('problems-list');
       const count = document.getElementById('problems-count');
       count.textContent = String(currentProblems.length);
-      panel.style.display = currentProblems.length ? 'flex' : 'none';
+
       list.innerHTML = currentProblems.length ? currentProblems.map((problem, index) => {
         const severityClass = problem.severity === monaco.MarkerSeverity.Warning ? ' warning' : '';
         const icon = problem.severity === monaco.MarkerSeverity.Warning ? '!' : '×';
@@ -148,6 +151,7 @@
           <span class="problem-location">${problem.startLineNumber}:${problem.startColumn}</span>
         </div>`;
       }).join('') : '<div id="no-problems">No problems detected.</div>';
+
       list.querySelectorAll('.problem').forEach((element) => {
         element.addEventListener('click', () => {
           const problem = currentProblems[Number(element.dataset.problemIndex)];
@@ -458,25 +462,62 @@
       document.getElementById('exit-btn').addEventListener('click', () => window.api.exit());
       document.getElementById('tree-root').textContent = 'Open a file to browse its folder';
 
+      function toggleProblemsPanel() {
+        const panel = document.getElementById('problems-panel');
+        const isHidden = window.getComputedStyle(panel).display === 'none';
+
+        panel.style.display = isHidden ? 'flex' : 'none';
+
+        requestAnimationFrame(() => {
+          if (window.editor) window.editor.layout();
+        });
+      }
+
+      // Application shortcuts outside Monaco.
       window.addEventListener('keydown', (event) => {
         if (!event.ctrlKey || event.altKey) return;
+
         if (event.key.toLowerCase() === 'n') {
           event.preventDefault();
+          event.stopImmediatePropagation();
           document.getElementById('new-btn').click();
         } else if (event.key.toLowerCase() === 'o') {
           event.preventDefault();
+          event.stopImmediatePropagation();
           document.getElementById('open-btn').click();
         } else if (event.key.toLowerCase() === 's' && event.shiftKey) {
           event.preventDefault();
+          event.stopImmediatePropagation();
           document.getElementById('save-as-btn').click();
         } else if (event.key.toLowerCase() === 's') {
           event.preventDefault();
+          event.stopImmediatePropagation();
           document.getElementById('save-btn').click();
         } else if (event.key.toLowerCase() === 'k') {
           event.preventDefault();
+          event.stopImmediatePropagation();
           document.getElementById('open-folder-btn').click();
         }
-      });
+      }, true);
+
+      // Ctrl+. — use both the physical key code and Monaco's command system.
+      // This avoids relying on event.key, which can vary by keyboard/layout.
+      window.addEventListener('keydown', (event) => {
+        if (!event.ctrlKey || event.altKey) return;
+
+        const isPeriod = event.code === 'Period' || event.key === '.' || event.keyCode === 190;
+        if (!isPeriod) return;
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        toggleProblemsPanel();
+      }, true);
+
+      // Register Ctrl+. with Monaco as well so it works while the editor owns focus.
+      window.editor.addCommand(
+        monaco.KeyMod.CtrlCmd | monaco.KeyCode.Period,
+        () => toggleProblemsPanel()
+      );
 
       let resizingProblems = false;
       document.getElementById('problems-resizer').addEventListener('mousedown', () => {
