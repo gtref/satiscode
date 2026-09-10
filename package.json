@@ -1,6 +1,6 @@
 {
   "name": "satiscode",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A lightweight C/C++ editor powered by Monaco and clangd.",
   "main": "main.js",
   "scripts": {
@@ -32,7 +32,8 @@
       "preload.js",
       "package.json",
       "node_modules/**/*",
-      "styles/**/*"
+      "styles/**/*",
+      "icons/**/**/*"
     ],
     "win": {
       "target": "nsis"

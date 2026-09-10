@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.1.0 - 2026-09-10
+
+- Added styles directory for root css files.
+- Added auto language detection and manual language selector
+- Added Icons directory with icon metadata for each style.
+- Added openfolder option.
+- Added support for html, css and js files.
+
+
 ## 1.0.0 - 2026-09-08
 
 - Added Monaco-based C/C++ editing
