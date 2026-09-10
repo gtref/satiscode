@@ -346,3 +346,43 @@ body {
   vertical-align: middle;
   fill: currentColor; /* Inherits the parent text color */
 }
+
+/* ==========================================================================
+   STATUS BAR ITEMS
+   ========================================================================== */
+
+#status,
+#ideStatus {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    padding: 0 8px;
+    border-radius: 3px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+/* Clangd status */
+#status {
+    margin-left: auto;
+    color: var(--vscode-text-muted);
+    background-color: rgba(0, 0, 0, 0.20);
+}
+
+/* Satiscode operational status */
+#ideStatus {
+    color: var(--vscode-text-main);
+    background-color: rgba(0, 0, 0, 0.20);
+}
+
+/* Operational indicator */
+#ideStatus::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background-color: #4ec9b0;
+    box-shadow: 0 0 4px rgba(78, 201, 176, 0.35);
+}
