@@ -351,38 +351,43 @@ body {
    STATUS BAR ITEMS
    ========================================================================== */
 
-#status,
-#ideStatus {
-    display: inline-flex;
-    align-items: center;
-    height: 22px;
-    padding: 0 8px;
-    border-radius: 3px;
-    font-family: var(--font-mono);
-    font-size: 11px;
-    white-space: nowrap;
-}
-
-/* Clangd status */
 #status {
     margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 11px;
     color: var(--vscode-text-muted);
-    background-color: rgba(0, 0, 0, 0.20);
+    padding: 2px 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
 }
 
-/* Satiscode operational status */
 #ideStatus {
+    font-family: var(--font-mono);
+    font-size: 11px;
     color: var(--vscode-text-main);
-    background-color: rgba(0, 0, 0, 0.20);
+    padding: 2px 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
 }
 
-/* Operational indicator */
 #ideStatus::before {
     content: "";
+    display: inline-block;
     width: 7px;
     height: 7px;
     margin-right: 6px;
     border-radius: 50%;
+    background-color: var(--status-starting);
+}
+
+#ideStatus[data-state="operational"]::before {
     background-color: #4ec9b0;
-    box-shadow: 0 0 4px rgba(78, 201, 176, 0.35);
+}
+
+#ideStatus[data-state="error"]::before {
+    background-color: var(--status-error);
+}
+
+#ideStatus[data-state="offline"]::before {
+    background-color: var(--status-offline);
 }
