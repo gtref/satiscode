@@ -7,7 +7,14 @@
     "start": "electron .",
     "dist:win": "electron-builder --win nsis"
   },
-  "keywords": ["electron", "monaco", "clangd", "c", "cpp", "editor"],
+  "keywords": [
+    "electron",
+    "monaco",
+    "clangd",
+    "c",
+    "cpp",
+    "editor"
+  ],
   "author": "gtref",
   "license": "MIT",
   "type": "commonjs",
@@ -38,6 +45,16 @@
       "node_modules/**/*",
       "styles/**/*",
       "icons/**/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "bin",
+        "to": "bin"
+      },
+      {
+        "from": "lib",
+        "to": "lib"
+      }
     ],
     "win": {
       "target": "nsis"
