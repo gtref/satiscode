@@ -63,6 +63,16 @@ Satiscode is licensed under the [MIT License](LICENSE).
 ## Contributers
 Thanks to all those who help in the maintenance of this project.
 
-<a href="https://github.com/gtref/satiscode/graphs/contributors">
-  <img src="https://images.lucasalt.fr/contributors?repo=gtref/satiscode" alt="Contributors" />
-</a>
+## Contributors
+
+Thanks to these awesome people for helping build **satiscode**:
+
+<div align="center">
+
+### 🤝 Contributors
+
+| [<img src="https://github.com/gtref.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@gtref</b></sub>](https://github.com/gtref) | [<img src="https://github.com/ncs22.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@ncs22</b></sub>](https://github.com/ncs22) | [<img src="https://github.com/apps/coderabbitai.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@coderabbitai</b></sub>](https://github.com/apps/coderabbitai) | [<img src="https://github.com/apps/dependabot.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@dependabot</b></sub>](https://github.com/apps/dependabot) |
+| :---: | :---: | :---: | :---: |
+| Project Lead | Contributor | Code Review Bot | Security Bot |
+
+</div>
