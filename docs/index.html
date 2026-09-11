@@ -1,30 +1,49 @@
-<title>SATISCODE</title>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SATISCODE</title>
+    <link rel="stylesheet" href="styles/style.css">
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>SATISCODE</h1>
+        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
+          🌙 Dark Mode
+        </button>
+      </header>
+      
+      <hr>
 
-<style>
-  body {
-    font-family: system-ui, -apple-system, sans-serif;
-    max-width: 650px;
-    margin: 2rem auto;
-    padding: 0 1rem;
-    line-height: 1.5;
-  }
+      <section class="card intro">
+        <p>Satiscode is designed to be a simple Integrated Development Environment (IDE). The simplicity comes from not tracking its users and being <strong>100% anti-AI</strong>. This means that we support AI development in the repo, but not in the IDE itself. Without built-in AI, the IDE remains as lightweight as the Node.js modules included.</p>
+      </section>
 
- .section-1 {
-  font-family: monospace;
-  background-color: #f6f8fa; /* Soft gray */
-  color: #24292f;
-  padding: 1.25rem;
-  border: 1px solid #d0d7de; /* Subtle border */
-  border-radius: 6px;
-}
-</style>
+      <section class="card download">
+        <p>Get the latest version for Windows directly from GitHub Releases:</p>
+        <a href="https://github.com/gtref/satiscode/releases/latest" class="btn-windows" target="_blank" rel="noopener noreferrer">
+          <svg class="icon-windows" viewBox="0 0 88 88" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M0 12.402l35.687-4.86.016 34.423-35.67.203zm35.67 33.529l.028 34.453L0 75.58V46.128zm4.326-39.025L88 0v41.527l-48.004.281zm48.004 39.539L88 88l-48.004-6.738-.012-34.739z"/>
+          </svg>
+          Latest Windows Version
+        </a>
+      </section>
 
-<h1>Welcome!</h1>
-<hr>
-<div class="section-1" id="section-1">
-  <p>Satiscode is designed to be a simple IDE or Integrated Development Environment. The simplicity comes from not tracking its users and being <strong>100% anti AI</strong>. This means that we support AI development in the repo but not in the IDE itself. And because there is no AI, the IDE can be as lightweight as the amount of Node.js modules we add.</p>
-</div>
+      <section class="card features">
+        <h2>Features</h2>
+        <ul>
+          <li>Light weight: The IDE installed is only 450 MBS in size.</li>
+          <li>ANTI AI: The IDE has <strong>NO AI FEATURES</strong></li>
+          <li>C support: This IDE nativly supports C and C++ syntax highlighting, Though you need to have LLVM installed first.</li>
+        </ul>
+      </section>
+      <footer>
+        <p>&copy; gtref 2026, All rights reserved</p>
+      </footer>
+    </main>
 
-<div class="section-2" id="section-2">
-  <p>The ide can be aquired here. Sorry that there is not much content on this page. <a href="https://github.com/gtref/satiscode/releases/latest">LATEST</a></p>
-</div>
+    <script src="script.js"></script>
+  </body>
+</html>
