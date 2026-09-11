@@ -12,7 +12,7 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
-    "monaco-editor": "0.52.2",
+    "monaco-editor": "0.56.0",
     "monaco-languageclient": "^10.7.0",
     "vscode-ws-jsonrpc": "^3.5.0"
   },
