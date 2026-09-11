@@ -13,7 +13,7 @@
   "type": "commonjs",
   "dependencies": {
     "monaco-editor": "0.52.2",
-    "monaco-languageclient": "^9.6.0",
+    "monaco-languageclient": "^10.7.0",
     "vscode-ws-jsonrpc": "^3.5.0"
   },
   "devDependencies": {
