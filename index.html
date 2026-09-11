@@ -26,6 +26,7 @@
     <button id="open-folder-btn">Open Folder</button>
     <button id="save-btn" data-i18n="saveFile">Save</button>
     <button id="save-as-btn" data-i18n="saveAs">Save As</button>
+    <button id="find-btn" data-i18n="find">Find</button>
     <button id="exit-btn" data-i18n="exit">Exit</button>
     <div id="source-language-menu">
       <button id="source-language-btn" aria-haspopup="true" aria-expanded="false"><span class="language-badge">◇</span><span id="source-language-label">Auto</span> ▾</button>
@@ -104,8 +105,8 @@
       ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json']
     ]);
     const translations = {
-      en: { newFile: 'New', openFile: 'Open', saveFile: 'Save', saveAs: 'Save As', exit: 'Exit', explorer: 'Explorer', problems: 'Problems', noProblems: 'No problems detected.' },
-      es: { newFile: 'Nuevo', openFile: 'Abrir', saveFile: 'Guardar', saveAs: 'Guardar como', exit: 'Salir', explorer: 'Explorador', problems: 'Problemas', noProblems: 'No se detectaron problemas.' }
+      en: { newFile: 'New', openFile: 'Open', saveFile: 'Save', saveAs: 'Save As', find: 'Find', exit: 'Exit', explorer: 'Explorer', problems: 'Problems', noProblems: 'No problems detected.' },
+      es: { newFile: 'Nuevo', openFile: 'Abrir', saveFile: 'Guardar', saveAs: 'Guardar como', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', problems: 'Problemas', noProblems: 'No se detectaron problemas.' }
     };
 
     const extensionForPath = (filePath) => {
@@ -496,6 +497,109 @@
         });
       }
 
+      // Open/Close Find Dialog
+      let findMatches = [];
+      let currentMatchIndex = -1;
+      let findDecorations = [];
+
+      function openFindDialog() {
+        const dialog = document.getElementById('find-dialog');
+        dialog.classList.remove('hidden');
+        const input = document.getElementById('find-input');
+        input.focus();
+        input.select();
+      }
+
+      function closeFindDialog() {
+        document.getElementById('find-dialog').classList.add('hidden');
+        document.getElementById('find-input').value = '';
+        findDecorations = window.editor.deltaDecorations(findDecorations, []);
+        findMatches = [];
+        currentMatchIndex = -1;
+        window.editor.focus();
+      }
+
+      document.getElementById('find-btn').addEventListener('click', openFindDialog);
+      document.getElementById('find-close-btn').addEventListener('click', closeFindDialog);
+      document.getElementById('find-input').addEventListener('input', (event) => {
+        performSearch(event.target.value);
+      });
+
+      document.getElementById('find-next-btn').addEventListener('click', goToNextMatch);
+      document.getElementById('find-prev-btn').addEventListener('click', goToPrevMatch);
+
+      document.getElementById('find-input').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          event.shiftKey ? goToPrevMatch() : goToNextMatch();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          closeFindDialog();
+        }
+      });
+
+      function performSearch(query) {
+        const model = window.editor.getModel();
+        findDecorations = window.editor.deltaDecorations(findDecorations, []); // limpia resaltados previos
+
+        if (!query) {
+          findMatches = [];
+          currentMatchIndex = -1;
+          updateMatchCount();
+          return;
+        }
+
+        findMatches = model.findMatches(
+          query,
+          true,   // searchOnlyEditableRange
+          false,  // isRegex
+          false,  // matchCase
+          null,   // wordSeparators
+          false   // captureMatches
+        );
+
+        currentMatchIndex = findMatches.length > 0 ? 0 : -1;
+        highlightMatches();
+        goToMatch(currentMatchIndex);
+        updateMatchCount();
+      }
+
+      function highlightMatches() {
+        const decorations = findMatches.map((match) => ({
+          range: match.range,
+          options: { inlineClassName: 'find-match-highlight' }
+        }));
+        findDecorations = window.editor.deltaDecorations(findDecorations, decorations);
+      }
+
+      function goToMatch(index) {
+        if (index < 0 || index >= findMatches.length) return;
+        const range = findMatches[index].range;
+        window.editor.revealRangeInCenter(range);
+        window.editor.setSelection(range);
+      }
+
+      function updateMatchCount() {
+        const label = document.getElementById('find-match-count');
+        label.textContent = findMatches.length
+          ? `${currentMatchIndex + 1}/${findMatches.length}`
+          : 'No results';
+      }
+
+      function goToNextMatch() {
+        if (!findMatches.length) return;
+        currentMatchIndex = (currentMatchIndex + 1) % findMatches.length;
+        goToMatch(currentMatchIndex);
+        updateMatchCount();
+      }
+
+      function goToPrevMatch() {
+        if (!findMatches.length) return;
+        currentMatchIndex = (currentMatchIndex - 1 + findMatches.length) % findMatches.length;
+        goToMatch(currentMatchIndex);
+        updateMatchCount();
+      }
+
       // Application shortcuts outside Monaco.
       window.addEventListener('keydown', (event) => {
         if (!event.ctrlKey || event.altKey) return;
@@ -520,6 +624,10 @@
           event.preventDefault();
           event.stopImmediatePropagation();
           document.getElementById('open-folder-btn').click();
+        } else if (event.key.toLowerCase() === 'f') {
+          event.preventDefault(); 
+          event.stopImmediatePropagation(); 
+          openFindDialog(); 
         }
       }, true);
 
@@ -563,5 +671,14 @@
       });
     });
   </script>
+
+  <div id="find-dialog" class="hidden" role="dialog" aria-label="Find in file">
+    <input type="text" id="find-input" placeholder="Find..." autocomplete="off" />
+    <button id="find-prev-btn" aria-label="Previous match">▲</button>
+    <button id="find-next-btn" aria-label="Next match">▼</button>
+    <span id="find-match-count"></span>
+    <button id="find-close-btn" aria-label="Close">✕</button>
+  </div>
+
 </body>
 </html>

@@ -391,3 +391,79 @@ body {
 #ideStatus[data-state="offline"]::before {
     background-color: var(--status-offline);
 }
+
+/* styles of Ctrl + F */
+/* styles of Ctrl + F */
+#find-dialog {
+  position: fixed;
+  top: 44px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  background-color: var(--vscode-sidebar-bg);
+  border: 1px solid var(--vscode-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+#find-dialog.hidden {
+  display: none;
+}
+
+#find-input {
+  background-color: var(--vscode-input-bg);
+  color: var(--vscode-text-main);
+  border: 1px solid var(--vscode-border);
+  border-radius: 3px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: var(--font-ui);
+  outline: none;
+  width: 180px;
+}
+
+#find-input:focus {
+  border-color: var(--vscode-focus-border);
+}
+
+#find-dialog button {
+  background-color: transparent;
+  color: var(--vscode-text-main);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+#find-dialog button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: var(--vscode-text-active);
+}
+
+#find-dialog button:active {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+#find-match-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--vscode-text-muted);
+  padding: 2px 8px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
+  white-space: nowrap;
+  min-width: 60px;
+  text-align: center;
+}
+
+.find-match-highlight {
+  background-color: rgba(0, 127, 212, 0.35);
+}
