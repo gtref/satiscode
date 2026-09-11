@@ -60,9 +60,6 @@ The renderer uses context isolation and does not have direct Node.js access. Fil
 
 Satiscode is licensed under the [MIT License](LICENSE).
 
-## Contributers
-Thanks to all those who help in the maintenance of this project.
-
 ## Contributors
 
 Thanks to these awesome people for helping build **satiscode**:
@@ -71,8 +68,8 @@ Thanks to these awesome people for helping build **satiscode**:
 
 ### 🤝 Contributors
 
-| [<img src="https://github.com/gtref.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@gtref</b></sub>](https://github.com/gtref) | [<img src="https://github.com/ncs22.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@ncs22</b></sub>](https://github.com/ncs22) | [<img src="https://github.com/Igcabr01.png" width="75px"><br><sub><b>@Igcabr01</b></sub>](https://github.com/Igcabr01) | [<img src="https://github.com/apps/coderabbitai.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@coderabbitai</b></sub>](https://github.com/apps/coderabbitai) | [<img src="https://github.com/apps/dependabot.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@dependabot</b></sub>](https://github.com/apps/dependabot) |
-| :---: | :---: | :---: | :---: |
-| Project Lead | Contributor | Contribuor | Code Review Bot | Security Bot |
+| [<img src="https://github.com/gtref.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@gtref</b></sub>](https://github.com/gtref) | [<img src="https://github.com/ncs22.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@ncs22</b></sub>](https://github.com/ncs22) | [<img src="https://github.com/Igcabr01.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@Igcabr01</b></sub>](https://github.com/Igcabr01) | [<img src="https://github.com/apps/coderabbitai.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@coderabbitai</b></sub>](https://github.com/apps/coderabbitai) | [<img src="https://github.com/apps/dependabot.png" width="75px;" style="border-radius:50%;"/><br><sub><b>@dependabot</b></sub>](https://github.com/apps/dependabot) |
+| :---: | :---: | :---: | :---: | :---: |
+| Project Lead | Contributor | Contributor | Code Review Bot | Security Bot |
 
 </div>
