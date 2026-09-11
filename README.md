@@ -62,3 +62,7 @@ Satiscode is licensed under the [MIT License](LICENSE).
 
 ## Contributers
 Thanks to all those who help in the maintenance of this project.
+
+<a href="https://github.com/gtref/satiscode/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=gtref/satiscode" />
+</a>
