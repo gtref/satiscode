@@ -6,6 +6,7 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Satiscode</title>
   <link rel="stylesheet" href="styles/style1.css">
+  <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
   <script type="module">
     import { initIcons, getFileIcon, getFolderIcon, getChevronIcon } from './icons.js';
 
@@ -47,9 +48,9 @@
     </select>
     <span id="status">clangd: idle</span>
     <span id="ideStatus">
-    <span class="status-indicator"></span>
-    satiscode: Operational
-  </span>
+      <span class="status-indicator"></span>
+      satiscode: Operational
+    </span>
   </div>
   <div id="content">
     <aside id="file-tree">
@@ -68,293 +69,292 @@
       </section>
     </div>
   </div>
-  <script type="module">
-    import * as monaco from './node_modules/monaco-editor/esm/vs/editor/editor.main.js';
 
-    window.addEventListener('error', (event) => {
-      if (event.message?.includes('ResizeObserver loop completed with undelivered notifications')) {
-        event.stopImmediatePropagation();
-        return;
-      }
-      console.error(`Uncaught renderer error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`, event.error?.stack || '');
-    });
-    window.addEventListener('unhandledrejection', (event) => {
-      console.error('Unhandled renderer promise rejection:', event.reason?.stack || event.reason);
-    });
+  <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
+  <script>
+    require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' } });
 
-    // Open Folder Event
-    document.getElementById('open-folder-btn').addEventListener('click', async () => {
-      const folderPath = await window.api.openFolder();
-      if (folderPath) {
-        currentDirectory = folderPath;
-        await refreshFileTree(folderPath);
-      }
-    });
+    require(['vs/editor/editor.main'], function (monaco) {
+      window.monaco = monaco;
 
-    let currentFilePath = null;
-    let clangdRequestId = 0;
-    let documentVersion = 1;
-    const pendingRequests = new Map();
-    let clangdStarted = false;
-    let currentDirectory = null;
-    let manualLanguage = null;
-    let currentDocumentUri = null;
-    const cppExtensions = new Set(['.c', '.cc', '.cpp', '.cxx', '.h', '.hh', '.hpp', '.hxx']);
-    const languageByExtension = new Map([
-      ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
-      ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'], ['.cjs', 'javascript'],
-      ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json']
-    ]);
-    const translations = {
-      en: { newFile: 'New', openFile: 'Open', saveFile: 'Save', saveAs: 'Save As', find: 'Find', exit: 'Exit', explorer: 'Explorer', problems: 'Problems', noProblems: 'No problems detected.' },
-      es: { newFile: 'Nuevo', openFile: 'Abrir', saveFile: 'Guardar', saveAs: 'Guardar como', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', problems: 'Problemas', noProblems: 'No se detectaron problemas.' }
-    };
-
-    const extensionForPath = (filePath) => {
-      const fileName = filePath.split(/[\\/]/).pop() || '';
-      const extensionIndex = fileName.lastIndexOf('.');
-      return extensionIndex >= 0 ? fileName.slice(extensionIndex).toLowerCase() : '';
-    };
-    const isCppFile = (filePath) => cppExtensions.has(extensionForPath(filePath));
-    const languageForPath = (filePath) => {
-      const extension = extensionForPath(filePath);
-      if (extension === '.c') return 'c';
-      if (cppExtensions.has(extension)) return 'cpp';
-      return languageByExtension.get(extension) || 'plaintext';
-    };
-    const hasEditorLanguage = (filePath) => isCppFile(filePath) || languageByExtension.has(extensionForPath(filePath));
-    const activeLanguage = (filePath) => manualLanguage || languageForPath(filePath || '');
-    const isActiveCppLanguage = () => activeLanguage(currentFilePath) === 'c' || activeLanguage(currentFilePath) === 'cpp';
-    const pathToUri = (filePath) => {
-      const normalized = filePath.replace(/\\/g, '/');
-      return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
-    };
-    const virtualDocumentUri = (workspacePath, language) => pathToUri(`${workspacePath}\\untitled.${language === 'c' ? 'c' : 'cpp'}`);
-    const positionToLsp = (position) => ({ line: position.lineNumber - 1, character: position.column - 1 });
-    const rangeToMonaco = (range) => ({
-      startLineNumber: range.start.line + 1,
-      startColumn: range.start.character + 1,
-      endLineNumber: range.end.line + 1,
-      endColumn: range.end.character + 1
-    });
-    let currentProblems = [];
-
-    function escapeHtml(value) {
-      return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
-    }
-
-    function renderProblems() {
-      const list = document.getElementById('problems-list');
-      const count = document.getElementById('problems-count');
-      count.textContent = String(currentProblems.length);
-
-      list.innerHTML = currentProblems.length ? currentProblems.map((problem, index) => {
-        const severityClass = problem.severity === monaco.MarkerSeverity.Warning ? ' warning' : '';
-        const icon = problem.severity === monaco.MarkerSeverity.Warning ? '!' : '×';
-        return `<div class="problem${severityClass}" data-problem-index="${index}">
-          <span class="problem-icon">${icon}</span>
-          <span class="problem-message">${escapeHtml(problem.message)}</span>
-          <span class="problem-location">${problem.startLineNumber}:${problem.startColumn}</span>
-        </div>`;
-      }).join('') : '<div id="no-problems">No problems detected.</div>';
-
-      list.querySelectorAll('.problem').forEach((element) => {
-        element.addEventListener('click', () => {
-          const problem = currentProblems[Number(element.dataset.problemIndex)];
-          if (!problem) return;
-          window.editor.setPosition({ lineNumber: problem.startLineNumber, column: problem.startColumn });
-          window.editor.revealLineInCenter(problem.startLineNumber);
-          window.editor.focus();
-        });
+      window.addEventListener('error', (event) => {
+        if (event.message?.includes('ResizeObserver loop completed with undelivered notifications')) {
+          event.stopImmediatePropagation();
+          return;
+        }
+        console.error(`Uncaught renderer error: ${event.message} at ${event.filename}:${event.lineno}:${event.colno}`, event.error?.stack || '');
       });
-    }
-
-    function clearProblems() {
-      currentProblems = [];
-      renderProblems();
-      if (window.editor) monaco.editor.setModelMarkers(window.editor.getModel(), 'clangd', []);
-    }
-
-    function setSatiscodeStatus(state, message) {
-      const status = document.getElementById('ideStatus');
-      const indicator = status?.querySelector('.status-indicator');
-
-      if (!status || !indicator) return;
-
-      status.dataset.state = state;
-
-      const labels = {
-        operational: 'satiscode: Operational',
-        starting: 'satiscode: Starting',
-        error: 'satiscode: Error',
-        offline: 'satiscode: Offline'
-      };
-
-      status.lastChild.textContent = ` ${message || labels[state] || labels.operational}`;
-    }
-
-    function applyInterfaceLanguage(language) {
-      const labels = translations[language] || translations.en;
-      document.querySelectorAll('[data-i18n]').forEach((element) => {
-        element.textContent = labels[element.dataset.i18n] || element.textContent;
+      window.addEventListener('unhandledrejection', (event) => {
+        console.error('Unhandled renderer promise rejection:', event.reason?.stack || event.reason);
       });
-      document.getElementById('language-select').value = translations[language] ? language : 'en';
-    }
 
-    function updateSourceLanguageLabel() {
-      const language = activeLanguage(currentFilePath);
-      const labels = { auto: 'Auto', c: 'C', cpp: 'C++', css: 'CSS', javascript: 'JavaScript', html: 'HTML', typescript: 'TypeScript', json: 'JSON', plaintext: 'Plain Text' };
-      const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', plaintext: 'Aa' };
-      document.getElementById('source-language-label').textContent = labels[language] || labels.auto;
-      document.querySelector('#source-language-btn .language-badge').textContent = icons[language] || icons.auto;
-    }
-
-    function applySourceLanguage(language) {
-      manualLanguage = language === 'auto' ? null : language;
-      const selectedLanguage = activeLanguage(currentFilePath);
-      monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
-      updateSourceLanguageLabel();
-      if (isActiveCppLanguage()) {
-        startLanguageServer();
-      } else if (clangdStarted) {
-        if (currentDocumentUri) sendNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
-        window.api.stopClangd();
-        clangdStarted = false;
-        currentDocumentUri = null;
-        clearProblems();
-        document.getElementById('status').textContent = 'language: ready';
-      } else {
-        document.getElementById('status').textContent = selectedLanguage === 'plaintext' ? 'language: plaintext' : 'language: ready';
-      }
-    }
-
-    async function renderDirectory(directoryPath, container) {
-      container.innerHTML = '';
-      const entries = await window.api.listDirectory(directoryPath);
-      entries.forEach((entry) => {
-        const row = document.createElement('div');
-        row.className = 'tree-entry';
-        row.title = entry.path;
-        
-        const chevron = document.createElement('span');
-        chevron.className = 'tree-chevron';
-        chevron.innerHTML = entry.isDirectory ? window.getChevronIcon(false) : '';
-        
-        const icon = document.createElement('span');
-        icon.className = 'tree-icon';
-        icon.innerHTML = entry.isDirectory ? window.getFolderIcon(false) : window.getFileIcon(entry.name);
-        
-        const label = document.createElement('span');
-        label.textContent = entry.name;
-        
-        row.append(chevron, icon, label);
-        container.appendChild(row);
-        
-        if (entry.isDirectory) {
-          const children = document.createElement('div');
-          children.className = 'tree-children';
-          children.hidden = true;
-          
-          row.addEventListener('click', async () => {
-            children.hidden = !children.hidden;
-            chevron.innerHTML = window.getChevronIcon(!children.hidden);
-            icon.innerHTML = window.getFolderIcon(!children.hidden);
-            
-            if (!children.hidden && !children.dataset.loaded) {
-              children.dataset.loaded = 'true';
-              await renderDirectory(entry.path, children);
-            }
-          });
-          container.appendChild(children);
-        } else {
-          row.addEventListener('click', async () => {
-            const file = await window.api.readFile(entry.path);
-            await openLoadedFile(file);
-          });
+      // Open Folder Event
+      document.getElementById('open-folder-btn').addEventListener('click', async () => {
+        const folderPath = await window.api.openFolder();
+        if (folderPath) {
+          currentDirectory = folderPath;
+          await refreshFileTree(folderPath);
         }
       });
-    }
 
-    async function refreshFileTree(directoryPath) {
-      if (!directoryPath) return;
-      currentDirectory = directoryPath;
-      await renderDirectory(directoryPath, document.getElementById('tree-root'));
-    }
+      let currentFilePath = null;
+      let clangdRequestId = 0;
+      let documentVersion = 1;
+      const pendingRequests = new Map();
+      let clangdStarted = false;
+      let currentDirectory = null;
+      let manualLanguage = null;
+      let currentDocumentUri = null;
+      const cppExtensions = new Set(['.c', '.cc', '.cpp', '.cxx', '.h', '.hh', '.hpp', '.hxx']);
+      const languageByExtension = new Map([
+        ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
+        ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'], ['.cjs', 'javascript'],
+        ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json']
+      ]);
+      const translations = {
+        en: { newFile: 'New', openFile: 'Open', saveFile: 'Save', saveAs: 'Save As', find: 'Find', exit: 'Exit', explorer: 'Explorer', problems: 'Problems', noProblems: 'No problems detected.' },
+        es: { newFile: 'Nuevo', openFile: 'Abrir', saveFile: 'Guardar', saveAs: 'Guardar como', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', problems: 'Problemas', noProblems: 'No se detectaron problemas.' }
+      };
 
-    async function openLoadedFile(file) {
-      if (clangdStarted) {
-        if (currentDocumentUri) sendNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
-        window.api.stopClangd();
-        clangdStarted = false;
-      }
-      currentFilePath = file.path;
-      currentDocumentUri = currentFilePath ? pathToUri(currentFilePath) : null;
-      manualLanguage = null;
-      currentDirectory = file.path.substring(0, Math.max(file.path.lastIndexOf('\\'), file.path.lastIndexOf('/')));
-      documentVersion = 1;
-      clearProblems();
-      monaco.editor.setModelLanguage(window.editor.getModel(), activeLanguage(file.path));
-      window.editor.setValue(file.content);
-      await refreshFileTree(currentDirectory);
-      if (isActiveCppLanguage()) startLanguageServer();
-      else document.getElementById('status').textContent = hasEditorLanguage(file.path) ? 'language: ready' : 'language: plaintext';
-      updateSourceLanguageLabel();
-    }
-
-    function sendRequest(method, params) {
-      const id = ++clangdRequestId;
-      window.api.sendClangdMessage({ jsonrpc: '2.0', id, method, params });
-      return new Promise((resolve, reject) => pendingRequests.set(id, { resolve, reject }));
-    }
-
-    function sendNotification(method, params) {
-      window.api.sendClangdMessage({ jsonrpc: '2.0', method, params });
-    }
-
-    async function startLanguageServer() {
-      if (!isActiveCppLanguage()) return;
-      if (clangdStarted) window.api.stopClangd();
-      clangdStarted = true;
-      document.getElementById('status').textContent = 'clangd: starting';
-      const language = activeLanguage(currentFilePath);
-      const workspacePath = currentDirectory || await window.api.getWorkspacePath();
-      const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
-      currentDocumentUri = currentDocumentUri || virtualDocumentUri(workspacePath, language);
-      console.info(`Starting clangd for ${currentDocumentUri} as ${language}`);
-      window.api.startClangd(rootPath || undefined).then(() => sendRequest('initialize', {
-          processId: null,
-          rootUri: pathToUri(rootPath),
-          capabilities: {
-            textDocument: {
-              synchronization: { didSave: true },
-              completion: { completionItem: { snippetSupport: true } }
-            }
-          }
-        })).then(() => {
-        sendNotification('initialized', {});
-        sendNotification('textDocument/didOpen', {
-          textDocument: { uri: currentDocumentUri, languageId: language, version: documentVersion, text: window.editor.getValue() }
-        });
-        document.getElementById('status').textContent = 'clangd: ready';
-      }).catch((error) => {
-        clangdStarted = false;
-        console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${error.message || error}`);
-        document.getElementById('status').textContent = 'clangd: unavailable';
+      const extensionForPath = (filePath) => {
+        const fileName = filePath.split(/[\\/]/).pop() || '';
+        const extensionIndex = fileName.lastIndexOf('.');
+        return extensionIndex >= 0 ? fileName.slice(extensionIndex).toLowerCase() : '';
+      };
+      const isCppFile = (filePath) => cppExtensions.has(extensionForPath(filePath));
+      const languageForPath = (filePath) => {
+        const extension = extensionForPath(filePath);
+        if (extension === '.c') return 'c';
+        if (cppExtensions.has(extension)) return 'cpp';
+        return languageByExtension.get(extension) || 'plaintext';
+      };
+      const hasEditorLanguage = (filePath) => isCppFile(filePath) || languageByExtension.has(extensionForPath(filePath));
+      const activeLanguage = (filePath) => manualLanguage || languageForPath(filePath || '');
+      const isActiveCppLanguage = () => activeLanguage(currentFilePath) === 'c' || activeLanguage(currentFilePath) === 'cpp';
+      const pathToUri = (filePath) => {
+        const normalized = filePath.replace(/\\/g, '/');
+        return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
+      };
+      const virtualDocumentUri = (workspacePath, language) => pathToUri(`${workspacePath}\\untitled.${language === 'c' ? 'c' : 'cpp'}`);
+      const positionToLsp = (position) => ({ line: position.lineNumber - 1, character: position.column - 1 });
+      const rangeToMonaco = (range) => ({
+        startLineNumber: range.start.line + 1,
+        startColumn: range.start.character + 1,
+        endLineNumber: range.end.line + 1,
+        endColumn: range.end.character + 1
       });
-    }
+      let currentProblems = [];
 
-    window.MonacoEnvironment = {
-      getWorker: () => new Worker(
-        new URL('./node_modules/monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
-        { type: 'module' }
-      )
-    };
-    window.editor = monaco.editor.create(document.getElementById('editor'), {
-        value: '// Start typing CMM code or JS here...\n',
-        language: 'plaintext',
-        theme: 'vs-dark',
-        automaticLayout: true
-    });
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>'"]/g, (character) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[character]));
+      }
+
+      function renderProblems() {
+        const list = document.getElementById('problems-list');
+        const count = document.getElementById('problems-count');
+        count.textContent = String(currentProblems.length);
+
+        list.innerHTML = currentProblems.length ? currentProblems.map((problem, index) => {
+          const severityClass = problem.severity === monaco.MarkerSeverity.Warning ? ' warning' : '';
+          const icon = problem.severity === monaco.MarkerSeverity.Warning ? '!' : '×';
+          return `<div class="problem${severityClass}" data-problem-index="${index}">
+            <span class="problem-icon">${icon}</span>
+            <span class="problem-message">${escapeHtml(problem.message)}</span>
+            <span class="problem-location">${problem.startLineNumber}:${problem.startColumn}</span>
+          </div>`;
+        }).join('') : '<div id="no-problems">No problems detected.</div>';
+
+        list.querySelectorAll('.problem').forEach((element) => {
+          element.addEventListener('click', () => {
+            const problem = currentProblems[Number(element.dataset.problemIndex)];
+            if (!problem) return;
+            window.editor.setPosition({ lineNumber: problem.startLineNumber, column: problem.startColumn });
+            window.editor.revealLineInCenter(problem.startLineNumber);
+            window.editor.focus();
+          });
+        });
+      }
+
+      function clearProblems() {
+        currentProblems = [];
+        renderProblems();
+        if (window.editor) monaco.editor.setModelMarkers(window.editor.getModel(), 'clangd', []);
+      }
+
+      function setSatiscodeStatus(state, message) {
+        const status = document.getElementById('ideStatus');
+        const indicator = status?.querySelector('.status-indicator');
+
+        if (!status || !indicator) return;
+
+        status.dataset.state = state;
+
+        const labels = {
+          operational: 'satiscode: Operational',
+          starting: 'satiscode: Starting',
+          error: 'satiscode: Error',
+          offline: 'satiscode: Offline'
+        };
+
+        status.lastChild.textContent = ` ${message || labels[state] || labels.operational}`;
+      }
+
+      function applyInterfaceLanguage(language) {
+        const labels = translations[language] || translations.en;
+        document.querySelectorAll('[data-i18n]').forEach((element) => {
+          element.textContent = labels[element.dataset.i18n] || element.textContent;
+        });
+        document.getElementById('language-select').value = translations[language] ? language : 'en';
+      }
+
+      function updateSourceLanguageLabel() {
+        const language = activeLanguage(currentFilePath);
+        const labels = { auto: 'Auto', c: 'C', cpp: 'C++', css: 'CSS', javascript: 'JavaScript', html: 'HTML', typescript: 'TypeScript', json: 'JSON', plaintext: 'Plain Text' };
+        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', plaintext: 'Aa' };
+        document.getElementById('source-language-label').textContent = labels[language] || labels.auto;
+        document.querySelector('#source-language-btn .language-badge').textContent = icons[language] || icons.auto;
+      }
+
+      function applySourceLanguage(language) {
+        manualLanguage = language === 'auto' ? null : language;
+        const selectedLanguage = activeLanguage(currentFilePath);
+        monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
+        updateSourceLanguageLabel();
+        if (isActiveCppLanguage()) {
+          startLanguageServer();
+        } else if (clangdStarted) {
+          if (currentDocumentUri) sendNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
+          window.api.stopClangd();
+          clangdStarted = false;
+          currentDocumentUri = null;
+          clearProblems();
+          document.getElementById('status').textContent = 'language: ready';
+        } else {
+          document.getElementById('status').textContent = selectedLanguage === 'plaintext' ? 'language: plaintext' : 'language: ready';
+        }
+      }
+
+      async function renderDirectory(directoryPath, container) {
+        container.innerHTML = '';
+        const entries = await window.api.listDirectory(directoryPath);
+        entries.forEach((entry) => {
+          const row = document.createElement('div');
+          row.className = 'tree-entry';
+          row.title = entry.path;
+          
+          const chevron = document.createElement('span');
+          chevron.className = 'tree-chevron';
+          chevron.innerHTML = entry.isDirectory ? window.getChevronIcon(false) : '';
+          
+          const icon = document.createElement('span');
+          icon.className = 'tree-icon';
+          icon.innerHTML = entry.isDirectory ? window.getFolderIcon(false) : window.getFileIcon(entry.name);
+          
+          const label = document.createElement('span');
+          label.textContent = entry.name;
+          
+          row.append(chevron, icon, label);
+          container.appendChild(row);
+          
+          if (entry.isDirectory) {
+            const children = document.createElement('div');
+            children.className = 'tree-children';
+            children.hidden = true;
+            
+            row.addEventListener('click', async () => {
+              children.hidden = !children.hidden;
+              chevron.innerHTML = window.getChevronIcon(!children.hidden);
+              icon.innerHTML = window.getFolderIcon(!children.hidden);
+              
+              if (!children.hidden && !children.dataset.loaded) {
+                children.dataset.loaded = 'true';
+                await renderDirectory(entry.path, children);
+              }
+            });
+            container.appendChild(children);
+          } else {
+            row.addEventListener('click', async () => {
+              const file = await window.api.readFile(entry.path);
+              await openLoadedFile(file);
+            });
+          }
+        });
+      }
+
+      async function refreshFileTree(directoryPath) {
+        if (!directoryPath) return;
+        currentDirectory = directoryPath;
+        await renderDirectory(directoryPath, document.getElementById('tree-root'));
+      }
+
+      async function openLoadedFile(file) {
+        if (clangdStarted) {
+          if (currentDocumentUri) sendNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
+          window.api.stopClangd();
+          clangdStarted = false;
+        }
+        currentFilePath = file.path;
+        currentDocumentUri = currentFilePath ? pathToUri(currentFilePath) : null;
+        manualLanguage = null;
+        currentDirectory = file.path.substring(0, Math.max(file.path.lastIndexOf('\\'), file.path.lastIndexOf('/')));
+        documentVersion = 1;
+        clearProblems();
+        monaco.editor.setModelLanguage(window.editor.getModel(), activeLanguage(file.path));
+        window.editor.setValue(file.content);
+        await refreshFileTree(currentDirectory);
+        if (isActiveCppLanguage()) startLanguageServer();
+        else document.getElementById('status').textContent = hasEditorLanguage(file.path) ? 'language: ready' : 'language: plaintext';
+        updateSourceLanguageLabel();
+      }
+
+      function sendRequest(method, params) {
+        const id = ++clangdRequestId;
+        window.api.sendClangdMessage({ jsonrpc: '2.0', id, method, params });
+        return new Promise((resolve, reject) => pendingRequests.set(id, { resolve, reject }));
+      }
+
+      function sendNotification(method, params) {
+        window.api.sendClangdMessage({ jsonrpc: '2.0', method, params });
+      }
+
+      async function startLanguageServer() {
+        if (!isActiveCppLanguage()) return;
+        if (clangdStarted) window.api.stopClangd();
+        clangdStarted = true;
+        document.getElementById('status').textContent = 'clangd: starting';
+        const language = activeLanguage(currentFilePath);
+        const workspacePath = currentDirectory || await window.api.getWorkspacePath();
+        const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
+        currentDocumentUri = currentDocumentUri || virtualDocumentUri(workspacePath, language);
+        console.info(`Starting clangd for ${currentDocumentUri} as ${language}`);
+        window.api.startClangd(rootPath || undefined).then(() => sendRequest('initialize', {
+            processId: null,
+            rootUri: pathToUri(rootPath),
+            capabilities: {
+              textDocument: {
+                synchronization: { didSave: true },
+                completion: { completionItem: { snippetSupport: true } }
+              }
+            }
+          })).then(() => {
+          sendNotification('initialized', {});
+          sendNotification('textDocument/didOpen', {
+            textDocument: { uri: currentDocumentUri, languageId: language, version: documentVersion, text: window.editor.getValue() }
+          });
+          document.getElementById('status').textContent = 'clangd: ready';
+        }).catch((error) => {
+          clangdStarted = false;
+          console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${error.message || error}`);
+          document.getElementById('status').textContent = 'clangd: unavailable';
+        });
+      }
+
+      window.editor = monaco.editor.create(document.getElementById('editor'), {
+          value: '// Start typing CMM code or JS here...\n',
+          language: 'plaintext',
+          theme: 'vs-dark',
+          automaticLayout: true
+      });
 
       window.api.onClangdMessage((message) => {
         if (message.id !== undefined && pendingRequests.has(message.id)) {
@@ -538,7 +538,7 @@
 
       function performSearch(query) {
         const model = window.editor.getModel();
-        findDecorations = window.editor.deltaDecorations(findDecorations, []); // limpia resaltados previos
+        findDecorations = window.editor.deltaDecorations(findDecorations, []);
 
         if (!query) {
           findMatches = [];
@@ -549,11 +549,11 @@
 
         findMatches = model.findMatches(
           query,
-          true,   // searchOnlyEditableRange
-          false,  // isRegex
-          false,  // matchCase
-          null,   // wordSeparators
-          false   // captureMatches
+          true,
+          false,
+          false,
+          null,
+          false
         );
 
         currentMatchIndex = findMatches.length > 0 ? 0 : -1;
@@ -629,8 +629,6 @@
         }
       }, true);
 
-      // Ctrl+. — use both the physical key code and Monaco's command system.
-      // This avoids relying on event.key, which can vary by keyboard/layout.
       window.addEventListener('keydown', (event) => {
         if (!event.ctrlKey || event.altKey) return;
 
@@ -667,6 +665,7 @@
         document.body.style.userSelect = '';
         window.editor.layout();
       });
+    });
   </script>
 
   <div id="find-dialog" class="hidden" role="dialog" aria-label="Find in file">
