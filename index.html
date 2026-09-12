@@ -6,7 +6,6 @@
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
   <title>Satiscode</title>
   <link rel="stylesheet" href="styles/style1.css">
-  <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
   <script type="module">
     import { initIcons, getFileIcon, getFolderIcon, getChevronIcon } from './icons.js';
 
@@ -69,7 +68,9 @@
       </section>
     </div>
   </div>
-  <script>
+  <script type="module">
+    import * as monaco from './node_modules/monaco-editor/esm/vs/editor/editor.main.js';
+
     window.addEventListener('error', (event) => {
       if (event.message?.includes('ResizeObserver loop completed with undelivered notifications')) {
         event.stopImmediatePropagation();
@@ -342,21 +343,18 @@
       });
     }
 
-    const monacoBaseUrl = new URL('node_modules/monaco-editor/min/', window.location.href).href;
     window.MonacoEnvironment = {
-      getWorkerUrl: () => `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-        self.MonacoEnvironment = { baseUrl: '${monacoBaseUrl}' };
-        importScripts('${monacoBaseUrl}vs/base/worker/workerMain.js');
-      `)}`
+      getWorker: () => new Worker(
+        new URL('./node_modules/monaco-editor/esm/vs/editor/editor.worker.js', import.meta.url),
+        { type: 'module' }
+      )
     };
-    require.config({ paths: { 'vs': `${monacoBaseUrl}vs` }});
-    require(['vs/editor/editor.main'], function() {
-      window.editor = monaco.editor.create(document.getElementById('editor'), {
+    window.editor = monaco.editor.create(document.getElementById('editor'), {
         value: '// Start typing CMM code or JS here...\n',
         language: 'plaintext',
         theme: 'vs-dark',
         automaticLayout: true
-      });
+    });
 
       window.api.onClangdMessage((message) => {
         if (message.id !== undefined && pendingRequests.has(message.id)) {
@@ -669,7 +667,6 @@
         document.body.style.userSelect = '';
         window.editor.layout();
       });
-    });
   </script>
 
   <div id="find-dialog" class="hidden" role="dialog" aria-label="Find in file">
