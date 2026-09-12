@@ -59,15 +59,18 @@ function gracefulStopClangd() {
   });
 }
 
+function getClangdPath() {
+  const isWin = process.platform === 'win32';
+  const clangdExecutable = isWin ? 'clangd.exe' : 'clangd';
+  const baseDir = app.isPackaged ? process.resourcesPath : __dirname;
+  return path.join(baseDir, 'bin', clangdExecutable);
+}
+
 function startClangd(event, rootPath) {
   stopClangd();
   const projectRoot = findProjectRoot(rootPath);
-  const clangdCandidates = [
-    process.env.ProgramFiles && path.join(process.env.ProgramFiles, 'LLVM', 'bin', 'clangd.exe'),
-    process.env.ProgramW6432 && path.join(process.env.ProgramW6432, 'LLVM', 'bin', 'clangd.exe'),
-    'clangd'
-  ].filter(Boolean);
-  const clangdCommand = clangdCandidates.find((candidate) => candidate === 'clangd' || fs.existsSync(candidate)) || 'clangd';
+  const clangdCommand = getClangdPath();
+
   clangdProcess = spawn(clangdCommand, ['--background-index', '--header-insertion=never'], {
     cwd: projectRoot,
     stdio: ['pipe', 'pipe', 'pipe']

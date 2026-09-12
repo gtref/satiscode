@@ -18,9 +18,11 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 
 - Windows 10 or newer
 - Node.js 20 or newer
-- LLVM/clangd installed and available at `C:\Program Files\LLVM\bin\clangd.exe` or on `PATH`
 
 The editor remains usable when clangd is unavailable, but C/C++ language services will be disabled.
+
+>[!NOTE]
+> Please NOTE That from satiscode 1.2.0 onwardw LLVM does not need to be installed. All new builds will contain clangd and its librarys and later there will be instructions for local testing.
 
 ## Development
 
@@ -73,3 +75,7 @@ Thanks to these awesome people for helping build **satiscode**:
 | Project Lead | Contributor | Contributor | Code Review Bot | Security Bot |
 
 </div>
+
+# Copy atributions
+This tool uses librarys and executables from the `clangd` util by `LLVM`, to see the copy atributions [please click here](NOTICES.md)
+
