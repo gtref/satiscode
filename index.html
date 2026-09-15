@@ -9,12 +9,22 @@
   <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
   <script type="module">
     import { initIcons, getFileIcon, getFolderIcon, getChevronIcon } from './icons.js';
+    import { loadTheme, applyTheme, getAvailableThemes } from './themes.js'; 
     import { TabManager } from './UI/tab_manager/tabman.js';
 
     // Attach getters to window for internal renderer access immediately
     window.getFileIcon = getFileIcon;
     window.getFolderIcon = getFolderIcon;
     window.getChevronIcon = getChevronIcon;
+
+    // Attach theme functions for internal renderer access
+    window.loadTheme = loadTheme;
+    window.applyTheme = applyTheme;
+    window.getAvailableThemes = getAvailableThemes;
+
+    const savedTheme = localStorage.getItem('satiscode-theme') || 'dark';
+    document.getElementById('theme-select').value = savedTheme;
+    await applyTheme(savedTheme);
     window.TabManager = TabManager;
 
     // Initialize local icon system from icons/style1/icons.json
@@ -45,6 +55,11 @@
         <button class="source-language-option" data-source-language="python"><span class="language-badge">Py</span>Python</button>
       </div>
     </div>
+    <select id="theme-select" aria-label="Interface Theme">
+      <option value="dark">Dark Theme</option>
+      <option value="light">Light Theme</option>
+      <!--<option value="hc">High Contrast</option>-->
+    </select>
     <select id="language-select" aria-label="Interface language">
       <option value="en">English</option>
       <option value="es">Español</option>
@@ -545,6 +560,23 @@
         });
       }
 
+    const monacoBaseUrl = new URL('node_modules/monaco-editor/min/', window.location.href).href;
+    window.MonacoEnvironment = {
+      getWorkerUrl: () => `data:text/javascript;charset=utf-8,${encodeURIComponent(`
+        self.MonacoEnvironment = { baseUrl: '${monacoBaseUrl}' };
+        importScripts('${monacoBaseUrl}vs/base/worker/workerMain.js');
+      `)}`
+    };
+    require.config({ paths: { 'vs': `${monacoBaseUrl}vs` }});
+    require(['vs/editor/editor.main'], function() {
+      const MONACO_THEME_MAP = { dark: 'vs-dark', light: 'vs' };
+      const savedThemeId = localStorage.getItem('satiscode-theme') || 'dark';
+
+      window.editor = monaco.editor.create(document.getElementById('editor'), {
+        value: '// Start typing CMM code or JS here...\n',
+        language: 'plaintext',
+        theme: MONACO_THEME_MAP[savedThemeId] || 'vs-dark',
+        automaticLayout: true
       window.editor = monaco.editor.create(document.getElementById('editor'), {
           language: 'plaintext',
           theme: 'vs-dark',
@@ -693,6 +725,11 @@
       document.getElementById('language-select').addEventListener('change', (event) => applyInterfaceLanguage(event.target.value));
       document.getElementById('exit-btn').addEventListener('click', () => window.api.exit());
       document.getElementById('tree-root').textContent = 'Open a file to browse its folder';
+
+      // Theme selector
+      document.getElementById('theme-select').addEventListener('change', (event) => {
+        applyTheme(event.target.value); 
+      })
 
       function toggleProblemsPanel() {
         const panel = document.getElementById('problems-panel');
@@ -874,6 +911,11 @@
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
         window.editor.layout();
+      });
+
+      // Apply the real Theme to Mocano now that exists
+      applyTheme(savedThemeId).then(() => {
+        document.getElementById('theme-select').value = savedThemeId;
       });
     });
   </script>

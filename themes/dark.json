@@ -1,0 +1,21 @@
+{
+    "id": "dark", 
+    "name": "Dark Theme", 
+    "monacoTheme": "vs-dark", 
+    "colors": {
+        "vscode-bg": "#1e1e1e",
+        "vscode-sidebar-bg": "#252526",
+        "vscode-toolbar-bg": "#333333",
+        "vscode-input-bg": "#3c3c3c",
+        "vscode-active-item": "#37373d",
+        "vscode-hover-item": "#2a2d2e",
+        "vscode-border": "#2b2b2b",
+        "vscode-focus-border": "#007fd4",
+        "vscode-text-main": "#cccccc",
+        "vscode-text-muted": "#858585",
+        "vscode-text-active": "#ffffff",
+        "vscode-error": "#f14c4c",
+        "vscode-warning": "#cca700",
+        "vscode-badge-bg": "#4d4d4d"
+    }
+}

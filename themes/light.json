@@ -1,0 +1,21 @@
+{
+    "id": "light", 
+    "name": "Light Theme", 
+    "monacoTheme": "vs", 
+    "colors": {
+        "vscode-bg": "#ffffff",
+        "vscode-sidebar-bg": "#f3f3f3",
+        "vscode-toolbar-bg": "#dddddd",
+        "vscode-input-bg": "#ffffff",
+        "vscode-active-item": "#e4e6f1",
+        "vscode-hover-item": "#e8e8e8",
+        "vscode-border": "#cecece",
+        "vscode-focus-border": "#0090f1",
+        "vscode-text-main": "#3b3b3b",
+        "vscode-text-muted": "#6f6f6f",
+        "vscode-text-active": "#000000",
+        "vscode-error": "#e51400",
+        "vscode-warning": "#bf8803",
+        "vscode-badge-bg": "#c4c4c4"
+    }
+}
