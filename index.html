@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; font-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; worker-src 'self' blob: data:; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+  <meta http-equiv="Content-Security-Policy"
+      content="default-src 'self';
+               font-src 'self' data:;
+               script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: data:;
+               worker-src blob: data:;
+               style-src 'self' 'unsafe-inline';
+               img-src 'self' data:;">
+
   <title>Satiscode</title>
   <link rel="stylesheet" href="styles/style1.css">
   <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
@@ -577,10 +584,6 @@
         language: 'plaintext',
         theme: MONACO_THEME_MAP[savedThemeId] || 'vs-dark',
         automaticLayout: true
-      window.editor = monaco.editor.create(document.getElementById('editor'), {
-          language: 'plaintext',
-          theme: 'vs-dark',
-          automaticLayout: true
       });
 
       createNewTab();
@@ -918,6 +921,7 @@
         document.getElementById('theme-select').value = savedThemeId;
       });
     });
+  });
   </script>
 
   <div id="find-dialog" class="hidden" role="dialog" aria-label="Find in file">
