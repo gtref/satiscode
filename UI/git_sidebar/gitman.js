@@ -1,4 +1,4 @@
-const { exec } = require("child_process");
+const { exec, execFile } = require("child_process");
 
 class GitManager {
     constructor(options = {}) {
@@ -36,8 +36,21 @@ class GitManager {
     }
 
     async commit(message) { // Function to handle git commit -m ""
-        const safe = message.replace(/\\/g, "\\\\").replace(/"/g, '\\"'); // Escape backslashes and double quotes in commit messages.
-        return this.run(`git commit -m "${safe}"`);
+        return new Promise((resolve, reject) => {
+            execFile("git", ["commit", "-m", message], { cwd: this.cwd }, (err, stdout, stderr) => {
+                if (this.verbose) {
+                    console.log("[GitManager] CMD: ", "git commit -m", message);
+                    console.log("[GitManager] OUT: ", stdout);
+                    console.log("[GitManager] ERR: ", stderr);
+                }
+                if (err) {
+                    const msg = stdout.trim() || stderr.trim();
+                    reject(msg);
+                    return;
+                }
+                resolve(stdout.trim());
+            });
+        });
     }
 
     async status() { // Function to handle git status
