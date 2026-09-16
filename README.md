@@ -84,5 +84,5 @@ Thanks to these awesome people for helping build **satiscode**:
 </div>
 
 # Copy atributions
-This tool uses librarys and executables from the `clangd` util by `LLVM`, to see the copy atributions [please click here](NOTICES.md)
+This tool uses librarys and executables from the `clangd` util by `LLVM` and `PyRight` by `microsoft`, to see the copy atributions [please click here](NOTICES.md)
 
