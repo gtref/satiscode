@@ -31,7 +31,8 @@ Install LLVM if you are working on C/C++ language services. The expected executa
 To maintain a clean and legally safe codebase:
 
 - Only submit code you wrote yourself or have the right to contribute.
-- Do not copy code from GPL-incompatible sources unless explicitly allowed.
+- Only use third-party code under licenses compatible with the project's MIT license; incompatible licenses, including GPL, are not permitted.
+- Satisfy all applicable third-party attribution and notice obligations documented in `NOTICES.md`.
 - AI-generated code **must be reviewed, rewritten, and validated** before submission.  
   Raw AI output is not acceptable without human verification.
 - Every commit must include a Developer Certificate of Origin (DCO) signoff.
