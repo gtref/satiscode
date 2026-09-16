@@ -5,7 +5,16 @@ import { defineConfig } from "eslint/config";
 export default defineConfig([
     // Backend: Node + CommonJS (GitManager, stubs, runner, Electron main/preload)
     {
-        files: ["main/**/*.js", "preload/**/*.js", "backend/**/*.js", "git/**/*.js"],
+        files: [
+            "main.js",
+            "preload.js",
+            "main/**/*.js",
+            "preload/**/*.js",
+            "backend/**/*.js",
+            "git/**/*.js",
+            "UI/git_sidebar/gitman.js",
+            "UI/git_sidebar/gitstub.js"
+        ],
         extends: [js.configs.recommended],
         languageOptions: {
             sourceType: "commonjs",

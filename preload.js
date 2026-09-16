@@ -29,6 +29,5 @@ contextBridge.exposeInMainWorld('api', {
   onPyrightMessage: (callback) => ipcRenderer.on('pyright:message', (_event, message) => callback(message)),
   onPyrightStderr: (callback) => ipcRenderer.on('pyright:stderr', (_event, message) => callback(message)),
   onPyrightError: (callback) => ipcRenderer.on('pyright:error', (_event, message) => callback(message)),
-  onPyrightExit: (callback) => ipcRenderer.on('pyright:exit', (_event) => callback())
+  onPyrightExit: (callback) => ipcRenderer.on('pyright:exit', () => callback())
 });
-
