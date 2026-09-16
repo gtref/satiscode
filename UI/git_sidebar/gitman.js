@@ -36,7 +36,7 @@ class GitManager {
     }
 
     async commit(message) { // Function to handle git commit -m ""
-        const safe = message.replace(/"/g, '\\"'); // Escape double quotes and special chars in commit mesages.
+        const safe = message.replace(/\\/g, "\\\\").replace(/"/g, '\\"'); // Escape backslashes and double quotes in commit messages.
         return this.run(`git commit -m "${safe}"`);
     }
 
