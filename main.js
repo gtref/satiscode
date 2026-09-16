@@ -7,6 +7,9 @@ const { spawn } = require('child_process');
 let clangdProcess = null;
 let clangdBuffer = Buffer.alloc(0);
 let isQuitting = false;
+let pyrightProcess = null;
+let pyrightBuffer = Buffer.alloc(0);
+
 
 function sendToClangd(message) {
   if (!clangdProcess || clangdProcess.stdin.destroyed) return;
@@ -14,6 +17,14 @@ function sendToClangd(message) {
   const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'ascii');
   clangdProcess.stdin.write(Buffer.concat([header, body]));
 }
+
+function sendToPyright(message) {
+  if (!pyrightProcess || pyrightProcess.stdin.destroyed) return;
+  const body = Buffer.from(JSON.stringify(message), 'utf8');
+  const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'ascii');
+  pyrightProcess.stdin.write(Buffer.concat([header, body]));
+}
+
 
 function sendToRenderer(event, channel, ...args) {
   if (!event.sender.isDestroyed()) event.sender.send(channel, ...args);
@@ -25,10 +36,29 @@ function stopClangd() {
   clangdBuffer = Buffer.alloc(0);
 }
 
+function stopPyright() {
+  if (pyrightProcess) pyrightProcess.kill();
+  pyrightProcess = null;
+  pyrightBuffer = Buffer.alloc(0);
+}
+
+
 function findProjectRoot(startPath) {
   let currentPath = path.resolve(startPath || process.cwd());
   while (true) {
     if (['compile_commands.json', '.clangd', '.git'].some((entry) => fs.existsSync(path.join(currentPath, entry)))) {
+      return currentPath;
+    }
+    const parentPath = path.dirname(currentPath);
+    if (parentPath === currentPath) return path.resolve(startPath || process.cwd());
+    currentPath = parentPath;
+  }
+}
+
+function findPythonProjectRoot(startPath) {
+  let currentPath = path.resolve(startPath || process.cwd());
+  while (true) {
+    if (['pyproject.toml', 'pyrightconfig.json', 'setup.py', 'requirements.txt', '.git'].some((entry) => fs.existsSync(path.join(currentPath, entry)))) {
       return currentPath;
     }
     const parentPath = path.dirname(currentPath);
@@ -60,12 +90,41 @@ function gracefulStopClangd() {
   });
 }
 
+function gracefulStopPyright() {
+  if (!pyrightProcess) return Promise.resolve();
+  const processToStop = pyrightProcess;
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (pyrightProcess === processToStop) stopPyright();
+      resolve();
+    };
+    const timeout = setTimeout(finish, 1000);
+    processToStop.once('exit', finish);
+    sendToPyright({ jsonrpc: '2.0', id: Date.now(), method: 'shutdown', params: null });
+    setTimeout(() => {
+      if (!settled && !processToStop.killed) {
+        sendToPyright({ jsonrpc: '2.0', method: 'exit', params: null });
+      }
+    }, 250);
+  });
+}
+
 function getClangdPath() {
   const isWin = process.platform === 'win32';
   const clangdExecutable = isWin ? 'clangd.exe' : 'clangd';
   const baseDir = app.isPackaged ? process.resourcesPath : __dirname;
   return path.join(baseDir, 'bin', clangdExecutable);
 }
+
+function getPyrightPath() {
+  const baseDir = app.isPackaged ? process.resourcesPath : __dirname;
+  return path.join(baseDir, 'PythonLSP', 'pyright-langserver.js');
+}
+
 
 function startClangd(event, rootPath) {
   stopClangd();
@@ -115,6 +174,81 @@ function startClangd(event, rootPath) {
 
   return processStarted;
 }
+
+function startPyright(event, rootPath) {
+  stopPyright();
+
+  const projectRoot = findPythonProjectRoot(rootPath);
+  const pyrightCommand = getPyrightPath();
+
+  // Filter out Windows Store app execution aliases from PATH so dummy stubs do not hijack python lookups
+  const rawPath = process.env.PATH || '';
+  const sanitizedPath = rawPath
+    .split(';')
+    .filter((entry) => !entry.toLowerCase().includes('\\microsoft\\windowsapps'))
+    .join(';');
+
+  pyrightProcess = spawn(process.execPath, [pyrightCommand, '--stdio'], {
+    cwd: projectRoot,
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', PATH: sanitizedPath },
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  const processStarted = new Promise((resolve, reject) => {
+    pyrightProcess.once('spawn', () => resolve({ projectRoot, command: pyrightCommand }));
+    pyrightProcess.once('error', reject);
+  });
+
+  pyrightProcess.stdout.on('data', (chunk) => {
+    pyrightBuffer = Buffer.concat([pyrightBuffer, chunk]);
+
+    while (true) {
+      const headerEnd = pyrightBuffer.indexOf('\r\n\r\n');
+      if (headerEnd < 0) break;
+
+      const header = pyrightBuffer.subarray(0, headerEnd).toString('ascii');
+      const lengthMatch = header.match(/Content-Length:\s*(\d+)/i);
+      if (!lengthMatch) {
+        pyrightBuffer = pyrightBuffer.subarray(headerEnd + 4);
+        continue;
+      }
+
+      const bodyLength = Number(lengthMatch[1]);
+      const bodyStart = headerEnd + 4;
+
+      if (pyrightBuffer.length < bodyStart + bodyLength) break;
+
+      const body = pyrightBuffer.subarray(bodyStart, bodyStart + bodyLength).toString('utf8');
+      pyrightBuffer = pyrightBuffer.subarray(bodyStart + bodyLength);
+
+      try {
+        sendToRenderer(event, 'pyright:message', JSON.parse(body));
+      } catch (error) {
+        console.error('Invalid pyright message:', error);
+      }
+    }
+  });
+
+  pyrightProcess.stderr.on('data', (chunk) => {
+    const text = chunk.toString();
+    if (text.includes('Python was not found; run without arguments to install from the Microsoft Store')) {
+      return;
+    }
+    sendToRenderer(event, 'pyright:stderr', text);
+  });
+
+  pyrightProcess.on('error', (error) =>
+    sendToRenderer(event, 'pyright:error', error.message)
+  );
+
+  pyrightProcess.on('exit', () => {
+    sendToRenderer(event, 'pyright:exit');
+    pyrightProcess = null;
+  });
+
+  return processStarted;
+}
+
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -190,15 +324,22 @@ ipcMain.handle('directory:list', async (_event, directoryPath) => {
 ipcMain.handle('clangd:start', (event, rootPath) => startClangd(event, rootPath));
 ipcMain.on('clangd:message', (_event, message) => sendToClangd(message));
 ipcMain.on('clangd:stop', stopClangd);
+ipcMain.handle('pyright:start', (event, rootPath) => startPyright(event, rootPath));
+ipcMain.on('pyright:message', (_event, message) => sendToPyright(message));
+ipcMain.on('pyright:stop', stopPyright);
+
 ipcMain.handle('app:exit', async () => {
   isQuitting = true;
-  await gracefulStopClangd();
+  await Promise.all([gracefulStopClangd(), gracefulStopPyright()]);
   app.quit();
 });
 app.on('before-quit', (event) => {
   if (isQuitting) return;
   isQuitting = true;
   event.preventDefault();
-  gracefulStopClangd().finally(() => app.quit());
+  Promise.all([gracefulStopClangd(), gracefulStopPyright()]).finally(() => app.quit());
 });
-app.on('will-quit', stopClangd);
+app.on('will-quit', () => {
+  stopClangd();
+  stopPyright();
+});

@@ -137,10 +137,13 @@ window.MonacoEnvironment = {
 
       let currentFilePath = null;
       let clangdRequestId = 0;
+      let pyrightRequestId = 0;
       let documentVersion = 1;
       let changeTimeout = null;
-      const pendingRequests = new Map();
+      const clangdPendingRequests = new Map();
+      const pyrightPendingRequests = new Map();
       let clangdStarted = false;
+      let pyrightStarted = false;
       let currentDirectory = null;
       let manualLanguage = null;
       let currentDocumentUri = null;
@@ -171,11 +174,15 @@ window.MonacoEnvironment = {
       const hasEditorLanguage = (filePath) => isCppFile(filePath) || languageByExtension.has(extensionForPath(filePath));
       const activeLanguage = (filePath) => manualLanguage || languageForPath(filePath || '');
       const isActiveCppLanguage = () => activeLanguage(currentFilePath) === 'c' || activeLanguage(currentFilePath) === 'cpp';
+      const isActivePythonLanguage = () => activeLanguage(currentFilePath) === 'python';
       const pathToUri = (filePath) => {
         const normalized = filePath.replace(/\\/g, '/');
         return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
       };
-      const virtualDocumentUri = (workspacePath, language) => pathToUri(`${workspacePath}\\untitled.${language === 'c' ? 'c' : 'cpp'}`);
+      const virtualDocumentUri = (workspacePath, language) => {
+        const ext = language === 'c' ? 'c' : language === 'cpp' ? 'cpp' : language === 'python' ? 'py' : 'txt';
+        return pathToUri(`${workspacePath}\\untitled.${ext}`);
+      };
       const positionToLsp = (position) => ({ line: position.lineNumber - 1, character: position.column - 1 });
       const rangeToMonaco = (range) => ({
         startLineNumber: range.start.line + 1,
@@ -218,7 +225,10 @@ window.MonacoEnvironment = {
       function clearProblems() {
         currentProblems = [];
         renderProblems();
-        if (window.editor) monaco.editor.setModelMarkers(window.editor.getModel(), 'clangd', []);
+        if (window.editor) {
+          monaco.editor.setModelMarkers(window.editor.getModel(), 'clangd', []);
+          monaco.editor.setModelMarkers(window.editor.getModel(), 'pyright', []);
+        }
       }
 
       function setSatiscodeStatus(state, message) {
@@ -249,10 +259,23 @@ window.MonacoEnvironment = {
 
       function updateSourceLanguageLabel() {
         const language = activeLanguage(currentFilePath);
-        const labels = { auto: 'Auto', c: 'C', cpp: 'C++', css: 'CSS', javascript: 'JavaScript', html: 'HTML', typescript: 'TypeScript', json: 'JSON', plaintext: 'Plain Text' };
-        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', plaintext: 'Aa' };
+        const labels = { auto: 'Auto', c: 'C', cpp: 'C++', css: 'CSS', javascript: 'JavaScript', html: 'HTML', typescript: 'TypeScript', json: 'JSON', python: 'Python', plaintext: 'Plain Text' };
+        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', python: 'Py', plaintext: 'Aa' };
         document.getElementById('source-language-label').textContent = labels[language] || labels.auto;
         document.querySelector('#source-language-btn .language-badge').textContent = icons[language] || icons.auto;
+      }
+
+      function stopLanguageServers() {
+        if (clangdStarted) {
+          if (currentDocumentUri) sendClangdNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
+          window.api.stopClangd();
+          clangdStarted = false;
+        }
+        if (pyrightStarted) {
+          if (currentDocumentUri) sendPyrightNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
+          window.api.stopPyright();
+          pyrightStarted = false;
+        }
       }
 
       function applySourceLanguage(language) {
@@ -263,15 +286,22 @@ window.MonacoEnvironment = {
         updateSourceLanguageLabel();
 
         if (isActiveCppLanguage()) {
-          startLanguageServer();
-        } else if (clangdStarted) {
-          if (currentDocumentUri) sendNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
-          window.api.stopClangd();
-          clangdStarted = false;
-          currentDocumentUri = null;
-          clearProblems();
-          document.getElementById('status').textContent = 'language: ready';
+          if (pyrightStarted) {
+            if (currentDocumentUri) sendPyrightNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
+            window.api.stopPyright();
+            pyrightStarted = false;
+          }
+          startClangdServer();
+        } else if (isActivePythonLanguage()) {
+          if (clangdStarted) {
+            if (currentDocumentUri) sendClangdNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
+            window.api.stopClangd();
+            clangdStarted = false;
+          }
+          startPyrightServer();
         } else {
+          stopLanguageServers();
+          clearProblems();
           document.getElementById('status').textContent = selectedLanguage === 'plaintext' ? 'language: plaintext' : 'language: ready';
         }
       }
@@ -323,118 +353,13 @@ window.MonacoEnvironment = {
         });
       }
 
-      let openTabs = []; 
-      let activeTabId = null;
       let untitledCounter = 1;
 
       function createNewTab() {
+        manualLanguage = null;
         const title = `Untitled-${untitledCounter++}`;
         const model = monaco.editor.createModel('', 'plaintext');
         tabManager.openTab(null, model, title);
-      }
-
-      function renderTabsUI() {
-        const container = document.getElementById('tab-bar');
-        if (!container) return;
-        container.innerHTML = openTabs.map(tab => `
-          <div class="tab ${tab.id === activeTabId ? 'active' : ''}" data-tab-id="${tab.id}">
-            <span class="tab-title">${escapeHtml(tab.title)}${tab.isDirty ? ' •' : ''}</span>
-            <span class="close-btn" data-close-id="${tab.id}">&times;</span>
-          </div>
-        `).join('');
-      }
-
-      const tabBarEl = document.getElementById('tab-bar');
-      if (tabBarEl) {
-        tabBarEl.addEventListener('click', (e) => {
-          const closeId = e.target.dataset.closeId || e.target.closest('[data-close-id]')?.dataset.closeId;
-          if (closeId) {
-            e.stopPropagation();
-            closeTab(closeId);
-            return;
-          }
-          const tabEl = e.target.closest('[data-tab-id]');
-          if (tabEl) switchTab(tabEl.dataset.tabId);
-        });
-
-        tabBarEl.addEventListener('auxclick', (e) => {
-          if (e.button === 1) {
-            const tabEl = e.target.closest('[data-tab-id]');
-            if (tabEl) closeTab(tabEl.dataset.tabId);
-          }
-        });
-      }
-
-      function switchTab(tabId) {
-        const tab = openTabs.find(t => t.id === tabId);
-        if (!tab) return;
-
-        activeTabId = tab.id;
-        currentFilePath = tab.filePath;
-        currentDocumentUri = tab.filePath ? pathToUri(tab.filePath) : null;
-
-        window.editor.setModel(tab.model);
-
-        updateSourceLanguageLabel();
-        if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
-
-        renderTabsUI();
-      }
-
-      function createOrFocusTab(filePath, content, title) {
-        let existing = openTabs.find(t => t.filePath && t.filePath === filePath);
-        if (existing) {
-          switchTab(existing.id);
-          return;
-        }
-
-        const lang = activeLanguage(filePath);
-        const uri = filePath ? monaco.Uri.file(filePath) : undefined;
-        
-        let model = uri ? monaco.editor.getModel(uri) : null;
-        if (!model) {
-          model = monaco.editor.createModel(content, lang, uri);
-        } else {
-          model.setValue(content);
-        }
-
-        const newTab = {
-          id: 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-          filePath: filePath || null,
-          title: title || (filePath ? filePath.split(/[\\/]/).pop() : 'Untitled'),
-          model: model,
-          isDirty: false
-        };
-
-        openTabs.push(newTab);
-        switchTab(newTab.id);
-      }
-
-      function closeTab(tabId) {
-        const index = openTabs.findIndex(t => t.id === tabId);
-        if (index === -1) return;
-
-        const tab = openTabs[index];
-        if (tab.isDirty && !confirm(`Save changes to ${tab.title}?`)) return;
-
-        tab.model.dispose();
-        openTabs.splice(index, 1);
-
-        if (activeTabId === tabId) {
-          if (openTabs.length > 0) {
-            const nextTab = openTabs[Math.max(0, index - 1)];
-            switchTab(nextTab.id);
-          } else {
-            activeTabId = null;
-            currentFilePath = null;
-            currentDocumentUri = null;
-            
-            const emptyModel = monaco.editor.createModel('', 'plaintext');
-            window.editor.setModel(emptyModel);
-          }
-        }
-
-        renderTabsUI();
       }
 
       const tabManager = new window.TabManager(
@@ -445,8 +370,13 @@ window.MonacoEnvironment = {
         clearTimeout(changeTimeout);
         changeTimeout = null;
       }
-      if (clangdStarted && previousDocumentUri) {
-        sendNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+      if (previousDocumentUri) {
+        if (clangdStarted) {
+          sendClangdNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+        }
+        if (pyrightStarted) {
+          sendPyrightNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+        }
       }
 
       if (tab) {
@@ -457,8 +387,12 @@ window.MonacoEnvironment = {
         updateSourceLanguageLabel();
 
         if (isActiveCppLanguage()) {
+          if (pyrightStarted) {
+            window.api.stopPyright();
+            pyrightStarted = false;
+          }
           if (clangdStarted && currentDocumentUri) {
-            sendNotification('textDocument/didOpen', {
+            sendClangdNotification('textDocument/didOpen', {
               textDocument: {
                 uri: currentDocumentUri,
                 languageId: activeLanguage(currentFilePath),
@@ -466,16 +400,38 @@ window.MonacoEnvironment = {
                 text: window.editor.getValue()
               }
             });
+            document.getElementById('status').textContent = 'clangd: ready';
           } else {
             if (clangdStarted) {
               window.api.stopClangd();
               clangdStarted = false;
             }
-            startLanguageServer();
+            startClangdServer();
           }
-        } else if (clangdStarted) {
-          window.api.stopClangd();
-          clangdStarted = false;
+        } else if (isActivePythonLanguage()) {
+          if (clangdStarted) {
+            window.api.stopClangd();
+            clangdStarted = false;
+          }
+          if (pyrightStarted && currentDocumentUri) {
+            sendPyrightNotification('textDocument/didOpen', {
+              textDocument: {
+                uri: currentDocumentUri,
+                languageId: 'python',
+                version: documentVersion,
+                text: window.editor.getValue()
+              }
+            });
+            document.getElementById('status').textContent = 'pyright: ready';
+          } else {
+            if (pyrightStarted) {
+              window.api.stopPyright();
+              pyrightStarted = false;
+            }
+            startPyrightServer();
+          }
+        } else {
+          stopLanguageServers();
           clearProblems();
           document.getElementById('status').textContent = hasEditorLanguage(currentFilePath || '') ? 'language: ready' : 'language: plaintext';
         }
@@ -483,13 +439,11 @@ window.MonacoEnvironment = {
         currentFilePath = null;
         currentDocumentUri = null;
         documentVersion = 1;
-        if (clangdStarted) {
-          window.api.stopClangd();
-          clangdStarted = false;
-          clearProblems();
-        }
+        stopLanguageServers();
+        clearProblems();
         const emptyModel = monaco.editor.createModel('', 'plaintext');
         window.editor.setModel(emptyModel);
+        document.getElementById('status').textContent = 'language: plaintext';
       }
     },
     (tab) => saveTab(tab)
@@ -537,17 +491,37 @@ window.MonacoEnvironment = {
     }
   }
 
-      function sendRequest(method, params) {
+      function sendClangdRequest(method, params) {
         const id = ++clangdRequestId;
         window.api.sendClangdMessage({ jsonrpc: '2.0', id, method, params });
-        return new Promise((resolve, reject) => pendingRequests.set(id, { resolve, reject }));
+        return new Promise((resolve, reject) => clangdPendingRequests.set(id, { resolve, reject }));
       }
 
-      function sendNotification(method, params) {
+      function sendClangdNotification(method, params) {
         window.api.sendClangdMessage({ jsonrpc: '2.0', method, params });
       }
 
-      async function startLanguageServer() {
+      function sendPyrightRequest(method, params) {
+        const id = ++pyrightRequestId;
+        window.api.sendPyrightMessage({ jsonrpc: '2.0', id, method, params });
+        return new Promise((resolve, reject) => pyrightPendingRequests.set(id, { resolve, reject }));
+      }
+
+      function sendPyrightNotification(method, params) {
+        window.api.sendPyrightMessage({ jsonrpc: '2.0', method, params });
+      }
+
+      function sendRequest(method, params) {
+        if (isActivePythonLanguage()) return sendPyrightRequest(method, params);
+        return sendClangdRequest(method, params);
+      }
+
+      function sendNotification(method, params) {
+        if (isActivePythonLanguage()) return sendPyrightNotification(method, params);
+        return sendClangdNotification(method, params);
+      }
+
+      async function startClangdServer() {
         if (!isActiveCppLanguage()) return;
         if (clangdStarted) window.api.stopClangd();
         clangdStarted = true;
@@ -557,18 +531,20 @@ window.MonacoEnvironment = {
         const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
         currentDocumentUri = currentDocumentUri || virtualDocumentUri(workspacePath, language);
         console.info(`Starting clangd for ${currentDocumentUri} as ${language}`);
-        window.api.startClangd(rootPath || undefined).then(() => sendRequest('initialize', {
+        window.api.startClangd(rootPath || undefined).then(() => sendClangdRequest('initialize', {
             processId: null,
             rootUri: pathToUri(rootPath),
             capabilities: {
               textDocument: {
                 synchronization: { didSave: true },
-                completion: { completionItem: { snippetSupport: true } }
+                completion: { completionItem: { snippetSupport: true } },
+                hover: { contentFormat: ['markdown', 'plaintext'] },
+                definition: {}
               }
             }
           })).then(() => {
-          sendNotification('initialized', {});
-          sendNotification('textDocument/didOpen', {
+          sendClangdNotification('initialized', {});
+          sendClangdNotification('textDocument/didOpen', {
             textDocument: { uri: currentDocumentUri, languageId: language, version: documentVersion, text: window.editor.getValue() }
           });
           document.getElementById('status').textContent = 'clangd: ready';
@@ -577,6 +553,45 @@ window.MonacoEnvironment = {
           console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${error.message || error}`);
           document.getElementById('status').textContent = 'clangd: unavailable';
         });
+      }
+
+      async function startPyrightServer() {
+        if (!isActivePythonLanguage()) return;
+        if (pyrightStarted) window.api.stopPyright();
+        pyrightStarted = true;
+        document.getElementById('status').textContent = 'pyright: starting';
+        const language = 'python';
+        const workspacePath = currentDirectory || await window.api.getWorkspacePath();
+        const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
+        currentDocumentUri = currentDocumentUri || virtualDocumentUri(workspacePath, language);
+        console.info(`Starting pyright for ${currentDocumentUri} as ${language}`);
+        window.api.startPyright(rootPath || undefined).then(() => sendPyrightRequest('initialize', {
+            processId: null,
+            rootUri: pathToUri(rootPath),
+            capabilities: {
+              textDocument: {
+                synchronization: { didSave: true },
+                completion: { completionItem: { snippetSupport: true } },
+                hover: { contentFormat: ['markdown', 'plaintext'] },
+                definition: {}
+              }
+            }
+          })).then(() => {
+          sendPyrightNotification('initialized', {});
+          sendPyrightNotification('textDocument/didOpen', {
+            textDocument: { uri: currentDocumentUri, languageId: language, version: documentVersion, text: window.editor.getValue() }
+          });
+          document.getElementById('status').textContent = 'pyright: ready';
+        }).catch((error) => {
+          pyrightStarted = false;
+          console.warn(`pyright is unavailable. Python editing will continue without language services: ${error.message || error}`);
+          document.getElementById('status').textContent = 'pyright: unavailable';
+        });
+      }
+
+      function startLanguageServer() {
+        if (isActiveCppLanguage()) return startClangdServer();
+        if (isActivePythonLanguage()) return startPyrightServer();
       }
 
     const monacoBaseUrl = new URL('node_modules/monaco-editor/min/', window.location.href).href;
@@ -601,9 +616,9 @@ window.MonacoEnvironment = {
       createNewTab();
 
       window.api.onClangdMessage((message) => {
-        if (message.id !== undefined && pendingRequests.has(message.id)) {
-          const request = pendingRequests.get(message.id);
-          pendingRequests.delete(message.id);
+        if (message.id !== undefined && clangdPendingRequests.has(message.id)) {
+          const request = clangdPendingRequests.get(message.id);
+          clangdPendingRequests.delete(message.id);
           if (message.error) request.reject(message.error); else request.resolve(message.result);
         }
         if (message.method === 'textDocument/publishDiagnostics') {
@@ -619,12 +634,45 @@ window.MonacoEnvironment = {
       });
       window.api.onClangdError((message) => {
         clangdStarted = false;
-        pendingRequests.forEach((request) => request.reject(new Error(message)));
-        pendingRequests.clear();
+        clangdPendingRequests.forEach((request) => request.reject(new Error(message)));
+        clangdPendingRequests.clear();
         console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${message}`);
         document.getElementById('status').textContent = 'clangd: unavailable';
       });
       window.api.onClangdStderr((message) => console.warn(`clangd: ${message.trim()}`));
+
+      window.api.onPyrightMessage((message) => {
+        if (message.id !== undefined && pyrightPendingRequests.has(message.id)) {
+          const request = pyrightPendingRequests.get(message.id);
+          pyrightPendingRequests.delete(message.id);
+          if (message.error) request.reject(message.error); else request.resolve(message.result);
+        }
+        if (message.method === 'textDocument/publishDiagnostics') {
+          const diagUri = message.params?.uri;
+          if (currentDocumentUri && diagUri && diagUri.toLowerCase() !== currentDocumentUri.toLowerCase()) {
+            return;
+          }
+          currentProblems = (message.params?.diagnostics || []).map((diagnostic) => ({
+            ...rangeToMonaco(diagnostic.range),
+            message: diagnostic.message,
+            severity: diagnostic.severity === 1 ? monaco.MarkerSeverity.Error : diagnostic.severity === 2 ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Info,
+            source: 'pyright'
+          }));
+          monaco.editor.setModelMarkers(window.editor.getModel(), 'pyright', currentProblems);
+          renderProblems();
+        }
+      });
+      window.api.onPyrightError((message) => {
+        pyrightStarted = false;
+        pyrightPendingRequests.forEach((request) => request.reject(new Error(message)));
+        pyrightPendingRequests.clear();
+        console.warn(`pyright is unavailable. Python editing will continue without language services: ${message}`);
+        document.getElementById('status').textContent = 'pyright: unavailable';
+      });
+      window.api.onPyrightStderr((message) => console.warn(`pyright: ${message.trim()}`));
+      window.api.onPyrightExit(() => {
+        pyrightStarted = false;
+      });
       applyInterfaceLanguage('en');
       updateSourceLanguageLabel();
       setSatiscodeStatus('operational');
@@ -653,7 +701,7 @@ window.MonacoEnvironment = {
           triggerCharacters: ['.', '>', ':'],
           provideCompletionItems: async (_model, position) => {
             if (!clangdStarted) return { suggestions: [] };
-            const result = await sendRequest('textDocument/completion', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+            const result = await sendClangdRequest('textDocument/completion', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
             const items = result && (result.items || result) || [];
             return { suggestions: items.map((item) => ({ label: item.label, kind: item.kind || monaco.languages.CompletionItemKind.Text, insertText: item.insertText || item.label, detail: item.detail })) };
           }
@@ -661,7 +709,7 @@ window.MonacoEnvironment = {
         monaco.languages.registerHoverProvider(language, {
           provideHover: async (_model, position) => {
             if (!clangdStarted) return null;
-            const result = await sendRequest('textDocument/hover', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+            const result = await sendClangdRequest('textDocument/hover', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
             if (!result) return null;
             const contents = Array.isArray(result.contents) ? result.contents : [result.contents];
             return { contents: contents.map((item) => ({ value: typeof item === 'string' ? item : item.value })), range: result.range && rangeToMonaco(result.range) };
@@ -670,28 +718,78 @@ window.MonacoEnvironment = {
         monaco.languages.registerDefinitionProvider(language, {
           provideDefinition: async (_model, position) => {
             if (!clangdStarted) return [];
-            const result = await sendRequest('textDocument/definition', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+            const result = await sendClangdRequest('textDocument/definition', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
             const locations = Array.isArray(result) ? result : result ? [result] : [];
-            return locations.map((location) => ({ uri: monaco.Uri.parse(location.uri), range: rangeToMonaco(location.range) }));
+            return locations.map((location) => {
+              const uri = location.targetUri || location.uri;
+              const range = location.targetSelectionRange || location.targetRange || location.range;
+              return { uri: monaco.Uri.parse(uri), range: rangeToMonaco(range) };
+            });
           }
         });
       });
 
+      monaco.languages.registerCompletionItemProvider('python', {
+        triggerCharacters: ['.'],
+        provideCompletionItems: async (_model, position) => {
+          if (!pyrightStarted) return { suggestions: [] };
+          const result = await sendPyrightRequest('textDocument/completion', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+          const items = result && (result.items || result) || [];
+          return {
+            suggestions: items.map((item) => ({
+              label: item.label,
+              kind: item.kind || monaco.languages.CompletionItemKind.Property,
+              insertText: item.insertText || item.label,
+              detail: item.detail,
+              documentation: typeof item.documentation === 'string' ? item.documentation : item.documentation?.value
+            }))
+          };
+        }
+      });
+      monaco.languages.registerHoverProvider('python', {
+        provideHover: async (_model, position) => {
+          if (!pyrightStarted) return null;
+          const result = await sendPyrightRequest('textDocument/hover', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+          if (!result || !result.contents) return null;
+          const rawContents = Array.isArray(result.contents) ? result.contents : [result.contents];
+          const contents = rawContents.map((item) => ({ value: typeof item === 'string' ? item : item.value || '' }));
+          return { contents, range: result.range && rangeToMonaco(result.range) };
+        }
+      });
+      monaco.languages.registerDefinitionProvider('python', {
+        provideDefinition: async (_model, position) => {
+          if (!pyrightStarted) return [];
+          const result = await sendPyrightRequest('textDocument/definition', { textDocument: { uri: currentDocumentUri }, position: positionToLsp(position) });
+          const locations = Array.isArray(result) ? result : result ? [result] : [];
+          return locations.map((location) => {
+            const uri = location.targetUri || location.uri;
+            const range = location.targetSelectionRange || location.targetRange || location.range;
+            return { uri: monaco.Uri.parse(uri), range: rangeToMonaco(range) };
+          });
+        }
+      });
+
       window.editor.onDidChangeModelContent(() => {
-       const activeTab = tabManager.getActiveTab();
+        const activeTab = tabManager.getActiveTab();
         if (activeTab && !activeTab.isDirty) {
           activeTab.isDirty = true;
           tabManager.render();
         }
 
-        if (!clangdStarted || !currentDocumentUri) return;
+        if (!currentDocumentUri) return;
+        if (!clangdStarted && !pyrightStarted) return;
         if (changeTimeout) clearTimeout(changeTimeout);
         changeTimeout = setTimeout(() => {
           documentVersion++;
-          sendNotification('textDocument/didChange', {
+          const payload = {
             textDocument: { uri: currentDocumentUri, version: documentVersion },
             contentChanges: [{ text: window.editor.getValue() }]
-          });
+          };
+          if (clangdStarted && isActiveCppLanguage()) {
+            sendClangdNotification('textDocument/didChange', payload);
+          } else if (pyrightStarted && isActivePythonLanguage()) {
+            sendPyrightNotification('textDocument/didChange', payload);
+          }
         }, 150);
       });
 
@@ -720,7 +818,31 @@ window.MonacoEnvironment = {
           currentDocumentUri = pathToUri(savedPath);
           monaco.editor.setModelLanguage(tab.model, languageForPath(savedPath));
           updateSourceLanguageLabel();
-          if (isActiveCppLanguage() && !clangdStarted) startLanguageServer();
+          if (isActiveCppLanguage()) {
+            if (pyrightStarted) {
+              window.api.stopPyright();
+              pyrightStarted = false;
+            }
+            if (!clangdStarted) {
+              startClangdServer();
+            } else {
+              sendClangdNotification('textDocument/didSave', { textDocument: { uri: currentDocumentUri } });
+            }
+          } else if (isActivePythonLanguage()) {
+            if (clangdStarted) {
+              window.api.stopClangd();
+              clangdStarted = false;
+            }
+            if (!pyrightStarted) {
+              startPyrightServer();
+            } else {
+              sendPyrightNotification('textDocument/didSave', { textDocument: { uri: currentDocumentUri } });
+            }
+          } else {
+            stopLanguageServers();
+            clearProblems();
+            document.getElementById('status').textContent = hasEditorLanguage(currentFilePath || '') ? 'language: ready' : 'language: plaintext';
+          }
         }
 
         tabManager.render();

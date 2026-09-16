@@ -194,3 +194,13 @@ hr {
   border: 1px solid var(--border-color);
   margin-bottom: 1rem;
 }
+
+.nav-btn {
+  background-color: var(--accent-blue);
+  color: #ffffff !important;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
