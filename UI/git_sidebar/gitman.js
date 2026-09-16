@@ -17,8 +17,12 @@ class GitManager {
                     console.log("[GitManager] OUT: ", stdout);
                     console.log("[GitManager] ERR: ", stderr);
                 }
-                if (err) reject(stderr.trim());
-                else resolve(stdout.trim());
+                if (err) {
+                    const msg = stdout.trim() || stderr.trim();
+                    reject(msg);
+                    return;
+                }
+                resolve(stdout.trim());
             });
         });
     }
@@ -32,7 +36,8 @@ class GitManager {
     }
 
     async commit(message) { // Function to handle git commit -m ""
-        return this.run(`git commit -m "${message}"`);
+        const safe = message.replace(/"/g, '\\"'); // Escape double quotes and special chars in commit mesages.
+        return this.run(`git commit -m "${safe}"`);
     }
 
     async status() { // Function to handle git status
@@ -49,6 +54,10 @@ class GitManager {
 
     async branch(name) { // Function to handle git branch
         return this.run(`git branch ${name}`);
+    }
+
+    async switch(name) { // Function to handle git switch branch
+        return this.run(`git switch ${name}`);
     }
 }
 
