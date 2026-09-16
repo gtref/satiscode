@@ -5,7 +5,7 @@ class StatusStub {
         }
 
         return raw.split("\n").map(line => {
-            const code = line.slice(0, 2).trim();
+            const code = line.slice(0, 2);
             const file = line.slice(2).trim();
             return { code, file };
         });
@@ -14,9 +14,9 @@ class StatusStub {
 
 class BranchStub {
     static parse(raw) {
-        const lines = raw.split("\n").filter(Bolean);
+        const lines = raw.split("\n").filter(Boolean);
 
-        let curr = null;
+        let current = null;
         const branches = [];
 
         for (const line of lines) {

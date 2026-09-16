@@ -27,6 +27,24 @@ class GitManager {
         });
     }
 
+    runGit(operation, name) {
+        return new Promise((resolve, reject) => {
+            execFile("git", [operation, name], { cwd: this.cwd }, (err, stdout, stderr) => {
+                if (this.verbose) {
+                    console.log("[GitManager] CMD: ", "git", operation, name);
+                    console.log("[GitManager] OUT: ", stdout);
+                    console.log("[GitManager] ERR: ", stderr);
+                }
+                if (err) {
+                    const msg = stdout.trim() || stderr.trim();
+                    reject(msg);
+                    return;
+                }
+                resolve(stdout.trim());
+            });
+        });
+    }
+
     async init() { // Function to handle git init
         return this.run("git init");
     }
@@ -66,11 +84,11 @@ class GitManager {
     }
 
     async branch(name) { // Function to handle git branch
-        return this.run(`git branch ${name}`);
+        return this.runGit("branch", name);
     }
 
     async switch(name) { // Function to handle git switch branch
-        return this.run(`git switch ${name}`);
+        return this.runGit("switch", name);
     }
 }
 
