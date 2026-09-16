@@ -28,7 +28,8 @@
   },
   "devDependencies": {
     "electron": "^44.3.0",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "eslint": "^10.10.0"
   },
   "overrides": {
     "dompurify": "^3.4.13"
