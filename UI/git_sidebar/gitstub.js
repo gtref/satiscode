@@ -31,7 +31,20 @@ class BranchStub {
     }
 }
 
+class LogStub {
+    static parse(raw) {
+        if (!raw.trim()) return [];
+
+        return raw.split("\n").filter(Boolean).map(line => {
+            const [hash, author, message, date] = line.split("|");
+            return { hash, author, message, date };
+        });
+    }
+}
+
+
 module.exports = {
     StatusStub,
-    BranchStub
+    BranchStub,
+    LogStub
 }
