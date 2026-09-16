@@ -578,3 +578,25 @@ body {
   outline: 2px solid var(--vscode-focus-border);
   outline-offset: -2px;
 }
+
+.git_bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  background-color: var(--vscode-toolbar-bg);
+  border-top: 1px solid var(--vscode-border);
+}
+
+.init_btn {
+  background-color: transparent;
+  color: var(--vscode-text-main);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
