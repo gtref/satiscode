@@ -100,6 +100,18 @@
   <script>
     require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' } });
 
+window.MonacoEnvironment = {
+  getWorkerUrl: function (moduleId, label) {
+    const code = `
+      self.MonacoEnvironment = { baseUrl: './node_modules/monaco-editor/min/' };
+      importScripts('./node_modules/monaco-editor/min/vs/base/worker/workerMain.js');
+    `;
+    const blob = new Blob([code], { type: 'application/javascript' });
+    return URL.createObjectURL(blob);
+  }
+};
+
+
     require(['vs/editor/editor.main'], function (monaco) {
       window.monaco = monaco;
 
