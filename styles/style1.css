@@ -600,3 +600,15 @@ body {
   cursor: pointer;
   transition: background-color 0.15s ease;
 }
+
+.add_btn {
+  background-color: transparent;
+  color: var(--vscode-text-main);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: var(--font-ui);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}

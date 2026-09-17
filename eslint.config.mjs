@@ -12,8 +12,9 @@ export default defineConfig([
             "preload/**/*.js",
             "backend/**/*.js",
             "git/**/*.js",
-            "UI/git_sidebar/gitman.js",
-            "UI/git_sidebar/gitstub.js"
+            "UI/git_sidebar/**.js",
+            "UI/codebase_indexer/**.js",
+            "UI/tab_manager/**.js"
         ],
         extends: [js.configs.recommended],
         languageOptions: {
