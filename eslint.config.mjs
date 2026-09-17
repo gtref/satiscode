@@ -14,7 +14,8 @@ export default defineConfig([
             "git/**/*.js",
             "UI/git_sidebar/**.js",
             "UI/codebase_indexer/**.js",
-            "UI/tab_manager/**.js"
+            "UI/tab_manager/**.js",
+            "patchgen.js"
         ],
         extends: [js.configs.recommended],
         languageOptions: {
