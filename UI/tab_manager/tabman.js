@@ -139,3 +139,6 @@ function escapeHtml(value) {
     '"': '&quot;'
   }[char]));
 }
+
+// TODO: Needs fixing so module exports work.
+// module.exports = TabManager;

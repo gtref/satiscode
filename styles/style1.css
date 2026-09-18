@@ -195,6 +195,20 @@ body {
   padding-left: 0;
 }
 
+#git-sidebar {
+  width: min(260px, 28vw);
+  min-width: 190px;
+  padding: 10px;
+  background-color: var(--vscode-sidebar-bg);
+  border-right: 1px solid var(--vscode-border);
+  overflow-y: auto;
+}
+
+#git-sidebar input,
+#git-sidebar button {
+  width: 100%;
+}
+
 .tree-entry {
   display: flex;
   align-items: center;
@@ -577,4 +591,37 @@ body {
 .add-tab-btn:focus-visible {
   outline: 2px solid var(--vscode-focus-border);
   outline-offset: -2px;
+}
+
+.git-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.git-title { margin: 0; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.git-message { margin: 0; padding: 7px; border-radius: 3px; color: var(--vscode-text-muted); overflow-wrap: anywhere; }
+.git-message--success { color: #89d185; }
+.git-message--error { color: #f48771; }
+.git-message--loading { color: var(--vscode-text-main); }
+.git-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+.git-panel button, .git-commit-input { box-sizing: border-box; min-height: 30px; border: 1px solid var(--vscode-border); border-radius: 4px; padding: 5px 8px; font: 12px var(--font-ui); }
+.git-panel button { background-color: var(--vscode-toolbar-bg); color: var(--vscode-text-main); cursor: pointer; }
+.git-panel button:hover:not(:disabled) { background-color: var(--vscode-hover-item); }
+.git-panel button:disabled { cursor: default; opacity: 0.5; }
+.git-panel button:focus-visible, .git-commit-input:focus-visible { outline: 2px solid var(--vscode-focus-border); outline-offset: 1px; }
+.git-commit-input {
+  background: var(--vscode-editor-bg);
+  color: var(--vscode-text-main);
+}
+.git-status-list { margin: 4px 0 0; padding: 0; list-style: none; overflow-y: auto; }
+.git-status-entry { display: flex; gap: 8px; padding: 5px 2px; min-width: 0; }
+.git-status-code { flex: 0 0 22px; color: #cca700; font-family: monospace; }
+.git-status-file { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.git-clean { color: var(--vscode-text-muted); padding: 6px 2px; }
+
+@media (max-width: 760px) {
+  #git-sidebar { width: 190px; min-width: 160px; padding: 7px; }
+  .git-actions { grid-template-columns: 1fr; }
 }
