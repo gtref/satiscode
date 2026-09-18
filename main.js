@@ -3,6 +3,7 @@ const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
+const { runGitRequest } = require('./main/git-service');
 
 let clangdProcess = null;
 let clangdBuffer = Buffer.alloc(0);
@@ -320,6 +321,8 @@ ipcMain.handle('directory:list', async (_event, directoryPath) => {
     .map((entry) => ({ name: entry.name, path: path.join(directoryPath, entry.name), isDirectory: entry.isDirectory() }))
     .sort((left, right) => Number(right.isDirectory) - Number(left.isDirectory) || left.name.localeCompare(right.name));
 });
+
+ipcMain.handle('git:run', (_event, request) => runGitRequest(request));
 
 ipcMain.handle('clangd:start', (event, rootPath) => startClangd(event, rootPath));
 ipcMain.on('clangd:message', (_event, message) => sendToClangd(message));

@@ -1,94 +1,47 @@
-const { exec, execFile } = require("child_process");
-
 class GitManager {
     constructor(options = {}) {
-        // Directory where Git commands will run
-        this.cwd = options.cwd || process.cwd();
-
-        // Optional: enable verbose logging
-        this.verbose = options.verbose || false;
+        this.api = options.api;
+        this.workspace = options.workspace || null;
     }
 
-    run(cmd) {
-        return new Promise((resolve, reject) => {
-            exec(cmd, { cwd: this.cwd }, (err, stdout, stderr) => {
-                if (this.verbose) {
-                    console.log("[GitManager] CMD: ", cmd);
-                    console.log("[GitManager] OUT: ", stdout);
-                    console.log("[GitManager] ERR: ", stderr);
-                }
-                if (err) {
-                    const msg = stdout.trim() || stderr.trim();
-                    reject(msg);
-                    return;
-                }
-                resolve(stdout.trim());
-            });
-        });
+    setWorkspace(workspace) {
+        this.workspace = workspace || null;
     }
 
-    runGit(operation, name) {
-        return new Promise((resolve, reject) => {
-            execFile("git", [operation, name], { cwd: this.cwd }, (err, stdout, stderr) => {
-                if (this.verbose) {
-                    console.log("[GitManager] CMD: ", "git", operation, name);
-                    console.log("[GitManager] OUT: ", stdout);
-                    console.log("[GitManager] ERR: ", stderr);
-                }
-                if (err) {
-                    const msg = stdout.trim() || stderr.trim();
-                    reject(msg);
-                    return;
-                }
-                resolve(stdout.trim());
-            });
-        });
+    async run(operation, ...args) {
+        if (!this.workspace) throw new Error('Open a folder to use Git.');
+        if (!this.api || typeof this.api.run !== 'function') throw new Error('Git API is unavailable.');
+        const result = await this.api.run(operation, this.workspace, args);
+        if (!result.ok) {
+            const error = new Error(result.stderr || result.stdout || 'Git command failed.');
+            error.code = result.code;
+            throw error;
+        }
+        return result.stdout;
     }
 
-    async init() { // Function to handle git init
-        return this.run("git init");
+    async init() {
+        return this.run('init');
     }
 
-    async addAll() { // Function to handle git add .
-        return this.run("git add .");
+    async addAll() {
+        return this.run('addAll');
     }
 
-    async commit(message) { // Function to handle git commit -m ""
-        return new Promise((resolve, reject) => {
-            execFile("git", ["commit", "-m", message], { cwd: this.cwd }, (err, stdout, stderr) => {
-                if (this.verbose) {
-                    console.log("[GitManager] CMD: ", "git commit -m", message);
-                    console.log("[GitManager] OUT: ", stdout);
-                    console.log("[GitManager] ERR: ", stderr);
-                }
-                if (err) {
-                    const msg = stdout.trim() || stderr.trim();
-                    reject(msg);
-                    return;
-                }
-                resolve(stdout.trim());
-            });
-        });
+    async commit(message) {
+        return this.run('commit', message);
     }
 
-    async status() { // Function to handle git status
-        return this.run("git status --short");
+    async status() {
+        return this.run('status');
     }
 
-    async push() { // Function to handle git push
-        return this.run("git push");
+    async push() {
+        return this.run('push');
     }
 
-    async pull() { // Function to handle git pull
-        return this.run("git pull");
-    }
-
-    async branch(name) { // Function to handle git branch
-        return this.runGit("branch", name);
-    }
-
-    async switch(name) { // Function to handle git switch branch
-        return this.runGit("switch", name);
+    async pull() {
+        return this.run('pull');
     }
 }
 

@@ -456,8 +456,13 @@ window.MonacoEnvironment = {
   tabManager.onNewTabRequest = () => createNewTab();
 
       async function refreshFileTree(directoryPath) {
-      if (!directoryPath) return;
+      if (!directoryPath) {
+        currentDirectory = null;
+        await window.api.setGitWorkspace(null);
+        return;
+      }
       currentDirectory = directoryPath;
+      await window.api.setGitWorkspace(directoryPath);
       await renderDirectory(directoryPath, document.getElementById('tree-root'));
     }
 
