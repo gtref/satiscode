@@ -87,3 +87,15 @@ Use short, imperative messages such as:
 - `Refactor LSP routing`
 
 Commit messages should describe *what* and *why*, not *how*.
+
+### AI-Assisted Code Policy
+
+If any part of a commit contains code generated or significantly influenced by an AI system, the commit **must** include the following Git trailer:
+
+Co-authored-by: AI Assistant <ai@example.com>
+
+Rules:
+- The developer must write the commit message themselves.
+- The trailer must appear at the bottom of the commit message.
+- There must be one blank line before trailers.
+- Use the exact casing and punctuation shown above.
