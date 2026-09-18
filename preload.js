@@ -1,16 +1,15 @@
-const { contextBridge, ipcRenderer, webUtils } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 const { indexer } = require('./UI/codebase_indexer/cb_index');
 const { GitUi } = require('./UI/git_sidebar/gitui');
 
+let gitUi = null;
+const gitApi = { run: (operation, workspace, args = []) => ipcRenderer.invoke('git:run', { operation, workspace, args }) };
+
 globalThis.addEventListener('DOMContentLoaded', () => {
   const container = globalThis.document.getElementById('git-sidebar-mount');
-  const gitBar = {
-    getPathForFile: (file) => webUtils.getPathForFile(file)
-  };
-
-  const gitUi = new GitUi(container, gitBar);
+  gitUi = new GitUi(container, { gitApi });
   gitUi.render();
-  gitUi.init_listners();
+  gitUi.initListeners();
 });
 
 contextBridge.exposeInMainWorld('api', {
@@ -20,6 +19,13 @@ contextBridge.exposeInMainWorld('api', {
   saveFile: (data) => ipcRenderer.invoke('file:save', data),
   listDirectory: (directoryPath) => ipcRenderer.invoke('directory:list', directoryPath),
   openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
+  setGitWorkspace: (workspace) => gitUi?.setWorkspace(workspace),
+  gitStatus: (workspace) => gitApi.run('status', workspace),
+  gitInit: (workspace) => gitApi.run('init', workspace),
+  gitAddAll: (workspace) => gitApi.run('addAll', workspace),
+  gitCommit: (workspace, message) => gitApi.run('commit', workspace, [message]),
+  gitPull: (workspace) => gitApi.run('pull', workspace),
+  gitPush: (workspace) => gitApi.run('push', workspace),
 
   updateCodebaseIndex: (documentId, text) => indexer.updateActiveDocument(documentId, text),
   queryCodebaseGhostText: (prefix) => indexer.queryGhostText(prefix),

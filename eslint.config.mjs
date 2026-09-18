@@ -13,8 +13,7 @@ export default defineConfig([
             "backend/**/*.js",
             "git/**/*.js",
             "UI/git_sidebar/**.js",
-            "UI/codebase_indexer/**.js",
-            "UI/tab_manager/**.js",
+            "UI/codebase_indexer/cb_index.js",
             "patchgen.js"
         ],
         extends: [js.configs.recommended],
@@ -31,6 +30,24 @@ export default defineConfig([
                 ipcRenderer: "readonly",
                 contextBridge: "readonly"
             }
+        }
+    },
+
+    {
+        files: ["UI/codebase_indexer/editor_integration.js"],
+        extends: [js.configs.recommended],
+        languageOptions: {
+            sourceType: "commonjs",
+            globals: { ...globals.node, ...globals.browser }
+        }
+    },
+
+    {
+        files: ["UI/tab_manager/**/*.js"],
+        extends: [js.configs.recommended],
+        languageOptions: {
+            sourceType: "module",
+            globals: { ...globals.browser }
         }
     },
 

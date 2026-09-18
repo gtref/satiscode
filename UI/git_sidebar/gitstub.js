@@ -1,10 +1,10 @@
 class StatusStub {
     static parse(raw) {
-        if (!raw.trim()) {
+        if (!raw || !raw.trim()) {
             return [];
         }
 
-        return raw.split("\n").map(line => {
+        return raw.split(/\r?\n/).filter(Boolean).map(line => {
             const code = line.slice(0, 2);
             const file = line.slice(2).trim();
             return { code, file };
@@ -47,4 +47,4 @@ module.exports = {
     StatusStub,
     BranchStub,
     LogStub
-}
+};
