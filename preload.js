@@ -1,5 +1,17 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 const { indexer } = require('./UI/codebase_indexer/cb_index');
+const { GitUi } = require('./UI/git_sidebar/gitui');
+
+globalThis.addEventListener('DOMContentLoaded', () => {
+  const container = globalThis.document.getElementById('git-sidebar-mount');
+  const gitBar = {
+    getPathForFile: (file) => webUtils.getPathForFile(file)
+  };
+
+  const gitUi = new GitUi(container, gitBar);
+  gitUi.render();
+  gitUi.init_listners();
+});
 
 contextBridge.exposeInMainWorld('api', {
   openFile: () => ipcRenderer.invoke('dialog:openFile'),

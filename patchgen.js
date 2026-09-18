@@ -1,7 +1,7 @@
-import fs from "fs";
-import path from "path";
+const fs = require("fs");
+const path = require("path");
 
-export function generateUnifiedDiff(oldFile, newFile) {
+function generateUnifiedDiff(oldFile, newFile) {
   const oldText = fs.readFileSync(oldFile, "utf8").split("\n");
   const newText = fs.readFileSync(newFile, "utf8").split("\n");
 
@@ -34,7 +34,7 @@ export function generateUnifiedDiff(oldFile, newFile) {
 
     // Old line removed
     if (oldLine !== undefined) {
-      patch += `@@ -${i + 1} +${j} @@\n`;
+      patch += `@@ -${i + 1},1 +${j},0 @@\n`;
       patch += `-${oldLine}\n`;
       i++;
       continue;
@@ -42,7 +42,7 @@ export function generateUnifiedDiff(oldFile, newFile) {
 
     // New line added
     if (newLine !== undefined) {
-      patch += `@@ -${i} +${j + 1} @@\n`;
+      patch += `@@ -${i},0 +${j + 1},1 @@\n`;
       patch += `+${newLine}\n`;
       j++;
       continue;
@@ -51,3 +51,5 @@ export function generateUnifiedDiff(oldFile, newFile) {
 
   return patch;
 }
+
+module.exports = { generateUnifiedDiff };
