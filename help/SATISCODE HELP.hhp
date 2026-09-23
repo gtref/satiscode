@@ -1,0 +1,19 @@
+[OPTIONS]
+Compatibility=1.1 or later
+Compiled file=SATISCODE HELP.chm
+Contents file=Table of Contents.hhc
+Default Font=@Meiryo UI,8,0
+Default topic=index.htm
+Display compile progress=No
+Index file=Index.hhk
+Language=0x1409 English (New Zealand)
+Title=SATISCODE
+
+[FILES]
+index.htm
+general.htm
+Languages.htm
+Keybinds.htm
+style.css
+
+[INFOTYPES]

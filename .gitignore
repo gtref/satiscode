@@ -3,5 +3,4 @@ dist
 lib
 bin
 .vscode
-help
 PythonLSP
