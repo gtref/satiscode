@@ -29,7 +29,7 @@ The editor remains usable when clangd is unavailable, but C/C++ language service
 > Please NOTE That from satiscode 1.2.0 onwards LLVM does not need to be installed. All new builds will contain clangd and its librarys and later there will be instructions for local testing.
 
 >[!NOTE]
-> Please note that version 1.5.0 onwards will need python to be installed.
+> Please note that version 1.5.0 onwards will need python to be installed to use python linting.
 
 ## Development
 
