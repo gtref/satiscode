@@ -3,6 +3,16 @@
 # Satiscode
 
 
+## [![Repography logo](https://images.repography.com/logo.svg)](https://repography.com) / Recent activity [![Time period](https://images.repography.com/166409166/gtref/satiscode/recent-activity/WJhcF1eUCd2tNOMMgJ4MczIjznf4cP5aFriV19j3t8M/8yZyspekiq7tNPgadxNln3ZK6CBAm-4nsXQ3aPOOJOA_badge.svg)](https://repography.com)
+[![Timeline graph](https://images.repography.com/166409166/gtref/satiscode/recent-activity/WJhcF1eUCd2tNOMMgJ4MczIjznf4cP5aFriV19j3t8M/8yZyspekiq7tNPgadxNln3ZK6CBAm-4nsXQ3aPOOJOA_timeline.svg)](https://github.com/gtref/satiscode/commits)
+[![Issue status graph](https://images.repography.com/166409166/gtref/satiscode/recent-activity/WJhcF1eUCd2tNOMMgJ4MczIjznf4cP5aFriV19j3t8M/8yZyspekiq7tNPgadxNln3ZK6CBAm-4nsXQ3aPOOJOA_issues.svg)](https://github.com/gtref/satiscode/issues)
+[![Pull request status graph](https://images.repography.com/166409166/gtref/satiscode/recent-activity/WJhcF1eUCd2tNOMMgJ4MczIjznf4cP5aFriV19j3t8M/8yZyspekiq7tNPgadxNln3ZK6CBAm-4nsXQ3aPOOJOA_prs.svg)](https://github.com/gtref/satiscode/pulls)
+[![Trending topics](https://images.repography.com/166409166/gtref/satiscode/recent-activity/WJhcF1eUCd2tNOMMgJ4MczIjznf4cP5aFriV19j3t8M/8yZyspekiq7tNPgadxNln3ZK6CBAm-4nsXQ3aPOOJOA_words.svg)](https://github.com/gtref/satiscode/commits)
+[![Top contributors](https://images.repography.com/166409166/gtref/satiscode/recent-activity/WJhcF1eUCd2tNOMMgJ4MczIjznf4cP5aFriV19j3t8M/8yZyspekiq7tNPgadxNln3ZK6CBAm-4nsXQ3aPOOJOA_users.svg)](https://github.com/gtref/satiscode/graphs/contributors)
+
+
+
+
 Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Editor, and clangd.
 
 ## Features
