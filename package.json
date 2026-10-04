@@ -25,7 +25,7 @@
   "dependencies": {
     "monaco-editor": "0.57.0",
     "monaco-languageclient": "^11.0.2",
-    "vscode-ws-jsonrpc": "^3.5.0"
+    "vscode-ws-jsonrpc": "^4.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
