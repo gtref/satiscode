@@ -50,6 +50,7 @@
       "UI/codebase_indexer/**/*",
       "package.json",
       "icons.js",
+      "icons/**/*",
       "UI/**/*",
       "node_modules/**/*",
       "styles/**/*",

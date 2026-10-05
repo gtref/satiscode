@@ -5,7 +5,7 @@
 - Added a git sidebar
 - Added pyright python language server
 - Added sidebar.
-- Update patch generation api
+- Removed patch generation API
 - Update the pyright python `PATH`
 
 ## [1.4.0](https://github.com/gtref/satiscode/releases/tag/v1.4.0) - 2026-09-15
