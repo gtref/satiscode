@@ -1,4 +1,5 @@
 const assert = require('node:assert/strict');
+const path = require('node:path');
 const test = require('node:test');
 const { runGitRequest, validateGitRequest } = require('./git-service');
 
@@ -12,7 +13,23 @@ test('accepts allowlisted operations and rejects unsupported operations', async 
 test('uses the selected workspace as cwd and keeps commit arguments separate', async () => {
   let invocation;
   const executor = (...args) => { invocation = args.slice(0, 3); args[3](null, 'committed\n', ''); };
-  const result = await runGitRequest({ operation: 'commit', workspace: '/selected/project', args: ['fix; echo unsafe'] }, executor);
+  const workspace = path.resolve(path.sep, 'selected', 'project');
+  const result = await runGitRequest({ operation: 'commit', workspace, args: ['fix; echo unsafe'] }, executor);
   assert.equal(result.ok, true);
-  assert.deepEqual(invocation, ['git', ['commit', '-m', 'fix; echo unsafe'], { cwd: '/selected/project' }]);
+  assert.deepEqual(invocation, ['git', ['commit', '-m', 'fix; echo unsafe'], { cwd: workspace }]);
+});
+
+test('creates a safely scoped Git blame request for an absolute file path', () => {
+  const workspace = path.resolve(path.sep, 'selected', 'project');
+  const filePath = path.join(workspace, 'src', 'file.js');
+  assert.deepEqual(validateGitRequest({ operation: 'blame', workspace, args: [filePath] }), {
+    workspace,
+    gitArgs: ['blame', '--date=short', '--', path.join('src', 'file.js')]
+  });
+});
+
+test('rejects Git blame paths outside the selected workspace', () => {
+  const workspace = path.resolve(path.sep, 'selected', 'project');
+  const outsideFile = path.resolve(workspace, '..', 'outside.js');
+  assert.throws(() => validateGitRequest({ operation: 'blame', workspace, args: [outsideFile] }), /inside the selected workspace/);
 });

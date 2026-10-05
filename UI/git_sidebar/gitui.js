@@ -30,8 +30,6 @@ class GitUi {
     });
   }
 
-  init_listners() { this.initListeners(); }
-
   async handleClick(event) {
     const action = event.target.dataset?.gitAction;
     if (!action) return;

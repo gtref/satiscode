@@ -1,6 +1,6 @@
 {
   "name": "satiscode",
-  "version": "1.7.0",
+  "version": "1.8.0",
   "description": "A lightweight C/C++ and Python editor powered by Monaco, clangd, and Pyright.",
   "main": "main.js",
   "scripts": {
@@ -50,15 +50,14 @@
       "UI/codebase_indexer/**/*",
       "package.json",
       "icons.js",
+      "icons/**/*",
       "UI/**/*",
       "node_modules/**/*",
       "styles/**/*",
-      "icons/**/*",
       "themes/**/*",
       "help/SATISCODE HELP.chm",
       "themes.js",
-      "main/**/*",
-      "patchgen.js"
+      "main/**/*"
     ],
     "extraResources": [
       {

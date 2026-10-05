@@ -45,6 +45,7 @@
     <button id="open-folder-btn">Open Folder</button>
     <button id="save-btn" data-i18n="saveFile">Save</button>
     <button id="save-as-btn" data-i18n="saveAs">Save As</button>
+    <button id="git-blame-btn" title="Show Git blame for the active file" aria-label="Show Git blame">⑂ Blame</button>
     <button id="find-btn" data-i18n="find">Find</button>
     <button id="exit-btn" data-i18n="exit">Exit</button>
     <div id="source-language-menu">
@@ -65,7 +66,7 @@
     <select id="theme-select" aria-label="Interface Theme">
       <option value="dark">Dark Theme</option>
       <option value="light">Light Theme</option>
-      <!--<option value="hc">High Contrast</option>-->
+      <option value="high_contrast">High Contrast</option>
     </select>
     <select id="language-select" aria-label="Interface language">
       <option value="en">English</option>
@@ -78,11 +79,15 @@
     </span>
   </div>
   <div id="content">
+    <nav id="activity-bar" aria-label="Sidebar views">
+      <button class="activity-button" type="button" data-sidebar-target="file-tree" aria-label="Explorer" title="Explorer" aria-pressed="true">▤</button>
+      <button class="activity-button" type="button" data-sidebar-target="git-sidebar" aria-label="Source Control" title="Source Control" aria-pressed="false">⑂</button>
+    </nav>
     <aside id="file-tree">
       <div id="tree-header" data-i18n="explorer">Explorer</div>
       <div id="tree-root"></div>
     </aside>
-    <aside id="git-sidebar" aria-label="Git controls">
+    <aside id="git-sidebar" aria-label="Git controls" hidden>
       <div id="git-sidebar-mount"></div>
     </aside>
     <div id="workspace">
@@ -102,18 +107,6 @@
   <script src="node_modules/monaco-editor/min/vs/loader.js"></script>
   <script>
     require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' } });
-
-window.MonacoEnvironment = {
-  getWorkerUrl: function (moduleId, label) {
-    const code = `
-      self.MonacoEnvironment = { baseUrl: './node_modules/monaco-editor/min/' };
-      importScripts('./node_modules/monaco-editor/min/vs/base/worker/workerMain.js');
-    `;
-    const blob = new Blob([code], { type: 'application/javascript' });
-    return URL.createObjectURL(blob);
-  }
-};
-
 
     require(['vs/editor/editor.main'], function (monaco) {
       window.monaco = monaco;
@@ -136,6 +129,20 @@ window.MonacoEnvironment = {
           currentDirectory = folderPath;
           await refreshFileTree(folderPath);
         }
+      });
+
+      document.querySelectorAll('[data-sidebar-target]').forEach((button) => {
+        button.addEventListener('click', () => {
+          const target = document.getElementById(button.dataset.sidebarTarget);
+          const shouldShow = target.hidden;
+          document.querySelectorAll('#file-tree, #git-sidebar').forEach((panel) => {
+            panel.hidden = panel !== target || !shouldShow;
+          });
+          document.querySelectorAll('[data-sidebar-target]').forEach((item) => {
+            item.setAttribute('aria-pressed', String(shouldShow && item === button));
+          });
+          requestAnimationFrame(() => window.editor?.layout());
+        });
       });
 
       let currentFilePath = null;
@@ -181,6 +188,13 @@ window.MonacoEnvironment = {
       const pathToUri = (filePath) => {
         const normalized = filePath.replace(/\\/g, '/');
         return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
+      };
+      const normalizeDocumentUri = (uri) => {
+        try {
+          return decodeURIComponent(uri).replace(/\\/g, '/').toLowerCase();
+        } catch {
+          return uri.replace(/\\/g, '/').toLowerCase();
+        }
       };
       const virtualDocumentUri = (workspacePath, language) => {
         const ext = language === 'c' ? 'c' : language === 'cpp' ? 'cpp' : language === 'python' ? 'py' : 'txt';
@@ -511,8 +525,17 @@ window.MonacoEnvironment = {
 
       function sendPyrightRequest(method, params) {
         const id = ++pyrightRequestId;
-        window.api.sendPyrightMessage({ jsonrpc: '2.0', id, method, params });
-        return new Promise((resolve, reject) => pyrightPendingRequests.set(id, { resolve, reject }));
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            pyrightPendingRequests.delete(id);
+            reject(new Error(`Pyright request timed out: ${method}`));
+          }, 15000);
+          pyrightPendingRequests.set(id, {
+            resolve: (result) => { clearTimeout(timeout); resolve(result); },
+            reject: (error) => { clearTimeout(timeout); reject(error); }
+          });
+          window.api.sendPyrightMessage({ jsonrpc: '2.0', id, method, params });
+        });
       }
 
       function sendPyrightNotification(method, params) {
@@ -590,6 +613,7 @@ window.MonacoEnvironment = {
             textDocument: { uri: currentDocumentUri, languageId: language, version: documentVersion, text: window.editor.getValue() }
           });
           document.getElementById('status').textContent = 'pyright: ready';
+          console.info(`Pyright ready for ${currentDocumentUri}`);
         }).catch((error) => {
           pyrightStarted = false;
           console.warn(`pyright is unavailable. Python editing will continue without language services: ${error.message || error}`);
@@ -602,14 +626,6 @@ window.MonacoEnvironment = {
         if (isActivePythonLanguage()) return startPyrightServer();
       }
 
-    const monacoBaseUrl = new URL('node_modules/monaco-editor/min/', window.location.href).href;
-    window.MonacoEnvironment = {
-      getWorkerUrl: () => `data:text/javascript;charset=utf-8,${encodeURIComponent(`
-        self.MonacoEnvironment = { baseUrl: '${monacoBaseUrl}' };
-        importScripts('${monacoBaseUrl}vs/base/worker/workerMain.js');
-      `)}`
-    };
-    require.config({ paths: { 'vs': `${monacoBaseUrl}vs` }});
     require(['vs/editor/editor.main'], function() {
       const MONACO_THEME_MAP = { dark: 'vs-dark', light: 'vs' };
       const savedThemeId = localStorage.getItem('satiscode-theme') || 'dark';
@@ -657,7 +673,7 @@ window.MonacoEnvironment = {
         }
         if (message.method === 'textDocument/publishDiagnostics') {
           const diagUri = message.params?.uri;
-          if (currentDocumentUri && diagUri && diagUri.toLowerCase() !== currentDocumentUri.toLowerCase()) {
+          if (currentDocumentUri && diagUri && normalizeDocumentUri(diagUri) !== normalizeDocumentUri(currentDocumentUri)) {
             return;
           }
           currentProblems = (message.params?.diagnostics || []).map((diagnostic) => ({
@@ -680,6 +696,9 @@ window.MonacoEnvironment = {
       window.api.onPyrightStderr((message) => console.warn(`pyright: ${message.trim()}`));
       window.api.onPyrightExit(() => {
         pyrightStarted = false;
+        const error = new Error('Pyright exited before completing its requests.');
+        pyrightPendingRequests.forEach((request) => request.reject(error));
+        pyrightPendingRequests.clear();
       });
       applyInterfaceLanguage('en');
       updateSourceLanguageLabel();
@@ -865,6 +884,25 @@ window.MonacoEnvironment = {
       document.getElementById('save-as-btn').addEventListener('click', async () => {
         const savedPath = await window.api.saveFile({ filePath: null, content: window.editor.getValue() });
         if (savedPath) await openLoadedFile({ path: savedPath, content: window.editor.getValue() });
+      });
+
+      document.getElementById('git-blame-btn').addEventListener('click', async () => {
+        if (!currentFilePath) {
+          document.getElementById('status').textContent = 'git blame: open a saved file first';
+          return;
+        }
+        try {
+          const lastSeparator = Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'));
+          const workspace = currentFilePath.slice(0, lastSeparator);
+          const result = await window.api.gitBlame(workspace, currentFilePath);
+          if (!result.ok) throw new Error(result.stderr || result.stdout || 'Git blame failed.');
+          const fileName = currentFilePath.slice(lastSeparator + 1);
+          document.getElementById('blame-title').textContent = `Git Blame: ${fileName}`;
+          document.getElementById('blame-output').textContent = result.stdout || 'No blame data.';
+          document.getElementById('blame-dialog').showModal();
+        } catch (error) {
+          document.getElementById('status').textContent = `git blame: ${error.message || error}`;
+        }
       });
 
       document.getElementById('language-select').addEventListener('change', (event) => applyInterfaceLanguage(event.target.value));
@@ -1073,6 +1111,19 @@ window.MonacoEnvironment = {
     <span id="find-match-count"></span>
     <button id="find-close-btn" aria-label="Close">✕</button>
   </div>
+
+  <dialog id="blame-dialog" aria-labelledby="blame-title">
+    <header class="blame-header">
+      <h2 id="blame-title">Git Blame</h2>
+      <button id="blame-close-btn" type="button" aria-label="Close Git blame">×</button>
+    </header>
+    <pre id="blame-output"></pre>
+  </dialog>
+  <script>
+    document.getElementById('blame-close-btn').addEventListener('click', () => {
+      document.getElementById('blame-dialog').close();
+    });
+  </script>
 
 </body>
 </html>

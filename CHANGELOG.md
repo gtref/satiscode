@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.8.0](https://github.com/gtref/satiscode/releases/tag/v1.8.0) - 2026-10-04
+
+- Added a git sidebar
+- Added pyright python language server
+- Added sidebar.
+- Removed patch generation API
+- Update the pyright python `PATH`
+
 ## [1.4.0](https://github.com/gtref/satiscode/releases/tag/v1.4.0) - 2026-09-15
 
 - Added Tab manager
