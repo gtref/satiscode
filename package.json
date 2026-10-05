@@ -53,12 +53,10 @@
       "UI/**/*",
       "node_modules/**/*",
       "styles/**/*",
-      "icons/**/*",
       "themes/**/*",
       "help/SATISCODE HELP.chm",
       "themes.js",
-      "main/**/*",
-      "patchgen.js"
+      "main/**/*"
     ],
     "extraResources": [
       {

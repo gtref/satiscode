@@ -14,6 +14,15 @@ function validateGitRequest(request) {
     if (args.length !== 1 || !args[0].trim() || args[0].length > 1000) throw new Error('A commit message is required.');
     return { workspace: path.resolve(workspace), gitArgs: ['commit', '-m', args[0]] };
   }
+  if (operation === 'blame') {
+    if (args.length !== 1 || !path.isAbsolute(args[0])) throw new Error('An absolute file path is required for Git blame.');
+    const resolvedWorkspace = path.resolve(workspace);
+    const filePath = path.relative(resolvedWorkspace, path.resolve(args[0]));
+    if (!filePath || filePath === '..' || filePath.startsWith(`..${path.sep}`) || path.isAbsolute(filePath)) {
+      throw new Error('The file must be inside the selected workspace.');
+    }
+    return { workspace: resolvedWorkspace, gitArgs: ['blame', '--date=short', '--', filePath] };
+  }
   if (!Object.hasOwn(OPERATIONS, operation) || args.length) throw new Error('Unsupported Git operation.');
   return { workspace: path.resolve(workspace), gitArgs: OPERATIONS[operation] };
 }

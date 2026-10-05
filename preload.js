@@ -1,5 +1,4 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const { indexer } = require('./UI/codebase_indexer/cb_index');
 const { GitUi } = require('./UI/git_sidebar/gitui');
 
 let gitUi = null;
@@ -20,15 +19,7 @@ contextBridge.exposeInMainWorld('api', {
   listDirectory: (directoryPath) => ipcRenderer.invoke('directory:list', directoryPath),
   openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
   setGitWorkspace: (workspace) => gitUi?.setWorkspace(workspace),
-  gitStatus: (workspace) => gitApi.run('status', workspace),
-  gitInit: (workspace) => gitApi.run('init', workspace),
-  gitAddAll: (workspace) => gitApi.run('addAll', workspace),
-  gitCommit: (workspace, message) => gitApi.run('commit', workspace, [message]),
-  gitPull: (workspace) => gitApi.run('pull', workspace),
-  gitPush: (workspace) => gitApi.run('push', workspace),
-
-  updateCodebaseIndex: (documentId, text) => indexer.updateActiveDocument(documentId, text),
-  queryCodebaseGhostText: (prefix) => indexer.queryGhostText(prefix),
+  gitBlame: (workspace, filePath) => gitApi.run('blame', workspace, [filePath]),
 
   exit: () => ipcRenderer.invoke('app:exit'),
 

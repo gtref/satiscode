@@ -182,16 +182,9 @@ function startPyright(event, rootPath) {
   const projectRoot = findPythonProjectRoot(rootPath);
   const pyrightCommand = getPyrightPath();
 
-  // Filter out Windows Store app execution aliases from PATH so dummy stubs do not hijack python lookups
-  const rawPath = process.env.PATH || '';
-  const sanitizedPath = rawPath
-    .split(';')
-    .filter((entry) => !entry.toLowerCase().includes('\\microsoft\\windowsapps'))
-    .join(';');
-
   pyrightProcess = spawn(process.execPath, [pyrightCommand, '--stdio'], {
     cwd: projectRoot,
-    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', PATH: sanitizedPath },
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
     stdio: ['pipe', 'pipe', 'pipe']
   });
 
