@@ -2,7 +2,7 @@ const path = require('node:path');
 const { execFile } = require('node:child_process');
 
 const OPERATIONS = Object.freeze({
-  init: ['init'], status: ['status', '--short'], addAll: ['add', '--all'], pull: ['pull'], push: ['push']
+  init: ['init'], status: ['status', '--short'], log: ['log', '--graph', '--all', '--decorate', '--date=relative', '--format=%x1f%H%x1f%P%x1f%an%x1f%ar%x1f%D%x1f%s', '-n', '40'], addAll: ['add', '--all'], pull: ['pull'], push: ['push']
 });
 
 function validateGitRequest(request) {

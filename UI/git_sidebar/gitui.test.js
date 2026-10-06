@@ -62,6 +62,23 @@ test('actions invoke the expected operation and refresh status', async () => {
   assert.equal(ui.state.messageType, 'success');
 });
 
+test('renders graph-aware, expandable commit history', async () => {
+  const gitman = {
+    setWorkspace() {},
+    status: async () => '',
+    log: async () => '* \x1f0123456789abcdef\x1f\x1fAda Lovelace\x1f2 hours ago\x1fAdd feature\n| * \x1fabcdef9876543210\x1f0123456789abcdef 1111111111111111\x1fGrace Hopper\x1f1 hour ago\x1fMerge branch'
+  };
+  const container = createContainer();
+  const ui = new GitUi(container, { gitman });
+  await ui.setWorkspace('/workspace');
+  assert.equal(ui.state.commits.length, 2);
+  assert.equal(ui.state.commits[1].parents.length, 2);
+  assert.match(container.textContent, /Add feature/);
+  assert.match(container.textContent, /Merge branch/);
+  assert.match(container.textContent, /Parents: 0123456, 1111111/);
+  assert.match(container.textContent, /\| \*/);
+});
+
 test('clearing the workspace clears repository state', async () => {
   const ui = new GitUi(createContainer(), { gitman: { setWorkspace() {}, status: async () => '' } });
   await ui.setWorkspace('/workspace');

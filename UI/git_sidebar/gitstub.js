@@ -33,11 +33,14 @@ class BranchStub {
 
 class LogStub {
     static parse(raw) {
-        if (!raw.trim()) return [];
+        if (!raw || !raw.trim()) return [];
 
-        return raw.split("\n").filter(Boolean).map(line => {
-            const [hash, author, message, date] = line.split("|");
-            return { hash, author, message, date };
+        return raw.split(/\r?\n/).flatMap((line) => {
+            const separator = line.indexOf('\x1f');
+            if (separator < 0) return [];
+            const [hash, parents, author, date, refs, message] = line.slice(separator + 1).split('\x1f');
+            if (!hash || !author) return [];
+            return [{ graph: line.slice(0, separator), hash, parents: parents ? parents.split(' ').filter(Boolean) : [], author, date, refs: refs || '', message }];
         });
     }
 }

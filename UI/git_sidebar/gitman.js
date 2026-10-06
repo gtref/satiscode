@@ -36,6 +36,10 @@ class GitManager {
         return this.run('status');
     }
 
+    async log() {
+        return this.run('log');
+    }
+
     async push() {
         return this.run('push');
     }

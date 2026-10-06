@@ -5,6 +5,7 @@ const { runGitRequest, validateGitRequest } = require('./git-service');
 
 test('accepts allowlisted operations and rejects unsupported operations', async () => {
   assert.deepEqual(validateGitRequest({ operation: 'status', workspace: '/workspace' }).gitArgs, ['status', '--short']);
+  assert.deepEqual(validateGitRequest({ operation: 'log', workspace: '/workspace' }).gitArgs, ['log', '--graph', '--all', '--decorate', '--date=relative', '--format=%x1f%H%x1f%P%x1f%an%x1f%ar%x1f%D%x1f%s', '-n', '40']);
   const result = await runGitRequest({ operation: 'shell', workspace: '/workspace' });
   assert.equal(result.ok, false);
   assert.equal(result.code, 'INVALID_REQUEST');
