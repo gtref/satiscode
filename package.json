@@ -40,6 +40,7 @@
   "build": {
     "appId": "com.satiscode.editor",
     "productName": "Satiscode",
+    "icon": "assets/satiacode.png",
     "directories": {
       "output": "dist"
     },
@@ -50,7 +51,7 @@
       "UI/codebase_indexer/**/*",
       "package.json",
       "icons.js",
-      "icons/**/*",
+      "icons/style1/icons.json",
       "UI/**/*",
       "node_modules/**/*",
       "styles/**/*",

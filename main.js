@@ -248,6 +248,7 @@ function createWindow() {
   const win = new BrowserWindow({
     width: 1200,
     height: 800,
+    icon: path.join(__dirname, 'assets', 'satiacode.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
