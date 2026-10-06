@@ -18,9 +18,10 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 ## Features
 
 - C and C++ language detection by file extension
-- Python syntax highligting.
+- Python language detection by file extention
 - Web language detection for HTML, CSS/SCSS, JavaScript/JSX, TypeScript/TSX, and JSON
 - clangd diagnostics, completion, hover, and go-to-definition
+- PyRight diagnostics, completion, hover and go-to-definition for python
 - VS Code-style Problems panel with clickable diagnostics
 - Resizable Explorer file tree for the current directory
 - New, Open, Save, Save As, and graceful Exit operations
@@ -28,12 +29,15 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 - Keyboard shortcuts for common file operations
 - Windows NSIS installer support
 
-## Requirements
+>[!TIP]
+> [Join the beta](https://satiscorp.wordpress.com)
+
+# Requirements
 
 - Windows 10 or newer
 - Node.js 20 or newer
 
-The editor remains usable when clangd is unavailable, but C/C++ language services will be disabled.
+The editor remains usable when python is unavailable, but PyRight language server will not function correctly.
 
 >[!NOTE]
 > Please NOTE That from satiscode 1.2.0 onwards LLVM does not need to be installed. All new builds will contain clangd and its librarys and later there will be instructions for local testing.
