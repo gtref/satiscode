@@ -53,9 +53,9 @@ npm start
 ```
 
 >[!WARNING]
-> The below file types and language servers are not available in the source but they are included in the builds. So running `npm start` will not start with any language servers, Though the IDE should still function.
+> A clean source checkout runs without clangd or Pyright because their server files are absent; the editor can still open and edit supported file types. Source mode looks for clangd in `bin/` and Pyright in `PythonLSP/` at the repository root. Packaged builds include these files in the application resources and load them from there.
 
-Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. Open a `.py` file to start PyRight server HTML, CSS, JavaScript, TypeScript and JSON files use Monaco's built-in language support without clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
+Opening a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file starts clangd only when its server files are available. Opening a `.py` file starts Pyright only when its server files are available. HTML, CSS, JavaScript, TypeScript, and JSON files use Monaco's built-in language support. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
 
 ## Keyboard shortcuts
 
