@@ -52,7 +52,10 @@ npm install
 npm start
 ```
 
-Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. HTML, CSS, JavaScript, TypeScript, JSON and Python files use Monaco's built-in language support without clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
+>[!WARNING]
+> A clean source checkout runs without clangd or Pyright because their server files are absent; the editor can still open and edit supported file types. Source mode looks for clangd in `bin/` and Pyright in `PythonLSP/` at the repository root. Packaged builds include these files in the application resources and load them from there.
+
+Opening a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file starts clangd only when its server files are available. Opening a `.py` file starts Pyright only when its server files are available. HTML, CSS, JavaScript, TypeScript, and JSON files use Monaco's built-in language support. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
 
 ## Keyboard shortcuts
 
@@ -77,6 +80,7 @@ The installer is written to `dist\Satiscode Setup 1.0.0.exe`. The installer is u
 - `preload.js`: isolated renderer IPC API
 - `index.html`: Monaco editor UI, Explorer, Problems panel, and language-service client
 - `icons.js`: Loads the icon packs located in `icons/`
+- `themes.js`: Loads theme files from the `themes/` directory
 
 ## Security notes
 
