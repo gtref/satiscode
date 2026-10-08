@@ -9,6 +9,19 @@
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 }
 
+/* System Dark Mode Preference */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-color: #0d1117;
+    --card-bg: #161b22;
+    --text-color: #c9d1d9;
+    --border-color: #30363d;
+    --accent-blue: #238636;
+    --accent-hover: #2ea043;
+  }
+}
+
+/* Explicit Dark Theme Attribute */
 [data-theme="dark"] {
   --bg-color: #0d1117;
   --card-bg: #161b22;
@@ -18,49 +31,53 @@
   --accent-hover: #2ea043;
 }
 
-/* Universal Selector: Applies box sizing, fonts, and theme colors globally */
 *, *::before, *::after {
   box-sizing: border-box;
-  font-family: var(--font-sans);
-  color: var(--text-color);
-  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
 }
 
 body {
   background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: var(--font-sans);
   margin: 0;
   padding: 2rem 1rem;
   line-height: 1.6;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .container {
   max-width: 650px;
   margin: 0 auto;
+  width: 100%;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 1rem;
 }
 
 h1 {
   font-size: 2rem;
   margin: 0;
+  line-height: 1.2;
 }
 
-/* Form controls & buttons inherit global font & theme styling automatically */
 button, input, select, textarea {
   font-family: inherit;
 }
 
 .theme-toggle {
   background: transparent;
+  color: var(--text-color);
   border: 1px solid var(--border-color);
   padding: 0.5rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
   font-size: 0.85rem;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
 }
 
 .theme-toggle:hover {
@@ -79,9 +96,13 @@ hr {
   border: 1px solid var(--border-color);
   border-radius: 8px;
   margin-bottom: 1.25rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.intro, .intro * {
+.intro, 
+.features, 
+.release-info, 
+.card.contributors {
   font-family: var(--font-mono);
   font-size: 0.95rem;
 }
@@ -91,27 +112,12 @@ hr {
   margin-bottom: 1rem;
 }
 
-.features * {
-  font-family: var(--font-mono);
-  font-size: 0.95rem;
-}
-
-.release-info * {
-  font-family: var(--font-mono);
-  font-size: 0.98rem;
+.release-info span,
+.release-info div {
   display: inline-block;
 }
 
-/* Contributors card container */
-.card.contributors {
-  padding: 1.25rem 1.5rem;
-  border-radius: 8px;
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  font-family: var(--font-mono);
-}
-
-/* Contributors list */
+/* Contributors */
 #contributors {
   margin-top: 0.75rem;
 }
@@ -125,7 +131,6 @@ hr {
   list-style: none;
 }
 
-/* Contributor pill */
 #contributors-list li {
   display: flex;
   align-items: center;
@@ -137,13 +142,11 @@ hr {
   transition: background-color 0.15s ease, transform 0.15s ease;
 }
 
-/* Hover effect */
 #contributors-list li:hover {
   background: var(--border-color);
   transform: translateY(-2px);
 }
 
-/* Avatar */
 #contributors-list img {
   width: 26px;
   height: 26px;
@@ -151,7 +154,6 @@ hr {
   flex-shrink: 0;
 }
 
-/* Username link */
 #contributors-list a {
   font-weight: 600;
   text-decoration: none;
@@ -162,26 +164,31 @@ hr {
   text-decoration: underline;
 }
 
-
-.btn-windows {
+/* Buttons */
+.btn-windows, .nav-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   background-color: var(--accent-blue);
-  color: #ffffff !important; /* Overrides global text color for the button */
+  color: #ffffff;
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   text-decoration: none;
   font-weight: 600;
   font-size: 0.95rem;
+  border: none;
+  transition: background-color 0.15s ease;
 }
 
-.btn-windows * {
-  color: #ffffff !important;
+.nav-btn {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
 }
 
-.btn-windows:hover {
+.btn-windows:hover, .nav-btn:hover {
   background-color: var(--accent-hover);
+  color: #ffffff;
 }
 
 .icon-windows {
@@ -190,17 +197,39 @@ hr {
 
 .preview-img {
   width: 100%;
+  height: auto;
   border-radius: 6px;
   border: 1px solid var(--border-color);
   margin-bottom: 1rem;
+  display: block;
 }
 
-.nav-btn {
-  background-color: var(--accent-blue);
-  color: #ffffff !important;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 0.85rem;
+/* Mobile & Tablet Responsive Rules */
+@media (max-width: 600px) {
+  body {
+    padding: 1rem 0.75rem;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .btn-windows, .nav-btn {
+    width: 100%;
+  }
+
+  #contributors-list li {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
