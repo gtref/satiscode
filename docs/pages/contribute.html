@@ -10,28 +10,36 @@
     <main class="container">
       <header class="header">
         <h1>SATISCODE</h1>
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
-          🌙 Dark Mode
-        </button>
-        <a href="../index.html"><button class="nav-btn" aria-label="Back to Home">Home</button></a>
-        <a href="about.html"><button class="nav-btn" aria-label="About">About</button></a>
+        <nav class="nav-links" aria-label="Main Navigation">
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
+            🌙 Dark Mode
+          </button>
+          <a href="../index.html" class="nav-btn">Home</a>
+          <a href="about.html" class="nav-btn">About</a>
+          <a href="sponsors.html" class="nav-btn">Sponsors</a>
+        </nav>
       </header>
-      <a href="https://alternativeto.net/software/satiscode/about/?utm_source=badge&utm_medium=referral" target="_blank">
-        <img src="https://alternativeto.net/static/badges/badge-wide-color.svg"
-             alt="Satiscode | AlternativeTo"
-             width="406" height="73"
-             style="width: 406px; height: 73px;" />
-      </a>
-    <section class="card intro">
-        <h2>Contributing to the project</h2>
+
+      <section class="card badge-container">
+        <a href="https://alternativeto.net/software/satiscode/about/?utm_source=badge&utm_medium=referral" target="_blank" rel="noopener noreferrer">
+          <img src="https://alternativeto.net/static/badges/badge-wide-color.svg"
+               alt="Satiscode on AlternativeTo"
+               width="406" height="73" class="badge-img" />
+        </a>
+      </section>
+
+      <section class="card intro">
+        <h2>Contributing to the Project</h2>
         <hr>
         <p>
-            Satiscode is an OSS(Open Source) Project. This means that contributing is as simple as just opening a pull request
-            on github with for example fixing spelling mistakes in the docs or updating some librarys or code and stuff. And because this
-            project is OSS you can submit any of these example fixes as a Pull Request on github and that is considered a contribution.
+          Satiscode is an open-source project. Contributing is as simple as opening a pull request on GitHub—whether it's fixing documentation typos, updating dependencies, resolving open issues, or adding new feature enhancements.
         </p>
-    </section>
-    <footer>
+        <p>
+          We welcome contributions of all skill levels! Check out our GitHub repository to view open issues, submit feedback, or submit your pull requests.
+        </p>
+      </section>
+
+      <footer>
         <p>&copy; gtref 2026, All rights reserved</p>
       </footer>
     </main>

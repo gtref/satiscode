@@ -10,11 +10,14 @@
     <main class="container">
       <header class="header">
         <h1>SATISCODE</h1>
-        <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
-          🌙 Dark Mode
-        </button>
-        <a href="pages/about.html"><button class="nav-btn">About</button></a>
-        <a href="pages/contribute.html"><button class="nav-btn" aria-label="Contribute">Contributing</button></a>
+        <nav class="nav-links" aria-label="Main Navigation">
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
+            🌙 Dark Mode
+          </button>
+          <a href="pages/about.html" class="nav-btn">About</a>
+          <a href="pages/contribute.html" class="nav-btn">Contributing</a>
+          <a href="pages/sponsors.html" class="nav-btn">Sponsors</a>
+        </nav>
       </header>
       
       <hr>
@@ -22,7 +25,7 @@
       <section class="card intro">
         <p>
           Satiscode is designed to be a simple Integrated Development Environment (IDE). The simplicity comes from not tracking
-           its users and being <strong>100% anti-AI</strong>. This means that we do not support AI development in the repo and not in 
+           its users and being <strong>100% anti-AI</strong>. This means that we do not support AI development in the repo or in
            the IDE itself. Without built-in AI, the IDE remains as lightweight as the Node.js modules included.
           </p>
       </section>
@@ -40,10 +43,10 @@
       <section class="card features">
         <h2>Features</h2>
         <ul>
-          <li>Light weight: The IDE installed is only 600 MBS in size once installed</li>
+          <li>Lightweight: The IDE installed is only 600 MB to 1 GB in size once installed</li>
           <li>ANTI AI: The IDE has <strong>NO AI FEATURES</strong></li>
-          <li>C support: This IDE nativly supports C and C++ syntax highlighting.</li>
-          <li>Python support: The IDE nativly supports python syntax highlighting.</li>
+          <li>C support: This IDE natively supports C and C++ syntax highlighting.</li>
+          <li>Python support: The IDE natively supports Python syntax highlighting.</li>
           <li>WebDev Language support.</li>
           <li>Git support.</li>
         </ul>
@@ -54,7 +57,6 @@
         <img src="assets/editor.png" alt="SATISCODE Editor Preview" class="preview-img">
       </section>
 
-
       <section class="card release-info">
         <h2>Release Info</h2><br>
         <p>Version: <span id="version"></span></p><br>
@@ -64,7 +66,7 @@
 
       <section class="card contributors" id="contributors">
         <h2>Contributors</h2>
-        <p>Thank you to all those who have helped to make satiscode what it is today, your help is greatly appreciated.</p>
+        <p>Thank you to all those who have helped to make Satiscode what it is today, your help is greatly appreciated.</p>
         <ul id="contributors-list"></ul>
       </section>
 
