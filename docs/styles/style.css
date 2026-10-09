@@ -16,8 +16,8 @@
     --card-bg: #161b22;
     --text-color: #c9d1d9;
     --border-color: #30363d;
-    --accent-blue: #2ea043;
-    --accent-hover: #3fb950;
+    --accent-blue: #238636;
+    --accent-hover: #267c39;
   }
 }
 
@@ -27,8 +27,8 @@
   --card-bg: #161b22;
   --text-color: #c9d1d9;
   --border-color: #30363d;
-  --accent-blue: #2ea043;
-  --accent-hover: #3fb950;
+  --accent-blue: #238636;
+  --accent-hover: #267c39;
 }
 
 *, *::before, *::after {
