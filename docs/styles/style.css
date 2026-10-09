@@ -16,8 +16,8 @@
     --card-bg: #161b22;
     --text-color: #c9d1d9;
     --border-color: #30363d;
-    --accent-blue: #238636;
-    --accent-hover: #2ea043;
+    --accent-blue: #2ea043;
+    --accent-hover: #3fb950;
   }
 }
 
@@ -27,8 +27,8 @@
   --card-bg: #161b22;
   --text-color: #c9d1d9;
   --border-color: #30363d;
-  --accent-blue: #238636;
-  --accent-hover: #2ea043;
+  --accent-blue: #2ea043;
+  --accent-hover: #3fb950;
 }
 
 *, *::before, *::after {
@@ -45,8 +45,17 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+a {
+  color: var(--accent-blue);
+  text-decoration: underline;
+}
+
+a:hover {
+  color: var(--accent-hover);
+}
+
 .container {
-  max-width: 650px;
+  max-width: 700px;
   margin: 0 auto;
   width: 100%;
 }
@@ -56,6 +65,14 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 h1 {
@@ -66,6 +83,12 @@ h1 {
 
 button, input, select, textarea {
   font-family: inherit;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
 }
 
 .theme-toggle {
@@ -105,6 +128,18 @@ hr {
 .card.contributors {
   font-family: var(--font-mono);
   font-size: 0.95rem;
+}
+
+.badge-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem;
+}
+
+.badge-img {
+  max-width: 100%;
+  height: auto;
 }
 
 .download p {
@@ -179,11 +214,13 @@ hr {
   font-size: 0.95rem;
   border: none;
   transition: background-color 0.15s ease;
+  cursor: pointer;
 }
 
 .nav-btn {
   padding: 0.5rem 1rem;
   font-size: 0.85rem;
+  text-decoration: none;
 }
 
 .btn-windows:hover, .nav-btn:hover {
@@ -204,6 +241,14 @@ hr {
   display: block;
 }
 
+footer {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-color);
+  opacity: 0.8;
+  margin-top: 2rem;
+}
+
 /* Mobile & Tablet Responsive Rules */
 @media (max-width: 600px) {
   body {
@@ -214,6 +259,11 @@ hr {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  .nav-links {
+    width: 100%;
+    gap: 0.5rem;
   }
 
   h1 {
