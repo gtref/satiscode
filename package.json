@@ -1,6 +1,6 @@
 {
   "name": "satiscode",
-  "version": "1.8.0",
+  "version": "2.1.0-BETA",
   "description": "A lightweight C/C++ and Python editor powered by Monaco, clangd, and Pyright.",
   "main": "main.js",
   "scripts": {
@@ -52,11 +52,11 @@
       "package.json",
       "icons.js",
       "icons/style1/icons.json",
-      "UI/**/*",
+      "UI/git_sidebar/*",
+      "UI/tab_manager/*",
       "node_modules/**/*",
       "styles/**/*",
       "themes/**/*",
-      "help/SATISCODE HELP.chm",
       "themes.js",
       "main/**/*"
     ],
@@ -72,6 +72,10 @@
       {
         "from": "PythonLSP",
         "to": "PythonLSP"
+      },
+      {
+        "from": "help",
+        "to": "help"
       }
     ],
     "win": {

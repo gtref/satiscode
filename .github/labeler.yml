@@ -7,6 +7,15 @@ config:
 
 theme:
   - "themes/**"
+  - "themes.js"
 
 UI:
   - "UI/**/**"
+
+System:
+  - "main/**/**"
+  - "styles/**/**"
+  - "index.html"
+  - "main.js"
+  - "preload.js"
+  - "icons.js"

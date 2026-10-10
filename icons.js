@@ -33,3 +33,7 @@ export function getChevronIcon(isExpanded = false) {
   }
   return iconMap.ui?.chevronRight || '›';
 }
+
+export function getUiIcon(iconName) {
+  return iconMap.ui?.[iconName] || '';
+}

@@ -4,12 +4,14 @@ const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
 const { runGitRequest } = require('./main/git-service');
+const { SettingsManager } = require('./main/settings-manager');
 
 let clangdProcess = null;
 let clangdBuffer = Buffer.alloc(0);
 let isQuitting = false;
 let pyrightProcess = null;
 let pyrightBuffer = Buffer.alloc(0);
+let settingsManager = null;
 
 
 function sendToClangd(message) {
@@ -268,7 +270,15 @@ function createWindow() {
   win.loadFile('index.html');
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  settingsManager = new SettingsManager(app.getPath('userData'));
+  createWindow();
+});
+
+ipcMain.handle('settings:get', () => settingsManager.getSettings());
+ipcMain.handle('settings:setUserName', (_event, userName) => settingsManager.setUserName(userName));
+ipcMain.handle('settings:setTheme', (_event, theme) => settingsManager.setTheme(theme));
+ipcMain.handle('settings:setLanguage', (_event, language) => settingsManager.setLanguage(language));
 
 // File Open Handler
 ipcMain.handle('dialog:openFile', async () => {

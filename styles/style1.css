@@ -145,6 +145,27 @@ body {
   display: none;
 }
 
+#language-menu { position: relative; }
+#language-button { width: 32px; height: 28px; display: grid; place-items: center; padding: 4px !important; }
+#language-button-icon, #language-button-icon svg { display: block; width: 16px; height: 16px; }
+#language-options {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+  margin-top: 4px;
+  padding: 4px 0;
+  background: var(--vscode-sidebar-bg);
+  border: 1px solid var(--vscode-border);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+#language-options[hidden] { display: none; }
+#language-options button { width: 100%; text-align: left; border-radius: 0; }
+#language-options button[aria-checked="true"] { color: var(--vscode-text-active); background: var(--vscode-active-item); }
+
 .source-language-option {
   display: flex;
   align-items: center;
@@ -693,6 +714,21 @@ body {
 .blame-header h2 { margin: 0; font-size: 13px; font-weight: 600; }
 .blame-header button { width: 28px; height: 28px; border: 0; background: transparent; color: inherit; font-size: 20px; cursor: pointer; }
 #blame-output { max-height: calc(78vh - 50px); margin: 0; padding: 12px 14px; overflow: auto; color: var(--vscode-text-main); font: 12px/1.5 var(--font-mono); user-select: text; }
+
+#name-setup-dialog {
+  width: min(380px, calc(100vw - 32px));
+  border: 1px solid var(--vscode-border);
+  background: var(--vscode-sidebar-bg);
+  color: var(--vscode-text-main);
+}
+
+#name-setup-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+#name-setup-dialog form { display: grid; gap: 10px; }
+#name-setup-dialog h2, #name-setup-dialog p { margin: 0; }
+#name-setup-dialog input { padding: 7px 9px; border: 1px solid var(--vscode-border); background: var(--vscode-input-bg); color: var(--vscode-text-main); font: inherit; }
+#name-setup-dialog input:focus { outline: 1px solid var(--vscode-focus-border); }
+.name-setup-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.name-setup-actions button { padding: 6px 12px; border: 1px solid var(--vscode-border); background: var(--vscode-toolbar-bg); color: var(--vscode-text-main); cursor: pointer; }
 
 @media (max-width: 760px) {
   #file-tree { width: 190px; min-width: 150px; }
