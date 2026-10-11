@@ -69,6 +69,7 @@
         <button class="source-language-option" data-source-language="json"><span class="language-badge">{ }</span><span data-i18n="sourceJson">JSON</span></button>
         <button class="source-language-option" data-source-language="plaintext"><span class="language-badge">Aa</span><span data-i18n="sourcePlainText">Plain Text</span></button>
         <button class="source-language-option" data-source-language="python"><span class="language-badge">Py</span><span data-i18n="sourcePython">Python</span></button>
+        <button class="source-language-option" data-source-language="markdown"><span class="language-badge">MD</span><span data-i18n="sourceMarkdown">MarkDown</span></button>
       </div>
     </div>
     <select id="theme-select" aria-label="Interface Theme" data-i18n-aria="interfaceTheme">
@@ -175,7 +176,7 @@
         ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
         ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'], ['.cjs', 'javascript'],
         ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json'],
-        ['.py', 'python']
+        ['.py', 'python'], ['.md', 'markdown']
       ]);
       const translations = {
         en: {
@@ -355,7 +356,7 @@
         const language = activeLanguage(currentFilePath);
         const labels = translations[window.appSettings?.language] || translations.en;
         const languageLabels = { auto: labels.sourceAuto, c: labels.sourceC, cpp: labels.sourceCpp, css: labels.sourceCss, javascript: labels.sourceJavaScript, html: labels.sourceHtml, typescript: labels.sourceTypeScript, json: labels.sourceJson, python: labels.sourcePython, plaintext: labels.sourcePlainText };
-        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', python: 'Py', plaintext: 'Aa' };
+        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', python: 'Py', plaintext: 'Aa', markdown: 'MD' };
         document.getElementById('source-language-label').textContent = languageLabels[language] || languageLabels.auto;
         document.querySelector('#source-language-btn .language-badge').textContent = icons[language] || icons.auto;
       }
