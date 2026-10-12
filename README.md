@@ -1,4 +1,6 @@
-[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://join.slack.com/t/a2-hc61499/shared_invite/zt-49ufy94zl-nTWdH_uBjDIkuPCbapoO0A)
+[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://join.slack.com/t/a2-hc61499/shared_invite/zt-49ufy94zl-nTWdH_uBjDIkuPCbapoO0A) 
+[![Satiscode | AlternativeTo](https://alternativeto.net/static/badges/badge-wide-color.svg)](https://alternativeto.net/software/satiscode/about/?utm_source=badge&utm_medium=referral)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gtref/satiscode)
 
 # Satiscode
 
@@ -18,9 +20,10 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 ## Features
 
 - C and C++ language detection by file extension
-- Python syntax highligting.
+- Python language detection by file extention
 - Web language detection for HTML, CSS/SCSS, JavaScript/JSX, TypeScript/TSX, and JSON
 - clangd diagnostics, completion, hover, and go-to-definition
+- PyRight diagnostics, completion, hover and go-to-definition for python
 - VS Code-style Problems panel with clickable diagnostics
 - Resizable Explorer file tree for the current directory
 - New, Open, Save, Save As, and graceful Exit operations
@@ -28,12 +31,15 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 - Keyboard shortcuts for common file operations
 - Windows NSIS installer support
 
-## Requirements
+>[!TIP]
+> [Join the beta](https://satiscorp.wordpress.com)
+
+# Requirements
 
 - Windows 10 or newer
 - Node.js 20 or newer
 
-The editor remains usable when clangd is unavailable, but C/C++ language services will be disabled.
+The editor remains usable when python is unavailable, but PyRight language server will not function correctly.
 
 >[!NOTE]
 > Please NOTE That from satiscode 1.2.0 onwards LLVM does not need to be installed. All new builds will contain clangd and its librarys and later there will be instructions for local testing.
@@ -48,7 +54,10 @@ npm install
 npm start
 ```
 
-Open a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file to start clangd. HTML, CSS, JavaScript, TypeScript, JSON and Python files use Monaco's built-in language support without clangd. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
+>[!WARNING]
+> A clean source checkout runs without clangd or Pyright because their server files are absent; the editor can still open and edit supported file types. Source mode looks for clangd in `bin/` and Pyright in `PythonLSP/` at the repository root. Packaged builds include these files in the application resources and load them from there.
+
+Opening a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file starts clangd only when its server files are available. Opening a `.py` file starts Pyright only when its server files are available. HTML, CSS, JavaScript, TypeScript, and JSON files use Monaco's built-in language support. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
 
 ## Keyboard shortcuts
 
@@ -73,6 +82,7 @@ The installer is written to `dist\Satiscode Setup 1.0.0.exe`. The installer is u
 - `preload.js`: isolated renderer IPC API
 - `index.html`: Monaco editor UI, Explorer, Problems panel, and language-service client
 - `icons.js`: Loads the icon packs located in `icons/`
+- `themes.js`: Loads theme files from the `themes/` directory
 
 ## Security notes
 
