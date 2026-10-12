@@ -37,7 +37,7 @@ class LogStub {
 
         return raw.split(/\r?\n/).flatMap((line) => {
             const separator = line.indexOf('\x1f');
-            if (separator < 0) return [];
+            if (separator < 0) return line.trim() ? [{ graph: line, graphOnly: true }] : [];
             const [hash, parents, author, date, refs, message] = line.slice(separator + 1).split('\x1f');
             if (!hash || !author) return [];
             return [{ graph: line.slice(0, separator), hash, parents: parents ? parents.split(' ').filter(Boolean) : [], author, date, refs: refs || '', message }];

@@ -63,9 +63,9 @@ class GitUi {
     try {
       const [raw, log] = await Promise.all([
         this.gitman.status(),
-        typeof this.gitman.log === 'function' ? this.gitman.log().catch(() => '') : Promise.resolve('')
+        typeof this.gitman.log === 'function' ? this.gitman.log().then((raw) => ({ raw }), (error) => ({ error: error?.message || String(error) })) : Promise.resolve({ raw: '' })
       ]);
-      this.state = { mode: 'repository', entries: StatusStub.parse(raw), commits: LogStub.parse(log), message: successMessage || 'Repository status is up to date.', messageType: successMessage ? 'success' : 'info' };
+      this.state = { mode: 'repository', entries: StatusStub.parse(raw), commits: LogStub.parse(log.raw), historyError: log.error || '', message: successMessage || 'Repository status is up to date.', messageType: successMessage ? 'success' : 'info' };
     } catch (error) {
       if (/not a git repository/i.test(error.message || '')) {
         this.state = { mode: 'non-repository', entries: [], commits: [], message: 'This folder is not a Git repository.', messageType: 'info' };
@@ -112,11 +112,26 @@ class GitUi {
       panel.append(this.create('h3', { className: 'git-history-title' }, 'Commits'));
       const history = this.create('ol', { className: 'git-history-list' });
       history.setAttribute('aria-label', 'Commit history');
-      if (!this.state.commits.length) history.append(this.create('li', { className: 'git-history-empty' }, 'No commits yet'));
+      if (this.state.historyError) history.append(this.create('li', { className: 'git-message git-message--error', role: 'alert' }, `Unable to load commit history: ${this.state.historyError}`));
+      else if (!this.state.commits.length) history.append(this.create('li', { className: 'git-history-empty' }, 'No commits yet'));
+      const graphWidth = Math.max(2, ...this.state.commits.map((commit) => (commit.graph || '*').length));
       for (const commit of this.state.commits) {
         const item = this.create('li', { className: 'git-history-entry' });
         const graph = this.create('span', { className: 'git-commit-graph' }, commit.graph || '*');
         graph.setAttribute('aria-hidden', 'true');
+        graph.style.width = `${graphWidth}ch`;
+        if (commit.graphOnly) {
+          item.className = 'git-history-entry git-history-connector';
+          item.setAttribute('aria-hidden', 'true');
+          item.append(graph);
+          history.append(item);
+          continue;
+        }
+        const commitColumn = (commit.graph || '*').indexOf('*');
+        if (commitColumn >= 0) {
+          graph.className += ' git-commit-graph--commit';
+          graph.style.setProperty('--commit-column', `${commitColumn + 0.5}ch`);
+        }
         const details = this.create('details', { className: 'git-commit-details' });
         const summary = this.create('summary', { className: 'git-commit-summary' });
         const message = this.create('span', { className: 'git-commit-message', title: commit.message }, commit.message || '(no message)');

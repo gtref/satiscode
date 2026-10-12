@@ -679,11 +679,11 @@ body {
 }
 .git-history-title { margin: 6px 0 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--vscode-text-muted); }
 .git-history-list { margin: 0; padding: 0; list-style: none; overflow: auto; min-height: 0; display: flex; flex-direction: column; gap: 2px; }
-.git-history-entry { display: grid; grid-template-columns: 28px minmax(0, 1fr); align-items: start; min-width: 0; position: relative; padding: 1px 0; border-radius: 4px; }
-.git-history-entry::before { content: ''; position: absolute; left: 13px; top: 0; bottom: 0; width: 1px; background: rgba(128, 128, 128, 0.45); }
+.git-history-entry { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; min-width: 0; position: relative; padding: 1px 0; border-radius: 4px; }
+.git-commit-graph--commit::before { content: ''; position: absolute; left: var(--commit-column); top: 0; bottom: 0; width: 1px; background: rgba(128, 128, 128, 0.45); }
 .git-history-entry:hover { background: var(--vscode-list-hoverBackground); }
-.git-commit-graph { position: relative; z-index: 1; display: block; min-height: 1.4em; padding: 3px 2px 0 0; color: var(--vscode-text-muted); white-space: pre; font: 11px/1.4 var(--font-mono); letter-spacing: -0.04em; text-align: center; }
-.git-commit-graph::after { content: ''; position: absolute; left: 50%; top: 7px; transform: translateX(-50%); width: 7px; height: 7px; border-radius: 50%; background: var(--vscode-charts-green); box-shadow: 0 0 0 2px var(--vscode-sidebar-bg); }
+.git-commit-graph { position: relative; z-index: 1; display: block; min-height: 1.4em; align-self: stretch; padding: 3px 2px 0 0; color: var(--vscode-text-muted); white-space: pre; font: 11px/1.4 var(--font-mono); letter-spacing: normal; text-align: left; }
+.git-commit-graph--commit::after { content: ''; position: absolute; left: var(--commit-column); top: 7px; transform: translateX(-50%); width: 7px; height: 7px; border-radius: 50%; background: var(--vscode-charts-green); box-shadow: 0 0 0 2px var(--vscode-sidebar-bg); }
 .git-commit-details { flex: 1; min-width: 0; }
 .git-commit-summary { position: relative; display: flex; flex-direction: column; gap: 1px; padding: 2px 8px 2px 0; border-radius: 4px; cursor: pointer; list-style: none; }
 .git-commit-summary::-webkit-details-marker { display: none; }

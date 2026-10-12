@@ -1,5 +1,6 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
+const { randomUUID } = require('node:crypto');
 
 const DEFAULT_SETTINGS = {
   theme: 'dark',
@@ -28,6 +29,7 @@ function normalizeSettings(settings) {
 class SettingsManager {
   constructor(userDataPath) {
     this.filePath = path.join(userDataPath, 'settings.json');
+    this.pendingSave = Promise.resolve();
   }
 
   async getSettings() {
@@ -41,31 +43,35 @@ class SettingsManager {
 
   async setUserName(userName) {
     if (typeof userName !== 'string') throw new TypeError('User name must be a string.');
-    const settings = await this.getSettings();
-    settings.userName = userName.trim().slice(0, 80);
-    settings.namePromptCompleted = true;
-    return this.saveSettings(settings);
+    return this.saveSettings({ userName, namePromptCompleted: true });
   }
 
   async setTheme(theme) {
     if (!AVAILABLE_THEMES.has(theme)) throw new TypeError('Invalid theme.');
-    const settings = await this.getSettings();
-    settings.theme = theme;
-    return this.saveSettings(settings);
+    return this.saveSettings({ theme });
   }
 
   async setLanguage(language) {
     if (!AVAILABLE_LANGUAGES.has(language)) throw new TypeError('Invalid interface language.');
-    const settings = await this.getSettings();
-    settings.language = language;
-    return this.saveSettings(settings);
+    return this.saveSettings({ language });
   }
 
   async saveSettings(settings) {
-    const normalizedSettings = normalizeSettings(settings);
-    await fs.mkdir(path.dirname(this.filePath), { recursive: true });
-    await fs.writeFile(this.filePath, `${JSON.stringify(normalizedSettings, null, 2)}\n`, 'utf8');
-    return normalizedSettings;
+    const save = this.pendingSave.then(async () => {
+      const normalizedSettings = normalizeSettings({ ...await this.getSettings(), ...settings });
+      await fs.mkdir(path.dirname(this.filePath), { recursive: true });
+      const temporaryPath = `${this.filePath}.${randomUUID()}.tmp`;
+      try {
+        await fs.writeFile(temporaryPath, `${JSON.stringify(normalizedSettings, null, 2)}\n`, { encoding: 'utf8', flag: 'wx' });
+        await fs.rename(temporaryPath, this.filePath);
+      } finally {
+        await fs.rm(temporaryPath, { force: true });
+      }
+      return normalizedSettings;
+    });
+    // Keep later updates usable even when a write fails.
+    this.pendingSave = save.catch(() => {});
+    return save;
   }
 }
 
