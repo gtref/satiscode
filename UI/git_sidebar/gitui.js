@@ -1,12 +1,12 @@
 const GitManager = require('./gitman');
-const { StatusStub } = require('./gitstub');
+const { LogStub, StatusStub } = require('./gitstub');
 
 class GitUi {
   constructor(containerEl, options = {}) {
     this.containerEl = containerEl;
     this.gitman = options.gitman || new GitManager({ api: options.gitApi });
     this.workspace = null;
-    this.state = { mode: 'empty', entries: [], message: 'Open a folder to use Git.', messageType: 'info' };
+    this.state = { mode: 'empty', entries: [], commits: [], message: 'Open a folder to use Git.', messageType: 'info' };
     this.listening = false;
   }
 
@@ -14,7 +14,7 @@ class GitUi {
     this.workspace = workspace || null;
     this.gitman.setWorkspace(this.workspace);
     if (!this.workspace) {
-      this.state = { mode: 'empty', entries: [], message: 'Open a folder to use Git.', messageType: 'info' };
+      this.state = { mode: 'empty', entries: [], commits: [], message: 'Open a folder to use Git.', messageType: 'info' };
       this.render();
       return;
     }
@@ -61,13 +61,16 @@ class GitUi {
     this.state = { ...this.state, mode: 'loading', message: 'Loading repository status…', messageType: 'loading' };
     this.render();
     try {
-      const raw = await this.gitman.status();
-      this.state = { mode: 'repository', entries: StatusStub.parse(raw), message: successMessage || 'Repository status is up to date.', messageType: successMessage ? 'success' : 'info' };
+      const [raw, log] = await Promise.all([
+        this.gitman.status(),
+        typeof this.gitman.log === 'function' ? this.gitman.log().then((raw) => ({ raw }), (error) => ({ error: error?.message || String(error) })) : Promise.resolve({ raw: '' })
+      ]);
+      this.state = { mode: 'repository', entries: StatusStub.parse(raw), commits: LogStub.parse(log.raw), historyError: log.error || '', message: successMessage || 'Repository status is up to date.', messageType: successMessage ? 'success' : 'info' };
     } catch (error) {
       if (/not a git repository/i.test(error.message || '')) {
-        this.state = { mode: 'non-repository', entries: [], message: 'This folder is not a Git repository.', messageType: 'info' };
+        this.state = { mode: 'non-repository', entries: [], commits: [], message: 'This folder is not a Git repository.', messageType: 'info' };
       } else {
-        this.state = { mode: 'error', entries: [], message: error.message || String(error), messageType: 'error' };
+        this.state = { mode: 'error', entries: [], commits: [], message: error.message || String(error), messageType: 'error' };
       }
     }
     this.render();
@@ -106,6 +109,44 @@ class GitUi {
       const toolbar = this.create('div', { className: 'git-actions' });
       toolbar.append(this.button('Refresh', 'refresh', busy), this.button('Stage all', 'stage', busy || !this.state.entries.length), this.button('Pull', 'pull', busy), this.button('Push', 'push', busy));
       panel.append(toolbar);
+      panel.append(this.create('h3', { className: 'git-history-title' }, 'Commits'));
+      const history = this.create('ol', { className: 'git-history-list' });
+      history.setAttribute('aria-label', 'Commit history');
+      if (this.state.historyError) history.append(this.create('li', { className: 'git-message git-message--error', role: 'alert' }, `Unable to load commit history: ${this.state.historyError}`));
+      else if (!this.state.commits.length) history.append(this.create('li', { className: 'git-history-empty' }, 'No commits yet'));
+      const graphWidth = Math.max(2, ...this.state.commits.map((commit) => (commit.graph || '*').length));
+      for (const commit of this.state.commits) {
+        const item = this.create('li', { className: 'git-history-entry' });
+        const graph = this.create('span', { className: 'git-commit-graph' }, commit.graph || '*');
+        graph.setAttribute('aria-hidden', 'true');
+        graph.style.width = `${graphWidth}ch`;
+        if (commit.graphOnly) {
+          item.className = 'git-history-entry git-history-connector';
+          item.setAttribute('aria-hidden', 'true');
+          item.append(graph);
+          history.append(item);
+          continue;
+        }
+        const commitColumn = (commit.graph || '*').indexOf('*');
+        if (commitColumn >= 0) {
+          graph.className += ' git-commit-graph--commit';
+          graph.style.setProperty('--commit-column', `${commitColumn + 0.5}ch`);
+        }
+        const details = this.create('details', { className: 'git-commit-details' });
+        const summary = this.create('summary', { className: 'git-commit-summary' });
+        const message = this.create('span', { className: 'git-commit-message', title: commit.message }, commit.message || '(no message)');
+        const meta = this.create('span', { className: 'git-commit-meta' }, `${commit.hash.slice(0, 7)} · ${commit.date}${commit.refs ? ` · ${commit.refs}` : ''}`);
+        summary.append(message, meta);
+        details.append(summary);
+        const info = this.create('div', { className: 'git-commit-info' });
+        info.append(this.create('span', {}, `Author: ${commit.author}`), this.create('span', {}, `Commit: ${commit.hash}`));
+        if (commit.parents.length) info.append(this.create('span', {}, `Parents: ${commit.parents.map((parent) => parent.slice(0, 7)).join(', ')}`));
+        if (commit.refs) info.append(this.create('span', {}, `Refs: ${commit.refs}`));
+        details.append(info);
+        item.append(graph, details);
+        history.append(item);
+      }
+      panel.append(history);
       const input = this.create('input', { id: 'git-commit-message', className: 'git-commit-input', type: 'text', placeholder: 'Commit message', disabled: busy || !this.state.entries.length });
       input.setAttribute('aria-label', 'Commit message');
       panel.append(input, this.button('Commit', 'commit', true));

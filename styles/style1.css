@@ -145,6 +145,27 @@ body {
   display: none;
 }
 
+#language-menu { position: relative; }
+#language-button { width: 32px; height: 28px; display: grid; place-items: center; padding: 4px !important; }
+#language-button-icon, #language-button-icon svg { display: block; width: 16px; height: 16px; }
+#language-options {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+  margin-top: 4px;
+  padding: 4px 0;
+  background: var(--vscode-sidebar-bg);
+  border: 1px solid var(--vscode-border);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+}
+#language-options[hidden] { display: none; }
+#language-options button { width: 100%; text-align: left; border-radius: 0; }
+#language-options button[aria-checked="true"] { color: var(--vscode-text-active); background: var(--vscode-active-item); }
+
 .source-language-option {
   display: flex;
   align-items: center;
@@ -656,6 +677,23 @@ body {
   background: var(--vscode-editor-bg);
   color: var(--vscode-text-main);
 }
+.git-history-title { margin: 6px 0 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--vscode-text-muted); }
+.git-history-list { margin: 0; padding: 0; list-style: none; overflow: auto; min-height: 0; display: flex; flex-direction: column; gap: 2px; }
+.git-history-entry { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; min-width: 0; position: relative; padding: 1px 0; border-radius: 4px; }
+.git-commit-graph--commit::before { content: ''; position: absolute; left: var(--commit-column); top: 0; bottom: 0; width: 1px; background: rgba(128, 128, 128, 0.45); }
+.git-history-entry:hover { background: var(--vscode-list-hoverBackground); }
+.git-commit-graph { position: relative; z-index: 1; display: block; min-height: 1.4em; align-self: stretch; padding: 3px 2px 0 0; color: var(--vscode-text-muted); white-space: pre; font: 11px/1.4 var(--font-mono); letter-spacing: normal; text-align: left; }
+.git-commit-graph--commit::after { content: ''; position: absolute; left: var(--commit-column); top: 7px; transform: translateX(-50%); width: 7px; height: 7px; border-radius: 50%; background: var(--vscode-charts-green); box-shadow: 0 0 0 2px var(--vscode-sidebar-bg); }
+.git-commit-details { flex: 1; min-width: 0; }
+.git-commit-summary { position: relative; display: flex; flex-direction: column; gap: 1px; padding: 2px 8px 2px 0; border-radius: 4px; cursor: pointer; list-style: none; }
+.git-commit-summary::-webkit-details-marker { display: none; }
+.git-commit-summary::before { content: none; }
+.git-commit-details[open] .git-commit-summary::before { content: none; }
+.git-commit-summary:focus-visible { outline: 1px solid var(--vscode-focus-border); outline-offset: -1px; border-radius: 4px; }
+.git-commit-message { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.35; }
+.git-commit-meta { display: block; color: var(--vscode-text-muted); font-size: 10px; margin-top: 1px; }
+.git-commit-info { display: grid; gap: 3px; padding: 0 8px 7px 0; color: var(--vscode-text-muted); font-size: 10px; overflow-wrap: anywhere; }
+.git-history-empty { padding: 6px 2px; color: var(--vscode-text-muted); }
 .git-status-list { margin: 4px 0 0; padding: 0; list-style: none; overflow-y: auto; }
 .git-status-entry { display: flex; gap: 8px; padding: 5px 2px; min-width: 0; }
 .git-status-code { flex: 0 0 22px; color: #cca700; font-family: monospace; }
@@ -676,6 +714,21 @@ body {
 .blame-header h2 { margin: 0; font-size: 13px; font-weight: 600; }
 .blame-header button { width: 28px; height: 28px; border: 0; background: transparent; color: inherit; font-size: 20px; cursor: pointer; }
 #blame-output { max-height: calc(78vh - 50px); margin: 0; padding: 12px 14px; overflow: auto; color: var(--vscode-text-main); font: 12px/1.5 var(--font-mono); user-select: text; }
+
+#name-setup-dialog {
+  width: min(380px, calc(100vw - 32px));
+  border: 1px solid var(--vscode-border);
+  background: var(--vscode-sidebar-bg);
+  color: var(--vscode-text-main);
+}
+
+#name-setup-dialog::backdrop { background: rgba(0, 0, 0, 0.6); }
+#name-setup-dialog form { display: grid; gap: 10px; }
+#name-setup-dialog h2, #name-setup-dialog p { margin: 0; }
+#name-setup-dialog input { padding: 7px 9px; border: 1px solid var(--vscode-border); background: var(--vscode-input-bg); color: var(--vscode-text-main); font: inherit; }
+#name-setup-dialog input:focus { outline: 1px solid var(--vscode-focus-border); }
+.name-setup-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.name-setup-actions button { padding: 6px 12px; border: 1px solid var(--vscode-border); background: var(--vscode-toolbar-bg); color: var(--vscode-text-main); cursor: pointer; }
 
 @media (max-width: 760px) {
   #file-tree { width: 190px; min-width: 150px; }

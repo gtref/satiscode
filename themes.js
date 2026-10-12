@@ -21,8 +21,6 @@ export async function applyTheme(themeId) {
     // 2. Monaco theme
     if (window.monaco) monaco.editor.setTheme(theme.monacoTheme); 
 
-    // 3. Localstorage
-    localStorage.setItem('satiscode-theme', themeId); 
 }
 
 export async function getAvailableThemes() {

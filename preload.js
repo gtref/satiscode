@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const hljs = require('highlight.js');
 const { GitUi } = require('./UI/git_sidebar/gitui');
 
 let gitUi = null;
@@ -12,6 +13,9 @@ globalThis.addEventListener('DOMContentLoaded', () => {
 });
 
 contextBridge.exposeInMainWorld('api', {
+  highlightCode: (code, language) => hljs.getLanguage(language)
+    ? hljs.highlight(code, { language }).value
+    : null,
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
   readFile: (filePath) => ipcRenderer.invoke('file:read', filePath),
   getWorkspacePath: () => ipcRenderer.invoke('app:workspacePath'),
@@ -20,6 +24,10 @@ contextBridge.exposeInMainWorld('api', {
   openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
   setGitWorkspace: (workspace) => gitUi?.setWorkspace(workspace),
   gitBlame: (workspace, filePath) => gitApi.run('blame', workspace, [filePath]),
+  getSettings: () => ipcRenderer.invoke('settings:get'),
+  setUserName: (userName) => ipcRenderer.invoke('settings:setUserName', userName),
+  setTheme: (theme) => ipcRenderer.invoke('settings:setTheme', theme),
+  setLanguage: (language) => ipcRenderer.invoke('settings:setLanguage', language),
 
   exit: () => ipcRenderer.invoke('app:exit'),
 

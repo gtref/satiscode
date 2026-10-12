@@ -14,64 +14,85 @@
   <title>Satiscode</title>
   <link rel="stylesheet" href="styles/style1.css">
   <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
+  <link rel="stylesheet" href="UI/markdown_view/style.css">
+  <link id="markdown-code-theme" rel="stylesheet" href="node_modules/highlight.js/styles/github-dark.min.css">
   <script type="module">
-    import { initIcons, getFileIcon, getFolderIcon, getChevronIcon } from './icons.js';
+    import { initIcons, getFileIcon, getFolderIcon, getChevronIcon, getUiIcon } from './icons.js';
     import { loadTheme, applyTheme, getAvailableThemes } from './themes.js'; 
     import { TabManager } from './UI/tab_manager/tabman.js';
+    import { MarkdownView } from './UI/markdown_view/view.js';
 
     // Attach getters to window for internal renderer access immediately
     window.getFileIcon = getFileIcon;
     window.getFolderIcon = getFolderIcon;
     window.getChevronIcon = getChevronIcon;
+    window.getUiIcon = getUiIcon;
+    window.MarkdownView = MarkdownView;
 
     // Attach theme functions for internal renderer access
     window.loadTheme = loadTheme;
     window.applyTheme = applyTheme;
     window.getAvailableThemes = getAvailableThemes;
 
-    const savedTheme = localStorage.getItem('satiscode-theme') || 'dark';
+    let settings = await window.api.getSettings();
+    const legacyTheme = localStorage.getItem('satiscode-theme');
+    if (!settings.namePromptCompleted && ['dark', 'light', 'high_contrast'].includes(legacyTheme)) {
+      settings = await window.api.setTheme(legacyTheme);
+    }
+    window.appSettings = settings;
+    const savedTheme = settings.theme || 'dark';
+    document.getElementById('markdown-code-theme').href = savedTheme === 'light'
+      ? 'node_modules/highlight.js/styles/github.min.css'
+      : 'node_modules/highlight.js/styles/github-dark.min.css';
     document.getElementById('theme-select').value = savedTheme;
     await applyTheme(savedTheme);
     window.TabManager = TabManager;
 
     // Initialize local icon system from icons/style1/icons.json
     await initIcons();
+    document.getElementById('language-button-icon').innerHTML = getUiIcon('translate');
   </script>
 </head>
 <body>
   <div id="toolbar">
     <button id="new-btn" data-i18n="newFile">New</button>
     <button id="open-btn" data-i18n="openFile">Open</button>
-    <button id="open-folder-btn">Open Folder</button>
+    <button id="open-folder-btn" data-i18n="openFolder">Open Folder</button>
     <button id="save-btn" data-i18n="saveFile">Save</button>
     <button id="save-as-btn" data-i18n="saveAs">Save As</button>
-    <button id="git-blame-btn" title="Show Git blame for the active file" aria-label="Show Git blame">⑂ Blame</button>
+    <button id="git-blame-btn" data-i18n="gitBlame" data-i18n-title="showGitBlame" data-i18n-aria="showGitBlame" title="Show Git blame for the active file" aria-label="Show Git blame">⑂ Blame</button>
     <button id="find-btn" data-i18n="find">Find</button>
     <button id="exit-btn" data-i18n="exit">Exit</button>
     <div id="source-language-menu">
-      <button id="source-language-btn" aria-haspopup="true" aria-expanded="false"><span class="language-badge">◇</span><span id="source-language-label">Auto</span> ▾</button>
+      <button id="source-language-btn" aria-haspopup="true" aria-expanded="false" data-i18n-aria="sourceLanguage"><span class="language-badge">◇</span><span id="source-language-label">Auto</span> ▾</button>
       <div id="source-language-options" hidden>
-        <button class="source-language-option" data-source-language="auto"><span class="language-badge">↯</span>Auto</button>
-        <button class="source-language-option" data-source-language="c"><span class="language-badge">C</span>C</button>
-        <button class="source-language-option" data-source-language="cpp"><span class="language-badge">C++</span>C++</button>
-        <button class="source-language-option" data-source-language="css"><span class="language-badge">#</span>CSS</button>
-        <button class="source-language-option" data-source-language="javascript"><span class="language-badge">JS</span>JavaScript</button>
-        <button class="source-language-option" data-source-language="html"><span class="language-badge">&lt;&gt;</span>HTML</button>
-        <button class="source-language-option" data-source-language="typescript"><span class="language-badge">TS</span>TypeScript</button>
-        <button class="source-language-option" data-source-language="json"><span class="language-badge">{ }</span>JSON</button>
-        <button class="source-language-option" data-source-language="plaintext"><span class="language-badge">Aa</span>Plain Text</button>
-        <button class="source-language-option" data-source-language="python"><span class="language-badge">Py</span>Python</button>
+        <button class="source-language-option" data-source-language="auto"><span class="language-badge">↯</span><span data-i18n="sourceAuto">Auto</span></button>
+        <button class="source-language-option" data-source-language="c"><span class="language-badge">C</span><span data-i18n="sourceC">C</span></button>
+        <button class="source-language-option" data-source-language="cpp"><span class="language-badge">C++</span><span data-i18n="sourceCpp">C++</span></button>
+        <button class="source-language-option" data-source-language="css"><span class="language-badge">#</span><span data-i18n="sourceCss">CSS</span></button>
+        <button class="source-language-option" data-source-language="javascript"><span class="language-badge">JS</span><span data-i18n="sourceJavaScript">JavaScript</span></button>
+        <button class="source-language-option" data-source-language="html"><span class="language-badge">&lt;&gt;</span><span data-i18n="sourceHtml">HTML</span></button>
+        <button class="source-language-option" data-source-language="typescript"><span class="language-badge">TS</span><span data-i18n="sourceTypeScript">TypeScript</span></button>
+        <button class="source-language-option" data-source-language="json"><span class="language-badge">{ }</span><span data-i18n="sourceJson">JSON</span></button>
+        <button class="source-language-option" data-source-language="plaintext"><span class="language-badge">Aa</span><span data-i18n="sourcePlainText">Plain Text</span></button>
+        <button class="source-language-option" data-source-language="python"><span class="language-badge">Py</span><span data-i18n="sourcePython">Python</span></button>
+        <button class="source-language-option" data-source-language="markdown"><span class="language-badge">MD</span><span data-i18n="sourceMarkdown">MarkDown</span></button>
       </div>
     </div>
-    <select id="theme-select" aria-label="Interface Theme">
-      <option value="dark">Dark Theme</option>
-      <option value="light">Light Theme</option>
-      <option value="high_contrast">High Contrast</option>
+    <select id="theme-select" aria-label="Interface Theme" data-i18n-aria="interfaceTheme">
+      <option value="dark" data-i18n="darkTheme">Dark Theme</option>
+      <option value="light" data-i18n="lightTheme">Light Theme</option>
+      <option value="high_contrast" data-i18n="highContrastTheme">High Contrast</option>
     </select>
-    <select id="language-select" aria-label="Interface language">
-      <option value="en">English</option>
-      <option value="es">Español</option>
-    </select>
+    <div id="language-menu">
+      <button id="language-button" type="button" aria-label="Change interface language" title="Change interface language" aria-haspopup="true" aria-expanded="false">
+        <span id="language-button-icon" aria-hidden="true"></span>
+      </button>
+      <div id="language-options" role="menu" hidden>
+        <button type="button" role="menuitemradio" aria-checked="true" data-language="en">English</button>
+        <button type="button" role="menuitemradio" aria-checked="false" data-language="es">Español</button>
+      </div>
+    </div>
     <span id="status">clangd: idle</span>
     <span id="ideStatus">
       <span class="status-indicator"></span>
@@ -79,22 +100,27 @@
     </span>
   </div>
   <div id="content">
-    <nav id="activity-bar" aria-label="Sidebar views">
-      <button class="activity-button" type="button" data-sidebar-target="file-tree" aria-label="Explorer" title="Explorer" aria-pressed="true">▤</button>
-      <button class="activity-button" type="button" data-sidebar-target="git-sidebar" aria-label="Source Control" title="Source Control" aria-pressed="false">⑂</button>
+    <nav id="activity-bar" aria-label="Sidebar views" data-i18n-aria="sidebarViews">
+      <button class="activity-button" type="button" data-sidebar-target="file-tree" aria-label="Explorer" title="Explorer" data-i18n-title="explorer" data-i18n-aria="explorer" aria-pressed="true">▤</button>
+      <button class="activity-button" type="button" data-sidebar-target="git-sidebar" aria-label="Source Control" title="Source Control" data-i18n-title="sourceControl" data-i18n-aria="sourceControl" aria-pressed="false">⑂</button>
     </nav>
     <aside id="file-tree">
       <div id="tree-header" data-i18n="explorer">Explorer</div>
       <div id="tree-root"></div>
     </aside>
-    <aside id="git-sidebar" aria-label="Git controls" hidden>
+    <aside id="git-sidebar" aria-label="Git controls" data-i18n-aria="gitControls" hidden>
       <div id="git-sidebar-mount"></div>
     </aside>
     <div id="workspace">
       <div id="tab-bar" class="tab-bar"></div>
+      <div id="markdown-mode-controls" role="group" aria-label="Markdown view mode" data-i18n-aria="markdownViewMode" hidden>
+        <button id="markdown-preview-button" type="button" data-i18n="markdownPreview" aria-pressed="true">Preview</button>
+        <button id="markdown-edit-button" type="button" data-i18n="markdownEdit" aria-pressed="false">Edit</button>
+      </div>
       <div id="editor"></div>
-      <section id="problems-panel" aria-label="Problems">
-        <div id="problems-resizer" title="Resize Problems panel"></div>
+      <div id="markdown-preview" hidden></div>
+      <section id="problems-panel" aria-label="Problems" data-i18n-aria="problems">
+        <div id="problems-resizer" title="Resize Problems panel" data-i18n-title="resizeProblems"></div>
         <div id="problems-header">
           <span id="problems-title" data-i18n="problems">Problems</span>
           <span id="problems-count">0</span>
@@ -162,11 +188,43 @@
         ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
         ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'], ['.cjs', 'javascript'],
         ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json'],
-        ['.py', 'python']
+        ['.py', 'python'], ['.md', 'markdown'], ['.markdown', 'markdown']
       ]);
       const translations = {
-        en: { newFile: 'New', openFile: 'Open', saveFile: 'Save', saveAs: 'Save As', find: 'Find', exit: 'Exit', explorer: 'Explorer', problems: 'Problems', noProblems: 'No problems detected.' },
-        es: { newFile: 'Nuevo', openFile: 'Abrir', saveFile: 'Guardar', saveAs: 'Guardar como', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', problems: 'Problemas', noProblems: 'No se detectaron problemas.' }
+        en: {
+          newFile: 'New', openFile: 'Open', openFolder: 'Open Folder', saveFile: 'Save', saveAs: 'Save As', gitBlame: '⑂ Blame',
+          showGitBlame: 'Show Git blame for the active file', find: 'Find', exit: 'Exit', explorer: 'Explorer', sourceControl: 'Source Control',
+          sourceLanguage: 'Select source language', sourceAuto: 'Auto', sourceC: 'C', sourceCpp: 'C++', sourceCss: 'CSS',
+          sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourcePlainText: 'Plain Text', sourcePython: 'Python', sourceMarkdown: 'Markdown',
+          interfaceTheme: 'Interface theme', darkTheme: 'Dark Theme', lightTheme: 'Light Theme', highContrastTheme: 'High Contrast',
+          changeLanguage: 'Change interface language', sidebarViews: 'Sidebar views', gitControls: 'Git controls', problems: 'Problems',
+          resizeProblems: 'Resize Problems panel', noProblems: 'No problems detected', treePrompt: 'Open a file to browse its folder',
+          findInFile: 'Find in file', findPlaceholder: 'Find...', previousMatch: 'Previous match', nextMatch: 'Next match', close: 'Close',
+          markdownViewMode: 'Markdown view mode', markdownPreview: 'Preview', markdownEdit: 'Edit',
+          gitBlameTitle: 'Git Blame', noBlameData: 'No blame data.', welcome: 'Welcome to Satiscode', namePrompt: 'What should we call you?', yourName: 'Your name',
+          notNow: 'Not now', continue: 'Continue', languageReady: 'language: ready', languagePlainText: 'language: plain text',
+          gitOpenSavedFile: 'Git: open a saved file first', gitError: 'Git error',
+          clangdIdle: 'clangd: idle', clangdReady: 'clangd: ready', clangdStarting: 'clangd: starting', clangdUnavailable: 'clangd: unavailable',
+          pyrightReady: 'pyright: ready', pyrightStarting: 'pyright: starting', pyrightUnavailable: 'pyright: unavailable',
+          operational: 'satiscode: Operational', starting: 'satiscode: Starting', error: 'satiscode: Error', offline: 'satiscode: Offline'
+        },
+        es: {
+          newFile: 'Nuevo', openFile: 'Abrir archivo', openFolder: 'Abrir carpeta', saveFile: 'Guardar', saveAs: 'Guardar como', gitBlame: '⑂ Anotaciones',
+          showGitBlame: 'Mostrar las anotaciones Git del archivo activo', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', sourceControl: 'Control de código fuente',
+          sourceLanguage: 'Seleccionar lenguaje del archivo', sourceAuto: 'Automático', sourceC: 'C', sourceCpp: 'C++', sourceCss: 'CSS',
+          sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourcePlainText: 'Texto sin formato', sourcePython: 'Python', sourceMarkdown: 'Markdown',
+          interfaceTheme: 'Tema de la interfaz', darkTheme: 'Tema oscuro', lightTheme: 'Tema claro', highContrastTheme: 'Alto contraste',
+          changeLanguage: 'Cambiar el idioma de la interfaz', sidebarViews: 'Vistas de la barra lateral', gitControls: 'Controles de Git', problems: 'Problemas',
+          resizeProblems: 'Cambiar el tamaño del panel de problemas', noProblems: 'No se detectaron problemas', treePrompt: 'Abre un archivo para explorar su carpeta',
+          findInFile: 'Buscar en el archivo', findPlaceholder: 'Buscar...', previousMatch: 'Coincidencia anterior', nextMatch: 'Siguiente coincidencia', close: 'Cerrar',
+          markdownViewMode: 'Modo de vista de Markdown', markdownPreview: 'Vista previa', markdownEdit: 'Editar',
+          gitBlameTitle: 'Anotaciones de Git', noBlameData: 'No hay datos de anotaciones.', welcome: 'Te damos la bienvenida a Satiscode', namePrompt: '¿Cómo te llamamos?', yourName: 'Tu nombre',
+          notNow: 'Ahora no', continue: 'Continuar', languageReady: 'idioma: listo', languagePlainText: 'idioma: texto sin formato',
+          gitOpenSavedFile: 'Git: abre primero un archivo guardado', gitError: 'Error de Git',
+          clangdIdle: 'clangd: inactivo', clangdReady: 'clangd: listo', clangdStarting: 'clangd: iniciando', clangdUnavailable: 'clangd: no disponible',
+          pyrightReady: 'pyright: listo', pyrightStarting: 'pyright: iniciando', pyrightUnavailable: 'pyright: no disponible',
+          operational: 'satiscode: operativo', starting: 'satiscode: iniciando', error: 'satiscode: error', offline: 'satiscode: desconectado'
+        }
       };
 
       const extensionForPath = (filePath) => {
@@ -226,7 +284,7 @@
             <span class="problem-message">${escapeHtml(problem.message)}</span>
             <span class="problem-location">${problem.startLineNumber}:${problem.startColumn}</span>
           </div>`;
-        }).join('') : '<div id="no-problems">No problems detected.</div>';
+        }).join('') : `<div id="no-problems">${translations[window.appSettings?.language]?.noProblems || translations.en.noProblems}${window.appSettings?.userName ? `, ${escapeHtml(window.appSettings.userName)}` : ''}.</div>`;
 
         list.querySelectorAll('.problem').forEach((element) => {
           element.addEventListener('click', () => {
@@ -256,29 +314,64 @@
 
         status.dataset.state = state;
 
-        const labels = {
-          operational: 'satiscode: Operational',
-          starting: 'satiscode: Starting',
-          error: 'satiscode: Error',
-          offline: 'satiscode: Offline'
-        };
+        const labels = translations[window.appSettings?.language] || translations.en;
 
         status.lastChild.textContent = ` ${message || labels[state] || labels.operational}`;
       }
 
+      function setEditorStatus(key) {
+        const status = document.getElementById('status');
+        const labels = translations[window.appSettings?.language] || translations.en;
+        status.dataset.translationKey = key;
+        status.textContent = labels[key] || key;
+      }
+
+      function setEditorStatusMessage(message) {
+        const status = document.getElementById('status');
+        delete status.dataset.translationKey;
+        status.textContent = message;
+      }
+
       function applyInterfaceLanguage(language) {
         const labels = translations[language] || translations.en;
+        const activeLanguage = translations[language] ? language : 'en';
+        document.documentElement.lang = activeLanguage;
         document.querySelectorAll('[data-i18n]').forEach((element) => {
           element.textContent = labels[element.dataset.i18n] || element.textContent;
         });
-        document.getElementById('language-select').value = translations[language] ? language : 'en';
+        document.querySelectorAll('[data-i18n-aria]').forEach((element) => {
+          element.setAttribute('aria-label', labels[element.dataset.i18nAria] || element.getAttribute('aria-label'));
+        });
+        document.querySelectorAll('[data-i18n-title]').forEach((element) => {
+          element.title = labels[element.dataset.i18nTitle] || element.title;
+        });
+        const languageButton = document.getElementById('language-button');
+        languageButton.setAttribute('aria-label', labels.changeLanguage);
+        languageButton.title = labels.changeLanguage;
+        document.querySelectorAll('[data-language]').forEach((option) => {
+          option.setAttribute('aria-checked', String(option.dataset.language === activeLanguage));
+        });
+        document.getElementById('find-dialog').setAttribute('aria-label', labels.findInFile);
+        document.getElementById('find-input').placeholder = labels.findPlaceholder;
+        document.getElementById('find-prev-btn').setAttribute('aria-label', labels.previousMatch);
+        document.getElementById('find-next-btn').setAttribute('aria-label', labels.nextMatch);
+        document.getElementById('find-close-btn').setAttribute('aria-label', labels.close);
+        document.getElementById('blame-close-btn').setAttribute('aria-label', labels.close);
+        const treeRoot = document.getElementById('tree-root');
+        if (!treeRoot.childElementCount) treeRoot.textContent = labels.treePrompt;
+        const status = document.getElementById('status');
+        const currentStatusKey = status.dataset.translationKey || Object.keys(labels).find((key) => Object.values(translations).some((locale) => locale[key] === status.textContent));
+        if (currentStatusKey) status.textContent = labels[currentStatusKey] || status.textContent;
+        const ideStatus = document.getElementById('ideStatus');
+        ideStatus.lastChild.textContent = ` ${labels[ideStatus.dataset.state] || labels.operational}`;
       }
 
       function updateSourceLanguageLabel() {
         const language = activeLanguage(currentFilePath);
-        const labels = { auto: 'Auto', c: 'C', cpp: 'C++', css: 'CSS', javascript: 'JavaScript', html: 'HTML', typescript: 'TypeScript', json: 'JSON', python: 'Python', plaintext: 'Plain Text' };
-        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', python: 'Py', plaintext: 'Aa' };
-        document.getElementById('source-language-label').textContent = labels[language] || labels.auto;
+        const labels = translations[window.appSettings?.language] || translations.en;
+        const languageLabels = { auto: labels.sourceAuto, c: labels.sourceC, cpp: labels.sourceCpp, css: labels.sourceCss, javascript: labels.sourceJavaScript, html: labels.sourceHtml, typescript: labels.sourceTypeScript, json: labels.sourceJson, python: labels.sourcePython, plaintext: labels.sourcePlainText, markdown: labels.sourceMarkdown };
+        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', python: 'Py', plaintext: 'Aa', markdown: 'MD' };
+        document.getElementById('source-language-label').textContent = languageLabels[language] || languageLabels.auto;
         document.querySelector('#source-language-btn .language-badge').textContent = icons[language] || icons.auto;
       }
 
@@ -319,7 +412,7 @@
         } else {
           stopLanguageServers();
           clearProblems();
-          document.getElementById('status').textContent = selectedLanguage === 'plaintext' ? 'language: plaintext' : 'language: ready';
+          setEditorStatus(selectedLanguage === 'plaintext' ? 'languagePlainText' : 'languageReady');
         }
       }
 
@@ -401,6 +494,7 @@
         currentDocumentUri = tab.filePath ? pathToUri(tab.filePath) : null;
         documentVersion = 1;
         window.editor.setModel(tab.model);
+        updateMarkdownDisplay(tab);
         updateSourceLanguageLabel();
 
         if (isActiveCppLanguage()) {
@@ -417,7 +511,7 @@
                 text: window.editor.getValue()
               }
             });
-            document.getElementById('status').textContent = 'clangd: ready';
+            setEditorStatus('clangdReady');
           } else {
             if (clangdStarted) {
               window.api.stopClangd();
@@ -439,7 +533,7 @@
                 text: window.editor.getValue()
               }
             });
-            document.getElementById('status').textContent = 'pyright: ready';
+            setEditorStatus('pyrightReady');
           } else {
             if (pyrightStarted) {
               window.api.stopPyright();
@@ -450,7 +544,7 @@
         } else {
           stopLanguageServers();
           clearProblems();
-          document.getElementById('status').textContent = hasEditorLanguage(currentFilePath || '') ? 'language: ready' : 'language: plaintext';
+          setEditorStatus(hasEditorLanguage(currentFilePath || '') ? 'languageReady' : 'languagePlainText');
         }
       } else {
         currentFilePath = null;
@@ -460,11 +554,39 @@
         clearProblems();
         const emptyModel = monaco.editor.createModel('', 'plaintext');
         window.editor.setModel(emptyModel);
-        document.getElementById('status').textContent = 'language: plaintext';
+        updateMarkdownDisplay(null);
+        setEditorStatus('languagePlainText');
       }
     },
     (tab) => saveTab(tab)
   );
+
+  const markdownView = new window.MarkdownView(document.getElementById('markdown-preview'));
+
+  function updateMarkdownDisplay(tab) {
+    const isMarkdownFile = Boolean(tab && ['.md', '.markdown'].includes(extensionForPath(tab.filePath || '')));
+    const isPreview = isMarkdownFile && tab.markdownMode !== 'edit';
+    document.getElementById('markdown-mode-controls').hidden = !isMarkdownFile;
+    document.getElementById('markdown-preview-button').setAttribute('aria-pressed', String(isPreview));
+    document.getElementById('markdown-edit-button').setAttribute('aria-pressed', String(isMarkdownFile && !isPreview));
+    document.getElementById('editor').hidden = isPreview;
+    document.getElementById('markdown-preview').hidden = !isPreview;
+    if (isPreview) markdownView.render(tab.model.getValue());
+  }
+
+  document.getElementById('markdown-preview-button').addEventListener('click', () => {
+    const tab = tabManager.getActiveTab();
+    if (!tab) return;
+    tab.markdownMode = 'preview';
+    updateMarkdownDisplay(tab);
+  });
+  document.getElementById('markdown-edit-button').addEventListener('click', () => {
+    const tab = tabManager.getActiveTab();
+    if (!tab) return;
+    tab.markdownMode = 'edit';
+    updateMarkdownDisplay(tab);
+    window.editor.focus();
+  });
 
   // Bind '+' button from tabman.js
   tabManager.onNewTabRequest = () => createNewTab();
@@ -556,7 +678,7 @@
         if (!isActiveCppLanguage()) return;
         if (clangdStarted) window.api.stopClangd();
         clangdStarted = true;
-        document.getElementById('status').textContent = 'clangd: starting';
+        setEditorStatus('clangdStarting');
         const language = activeLanguage(currentFilePath);
         const workspacePath = currentDirectory || await window.api.getWorkspacePath();
         const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
@@ -578,11 +700,11 @@
           sendClangdNotification('textDocument/didOpen', {
             textDocument: { uri: currentDocumentUri, languageId: language, version: documentVersion, text: window.editor.getValue() }
           });
-          document.getElementById('status').textContent = 'clangd: ready';
+          setEditorStatus('clangdReady');
         }).catch((error) => {
           clangdStarted = false;
           console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${error.message || error}`);
-          document.getElementById('status').textContent = 'clangd: unavailable';
+          setEditorStatus('clangdUnavailable');
         });
       }
 
@@ -590,7 +712,7 @@
         if (!isActivePythonLanguage()) return;
         if (pyrightStarted) window.api.stopPyright();
         pyrightStarted = true;
-        document.getElementById('status').textContent = 'pyright: starting';
+        setEditorStatus('pyrightStarting');
         const language = 'python';
         const workspacePath = currentDirectory || await window.api.getWorkspacePath();
         const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
@@ -612,12 +734,12 @@
           sendPyrightNotification('textDocument/didOpen', {
             textDocument: { uri: currentDocumentUri, languageId: language, version: documentVersion, text: window.editor.getValue() }
           });
-          document.getElementById('status').textContent = 'pyright: ready';
+          setEditorStatus('pyrightReady');
           console.info(`Pyright ready for ${currentDocumentUri}`);
         }).catch((error) => {
           pyrightStarted = false;
           console.warn(`pyright is unavailable. Python editing will continue without language services: ${error.message || error}`);
-          document.getElementById('status').textContent = 'pyright: unavailable';
+          setEditorStatus('pyrightUnavailable');
         });
       }
 
@@ -628,7 +750,7 @@
 
     require(['vs/editor/editor.main'], function() {
       const MONACO_THEME_MAP = { dark: 'vs-dark', light: 'vs' };
-      const savedThemeId = localStorage.getItem('satiscode-theme') || 'dark';
+      const savedThemeId = window.appSettings?.theme || 'dark';
 
       window.editor = monaco.editor.create(document.getElementById('editor'), {
         value: '// Start typing CMM code or JS here...\n',
@@ -661,7 +783,7 @@
         clangdPendingRequests.forEach((request) => request.reject(new Error(message)));
         clangdPendingRequests.clear();
         console.warn(`clangd is unavailable. C/C++ editing will continue without language services: ${message}`);
-        document.getElementById('status').textContent = 'clangd: unavailable';
+        setEditorStatus('clangdUnavailable');
       });
       window.api.onClangdStderr((message) => console.warn(`clangd: ${message.trim()}`));
 
@@ -691,7 +813,7 @@
         pyrightPendingRequests.forEach((request) => request.reject(new Error(message)));
         pyrightPendingRequests.clear();
         console.warn(`pyright is unavailable. Python editing will continue without language services: ${message}`);
-        document.getElementById('status').textContent = 'pyright: unavailable';
+        setEditorStatus('pyrightUnavailable');
       });
       window.api.onPyrightStderr((message) => console.warn(`pyright: ${message.trim()}`));
       window.api.onPyrightExit(() => {
@@ -700,7 +822,7 @@
         pyrightPendingRequests.forEach((request) => request.reject(error));
         pyrightPendingRequests.clear();
       });
-      applyInterfaceLanguage('en');
+      applyInterfaceLanguage(window.appSettings?.language || 'en');
       updateSourceLanguageLabel();
       setSatiscodeStatus('operational');
 
@@ -844,6 +966,7 @@
           currentFilePath = savedPath;
           currentDocumentUri = pathToUri(savedPath);
           monaco.editor.setModelLanguage(tab.model, languageForPath(savedPath));
+          updateMarkdownDisplay(tab);
           updateSourceLanguageLabel();
           if (isActiveCppLanguage()) {
             if (pyrightStarted) {
@@ -868,7 +991,7 @@
           } else {
             stopLanguageServers();
             clearProblems();
-            document.getElementById('status').textContent = hasEditorLanguage(currentFilePath || '') ? 'language: ready' : 'language: plaintext';
+            setEditorStatus(hasEditorLanguage(currentFilePath || '') ? 'languageReady' : 'languagePlainText');
           }
         }
 
@@ -888,7 +1011,7 @@
 
       document.getElementById('git-blame-btn').addEventListener('click', async () => {
         if (!currentFilePath) {
-          document.getElementById('status').textContent = 'git blame: open a saved file first';
+          setEditorStatus('gitOpenSavedFile');
           return;
         }
         try {
@@ -897,21 +1020,44 @@
           const result = await window.api.gitBlame(workspace, currentFilePath);
           if (!result.ok) throw new Error(result.stderr || result.stdout || 'Git blame failed.');
           const fileName = currentFilePath.slice(lastSeparator + 1);
-          document.getElementById('blame-title').textContent = `Git Blame: ${fileName}`;
-          document.getElementById('blame-output').textContent = result.stdout || 'No blame data.';
+          const labels = translations[window.appSettings?.language] || translations.en;
+          document.getElementById('blame-title').textContent = `${labels.gitBlameTitle}: ${fileName}`;
+          document.getElementById('blame-output').textContent = result.stdout || labels.noBlameData;
           document.getElementById('blame-dialog').showModal();
         } catch (error) {
-          document.getElementById('status').textContent = `git blame: ${error.message || error}`;
+          const labels = translations[window.appSettings?.language] || translations.en;
+          setEditorStatusMessage(`${labels.gitError}: ${error.message || error}`);
         }
       });
 
-      document.getElementById('language-select').addEventListener('change', (event) => applyInterfaceLanguage(event.target.value));
+      const languageButton = document.getElementById('language-button');
+      const languageOptions = document.getElementById('language-options');
+      languageButton.addEventListener('click', () => {
+        languageOptions.hidden = !languageOptions.hidden;
+        languageButton.setAttribute('aria-expanded', String(!languageOptions.hidden));
+      });
+      languageOptions.addEventListener('click', async (event) => {
+        const option = event.target.closest('[data-language]');
+        if (!option) return;
+        window.appSettings = await window.api.setLanguage(option.dataset.language);
+        applyInterfaceLanguage(window.appSettings.language);
+        updateSourceLanguageLabel();
+        renderProblems();
+        languageOptions.hidden = true;
+        languageButton.setAttribute('aria-expanded', 'false');
+      });
       document.getElementById('exit-btn').addEventListener('click', () => window.api.exit());
       document.getElementById('tree-root').textContent = 'Open a file to browse its folder';
 
       // Theme selector
       document.getElementById('theme-select').addEventListener('change', (event) => {
-        applyTheme(event.target.value); 
+        window.api.setTheme(event.target.value).then((settings) => {
+          window.appSettings = settings;
+          document.getElementById('markdown-code-theme').href = event.target.value === 'light'
+            ? 'node_modules/highlight.js/styles/github.min.css'
+            : 'node_modules/highlight.js/styles/github-dark.min.css';
+          return applyTheme(event.target.value);
+        });
       })
 
       function toggleProblemsPanel() {
@@ -1100,11 +1246,29 @@
       applyTheme(savedThemeId).then(() => {
         document.getElementById('theme-select').value = savedThemeId;
       });
+
+      const nameDialog = document.getElementById('name-setup-dialog');
+      const nameInput = document.getElementById('user-name-input');
+      nameDialog.addEventListener('cancel', (event) => event.preventDefault());
+      document.getElementById('name-setup-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        window.appSettings = await window.api.setUserName(nameInput.value);
+        nameDialog.close();
+        renderProblems();
+      });
+      document.getElementById('skip-name-setup').addEventListener('click', async () => {
+        window.appSettings = await window.api.setUserName('');
+        nameDialog.close();
+      });
+      if (!window.appSettings?.namePromptCompleted) {
+        nameDialog.showModal();
+        nameInput.focus();
+      }
     });
   });
   </script>
 
-  <div id="find-dialog" class="hidden" role="dialog" aria-label="Find in file">
+  <div id="find-dialog" class="hidden" role="dialog" aria-label="Find in file" data-i18n-aria="findInFile">
     <input type="text" id="find-input" placeholder="Find..." autocomplete="off" />
     <button id="find-prev-btn" aria-label="Previous match">▲</button>
     <button id="find-next-btn" aria-label="Next match">▼</button>
@@ -1114,10 +1278,22 @@
 
   <dialog id="blame-dialog" aria-labelledby="blame-title">
     <header class="blame-header">
-      <h2 id="blame-title">Git Blame</h2>
-      <button id="blame-close-btn" type="button" aria-label="Close Git blame">×</button>
+      <h2 id="blame-title" data-i18n="gitBlameTitle">Git Blame</h2>
+      <button id="blame-close-btn" type="button" aria-label="Close Git blame" data-i18n-aria="close">×</button>
     </header>
     <pre id="blame-output"></pre>
+  </dialog>
+  <dialog id="name-setup-dialog" aria-labelledby="name-setup-title">
+    <form id="name-setup-form">
+      <h2 id="name-setup-title" data-i18n="welcome">Welcome to Satiscode</h2>
+      <p data-i18n="namePrompt">What should we call you?</p>
+      <label for="user-name-input" data-i18n="yourName">Your name</label>
+      <input id="user-name-input" name="userName" type="text" maxlength="80" autocomplete="nickname" required>
+      <div class="name-setup-actions">
+        <button id="skip-name-setup" type="button" data-i18n="notNow">Not now</button>
+        <button type="submit" data-i18n="continue">Continue</button>
+      </div>
+    </form>
   </dialog>
   <script>
     document.getElementById('blame-close-btn').addEventListener('click', () => {
