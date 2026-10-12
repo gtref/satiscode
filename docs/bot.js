@@ -1,6 +1,4 @@
-// bot.js — placeholder replaced by GitHub Actions
-
-const GROQ_API = "__GROQ_API__";  // replaced during build
+const GROQ_API = "__GROQ_API__"; // replaced by static.yml
 
 async function askGroq(prompt) {
   const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
@@ -18,8 +16,15 @@ async function askGroq(prompt) {
   });
 
   const data = await response.json();
+
+  // Handle errors safely
+  if (data.error) {
+    console.error("Groq API Error:", data.error);
+    return "Groq error: " + data.error.message;
+  }
+
   return data.choices[0].message.content;
 }
 
-// Example:
+// Example usage
 askGroq("Hello from GitHub Pages!").then(console.log);
