@@ -8,7 +8,7 @@ async function askGroq(prompt) {
       "Content-Type": "application/json"
     },
     body: JSON.stringify({
-      model: "llama3-8b-262k",
+      model: "openai/gpt-oss-120b",
       messages: [
         { role: "user", content: prompt }
       ]
