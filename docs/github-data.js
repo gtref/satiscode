@@ -33,6 +33,9 @@ function renderReleaseInfo(release) {
 
   document.getElementById("release-date").textContent =
     new Date(release.published_at).toLocaleDateString();
+  
+  document.getElementById("release-notes").innerHTML = 
+    release.body ? marked.parse(release.body) : "No release notes available.";
 
   // Find installer asset
   const installer = release.assets.find(a =>
