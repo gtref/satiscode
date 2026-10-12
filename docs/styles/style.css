@@ -284,12 +284,14 @@ footer {
   }
 }
 
+
+
 #helpbox {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 300px;
-  background: #ffffff;
+  width: 320px;
+  background: #fff;
   border-radius: 12px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.15);
   font-family: sans-serif;
@@ -308,7 +310,7 @@ footer {
 
 #helpbox-messages {
   padding: 10px;
-  height: 200px;
+  height: 220px;
   overflow-y: auto;
   font-size: 14px;
 }
