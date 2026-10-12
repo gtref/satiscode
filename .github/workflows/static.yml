@@ -26,6 +26,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Inject obfuscated Groq key
+        env:
+          GROQ_API: ${{ secrets.GROQ_API }}
+        run: |
+          python - <<'PY'
+          import base64
+          import os
+          from pathlib import Path
+
+          api_key = os.environ.get("GROQ_API", "")
+          if not api_key:
+              raise SystemExit("The GROQ_API repository secret is not configured.")
+
+          mask = b"SatiscodePublicDocsMask2026"
+          key_bytes = api_key.encode("utf-8")
+          obfuscated = bytes(value ^ mask[index % len(mask)] for index, value in enumerate(key_bytes))
+          encoded = base64.urlsafe_b64encode(obfuscated).decode("ascii").rstrip("=")
+          bot_path = Path("docs/bot.js")
+          source = bot_path.read_text(encoding="utf-8")
+          placeholder = "__GROQ_API_OBFUSCATED__"
+          if placeholder not in source:
+              raise SystemExit("Groq key placeholder was not found in docs/bot.js.")
+          bot_path.write_text(source.replace(placeholder, encoded, 1), encoding="utf-8")
+          PY
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
