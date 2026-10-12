@@ -1,6 +1,6 @@
 {
   "name": "satiscode",
-  "version": "2.1.0-BETA",
+  "version": "2.1.3",
   "description": "A lightweight C/C++ and Python editor powered by Monaco, clangd, and Pyright.",
   "main": "main.js",
   "scripts": {
@@ -23,6 +23,9 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
+    "dompurify": "^3.4.13",
+    "highlight.js": "^11.11.1",
+    "marked": "^17.0.1",
     "monaco-editor": "0.57.0",
     "monaco-languageclient": "^11.0.2",
     "vscode-ws-jsonrpc": "^4.0.2"
@@ -35,7 +38,7 @@
     "globals": "^17.12.0"
   },
   "overrides": {
-    "dompurify": "^3.4.13"
+    "dompurify": "$dompurify"
   },
   "build": {
     "appId": "com.satiscode.editor",
@@ -53,6 +56,7 @@
       "icons.js",
       "icons/style1/icons.json",
       "UI/git_sidebar/*",
+      "UI/markdown_view/**/*",
       "UI/tab_manager/*",
       "node_modules/**/*",
       "styles/**/*",

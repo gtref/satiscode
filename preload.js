@@ -1,4 +1,5 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const hljs = require('highlight.js');
 const { GitUi } = require('./UI/git_sidebar/gitui');
 
 let gitUi = null;
@@ -12,6 +13,9 @@ globalThis.addEventListener('DOMContentLoaded', () => {
 });
 
 contextBridge.exposeInMainWorld('api', {
+  highlightCode: (code, language) => hljs.getLanguage(language)
+    ? hljs.highlight(code, { language }).value
+    : null,
   openFile: () => ipcRenderer.invoke('dialog:openFile'),
   readFile: (filePath) => ipcRenderer.invoke('file:read', filePath),
   getWorkspacePath: () => ipcRenderer.invoke('app:workspacePath'),

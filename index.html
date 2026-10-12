@@ -14,16 +14,20 @@
   <title>Satiscode</title>
   <link rel="stylesheet" href="styles/style1.css">
   <link rel="stylesheet" href="node_modules/monaco-editor/min/vs/editor/editor.main.css">
+  <link rel="stylesheet" href="UI/markdown_view/style.css">
+  <link id="markdown-code-theme" rel="stylesheet" href="node_modules/highlight.js/styles/github-dark.min.css">
   <script type="module">
     import { initIcons, getFileIcon, getFolderIcon, getChevronIcon, getUiIcon } from './icons.js';
     import { loadTheme, applyTheme, getAvailableThemes } from './themes.js'; 
     import { TabManager } from './UI/tab_manager/tabman.js';
+    import { MarkdownView } from './UI/markdown_view/view.js';
 
     // Attach getters to window for internal renderer access immediately
     window.getFileIcon = getFileIcon;
     window.getFolderIcon = getFolderIcon;
     window.getChevronIcon = getChevronIcon;
     window.getUiIcon = getUiIcon;
+    window.MarkdownView = MarkdownView;
 
     // Attach theme functions for internal renderer access
     window.loadTheme = loadTheme;
@@ -37,6 +41,9 @@
     }
     window.appSettings = settings;
     const savedTheme = settings.theme || 'dark';
+    document.getElementById('markdown-code-theme').href = savedTheme === 'light'
+      ? 'node_modules/highlight.js/styles/github.min.css'
+      : 'node_modules/highlight.js/styles/github-dark.min.css';
     document.getElementById('theme-select').value = savedTheme;
     await applyTheme(savedTheme);
     window.TabManager = TabManager;
@@ -106,7 +113,12 @@
     </aside>
     <div id="workspace">
       <div id="tab-bar" class="tab-bar"></div>
+      <div id="markdown-mode-controls" role="group" aria-label="Markdown view mode" data-i18n-aria="markdownViewMode" hidden>
+        <button id="markdown-preview-button" type="button" data-i18n="markdownPreview" aria-pressed="true">Preview</button>
+        <button id="markdown-edit-button" type="button" data-i18n="markdownEdit" aria-pressed="false">Edit</button>
+      </div>
       <div id="editor"></div>
+      <div id="markdown-preview" hidden></div>
       <section id="problems-panel" aria-label="Problems" data-i18n-aria="problems">
         <div id="problems-resizer" title="Resize Problems panel" data-i18n-title="resizeProblems"></div>
         <div id="problems-header">
@@ -176,7 +188,7 @@
         ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
         ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'], ['.cjs', 'javascript'],
         ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json'],
-        ['.py', 'python'], ['.md', 'markdown']
+        ['.py', 'python'], ['.md', 'markdown'], ['.markdown', 'markdown']
       ]);
       const translations = {
         en: {
@@ -188,6 +200,7 @@
           changeLanguage: 'Change interface language', sidebarViews: 'Sidebar views', gitControls: 'Git controls', problems: 'Problems',
           resizeProblems: 'Resize Problems panel', noProblems: 'No problems detected', treePrompt: 'Open a file to browse its folder',
           findInFile: 'Find in file', findPlaceholder: 'Find...', previousMatch: 'Previous match', nextMatch: 'Next match', close: 'Close',
+          markdownViewMode: 'Markdown view mode', markdownPreview: 'Preview', markdownEdit: 'Edit',
           gitBlameTitle: 'Git Blame', noBlameData: 'No blame data.', welcome: 'Welcome to Satiscode', namePrompt: 'What should we call you?', yourName: 'Your name',
           notNow: 'Not now', continue: 'Continue', languageReady: 'language: ready', languagePlainText: 'language: plain text',
           gitOpenSavedFile: 'Git: open a saved file first', gitError: 'Git error',
@@ -204,6 +217,7 @@
           changeLanguage: 'Cambiar el idioma de la interfaz', sidebarViews: 'Vistas de la barra lateral', gitControls: 'Controles de Git', problems: 'Problemas',
           resizeProblems: 'Cambiar el tamaño del panel de problemas', noProblems: 'No se detectaron problemas', treePrompt: 'Abre un archivo para explorar su carpeta',
           findInFile: 'Buscar en el archivo', findPlaceholder: 'Buscar...', previousMatch: 'Coincidencia anterior', nextMatch: 'Siguiente coincidencia', close: 'Cerrar',
+          markdownViewMode: 'Modo de vista de Markdown', markdownPreview: 'Vista previa', markdownEdit: 'Editar',
           gitBlameTitle: 'Anotaciones de Git', noBlameData: 'No hay datos de anotaciones.', welcome: 'Te damos la bienvenida a Satiscode', namePrompt: '¿Cómo te llamamos?', yourName: 'Tu nombre',
           notNow: 'Ahora no', continue: 'Continuar', languageReady: 'idioma: listo', languagePlainText: 'idioma: texto sin formato',
           gitOpenSavedFile: 'Git: abre primero un archivo guardado', gitError: 'Error de Git',
@@ -480,6 +494,7 @@
         currentDocumentUri = tab.filePath ? pathToUri(tab.filePath) : null;
         documentVersion = 1;
         window.editor.setModel(tab.model);
+        updateMarkdownDisplay(tab);
         updateSourceLanguageLabel();
 
         if (isActiveCppLanguage()) {
@@ -539,11 +554,39 @@
         clearProblems();
         const emptyModel = monaco.editor.createModel('', 'plaintext');
         window.editor.setModel(emptyModel);
+        updateMarkdownDisplay(null);
         setEditorStatus('languagePlainText');
       }
     },
     (tab) => saveTab(tab)
   );
+
+  const markdownView = new window.MarkdownView(document.getElementById('markdown-preview'));
+
+  function updateMarkdownDisplay(tab) {
+    const isMarkdownFile = Boolean(tab && ['.md', '.markdown'].includes(extensionForPath(tab.filePath || '')));
+    const isPreview = isMarkdownFile && tab.markdownMode !== 'edit';
+    document.getElementById('markdown-mode-controls').hidden = !isMarkdownFile;
+    document.getElementById('markdown-preview-button').setAttribute('aria-pressed', String(isPreview));
+    document.getElementById('markdown-edit-button').setAttribute('aria-pressed', String(isMarkdownFile && !isPreview));
+    document.getElementById('editor').hidden = isPreview;
+    document.getElementById('markdown-preview').hidden = !isPreview;
+    if (isPreview) markdownView.render(tab.model.getValue());
+  }
+
+  document.getElementById('markdown-preview-button').addEventListener('click', () => {
+    const tab = tabManager.getActiveTab();
+    if (!tab) return;
+    tab.markdownMode = 'preview';
+    updateMarkdownDisplay(tab);
+  });
+  document.getElementById('markdown-edit-button').addEventListener('click', () => {
+    const tab = tabManager.getActiveTab();
+    if (!tab) return;
+    tab.markdownMode = 'edit';
+    updateMarkdownDisplay(tab);
+    window.editor.focus();
+  });
 
   // Bind '+' button from tabman.js
   tabManager.onNewTabRequest = () => createNewTab();
@@ -923,6 +966,7 @@
           currentFilePath = savedPath;
           currentDocumentUri = pathToUri(savedPath);
           monaco.editor.setModelLanguage(tab.model, languageForPath(savedPath));
+          updateMarkdownDisplay(tab);
           updateSourceLanguageLabel();
           if (isActiveCppLanguage()) {
             if (pyrightStarted) {
@@ -1009,6 +1053,9 @@
       document.getElementById('theme-select').addEventListener('change', (event) => {
         window.api.setTheme(event.target.value).then((settings) => {
           window.appSettings = settings;
+          document.getElementById('markdown-code-theme').href = event.target.value === 'light'
+            ? 'node_modules/highlight.js/styles/github.min.css'
+            : 'node_modules/highlight.js/styles/github-dark.min.css';
           return applyTheme(event.target.value);
         });
       })
