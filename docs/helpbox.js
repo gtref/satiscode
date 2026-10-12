@@ -82,7 +82,7 @@ function initHelpBox() {
     messages.appendChild(pending);
     messages.scrollTop = messages.scrollHeight;
 
-    const prompt = `You are a helpful assistant for the Satiscode documentation. Answer based on this page content and general knowledge.\n\nPage content: ${extractPageContent()}\n\nQuestion: ${userMsg}`;
+    const prompt = `PAGE CONTENT (reference only):\n${extractPageContent()}\n\nQUESTION:\n${userMsg}`;
     const reply = await askAssistant(prompt);
     pending.remove();
     addMessage("assistant", reply);
