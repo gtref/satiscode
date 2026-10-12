@@ -26,11 +26,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # ⭐ Inject GROQ_API secret into docs/bot.js
-      - name: Inject GROQ_API into bot.js
-        run: |
-          sed -i "s|__GROQ_API__|${{ secrets.GROQ_API }}|g" docs/bot.js
-
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
