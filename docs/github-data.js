@@ -33,17 +33,23 @@ function renderReleaseInfo(release) {
 
   document.getElementById("release-date").textContent =
     new Date(release.published_at).toLocaleDateString();
-  
-  document.getElementById("release-notes").innerHTML = 
-    release.body ? marked.parse(release.body) : "No release notes available.";
+
+  const releaseNotes = release.body ? release.body.trim() : "";
+  const releaseNotesMarkup = typeof marked !== "undefined" && typeof marked.parse === "function"
+    ? marked.parse(releaseNotes)
+    : releaseNotes || "No release notes available.";
+
+  document.getElementById("release-notes").innerHTML = releaseNotes ? releaseNotesMarkup : "No release notes available.";
 
   // Find installer asset
-  const installer = release.assets.find(a =>
-    a.name.endsWith(".exe") ||
-    a.name.endsWith(".msi") ||
-    a.name.endsWith(".zip") ||
-    a.name.endsWith(".tar.gz")
-  );
+  const installer = Array.isArray(release.assets)
+    ? release.assets.find(a =>
+        a.name.endsWith(".exe") ||
+        a.name.endsWith(".msi") ||
+        a.name.endsWith(".zip") ||
+        a.name.endsWith(".tar.gz")
+      )
+    : null;
 
   document.getElementById("installer-size").textContent =
     installer ? formatBytes(installer.size) : "N/A";
