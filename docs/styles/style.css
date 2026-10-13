@@ -249,6 +249,159 @@ footer {
   margin-top: 2rem;
 }
 
+/* Newsletter Card & MailerLite Embed Custom Styles */
+.card.newsletter {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+#mlb2-47072472.ml-form-embedContainer {
+  box-sizing: border-box;
+  width: 100% !important;
+  margin: 0 auto;
+}
+
+#mlb2-47072472.ml-form-embedContainer .ml-form-embedWrapper {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+#mlb2-47072472 .ml-form-embedHeader {
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+#mlb2-47072472 .ml-form-embedHeader img {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  margin: 0 auto;
+  display: block;
+}
+
+#mlb2-47072472 .ml-form-embedContent h2,
+#mlb2-47072472 .ml-form-successContent h2 {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--text-color);
+}
+
+#mlb2-47072472 .ml-form-embedContent p,
+#mlb2-47072472 .ml-form-successContent p {
+  color: var(--text-color);
+  margin: 0 0 1rem 0;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+}
+
+#mlb2-47072472 .ml-form-fieldRow {
+  margin-bottom: 1rem;
+}
+
+#mlb2-47072472 input[type="email"] {
+  background-color: var(--bg-color) !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px !important;
+  padding: 0.6rem 0.8rem !important;
+  font-family: var(--font-sans) !important;
+  font-size: 0.95rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+#mlb2-47072472 input[type="email"]:focus {
+  border-color: var(--accent-blue) !important;
+}
+
+#mlb2-47072472 .ml-form-checkboxRow {
+  margin-bottom: 1rem;
+}
+
+#mlb2-47072472 .ml-form-checkboxRow label.checkbox {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  margin: 0;
+  padding: 0;
+}
+
+#mlb2-47072472 .ml-form-checkboxRow input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent-blue);
+  cursor: pointer;
+  margin: 0;
+}
+
+#mlb2-47072472 .ml-form-checkboxRow .label-description p {
+  margin: 0 !important;
+  font-size: 0.85rem !important;
+  color: var(--text-color) !important;
+}
+
+#mlb2-47072472 .ml-form-embedSubmit {
+  margin-top: 1rem;
+}
+
+#mlb2-47072472 .ml-form-embedSubmit button.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.6rem 1.2rem;
+  background-color: var(--accent-blue) !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 6px !important;
+  font-family: var(--font-sans) !important;
+  font-weight: 600;
+  font-size: 0.95rem !important;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+
+#mlb2-47072472 .ml-form-embedSubmit button.primary:hover {
+  background-color: var(--accent-hover) !important;
+}
+
+#mlb2-47072472 .ml-form-embedSubmitLoad {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #ffffff;
+  border-color: #ffffff #ffffff #ffffff transparent;
+  border-radius: 50%;
+  animation: ml-form-embedSubmitLoad 1.2s linear infinite;
+}
+
+@keyframes ml-form-embedSubmitLoad {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  border: 0;
+}
+
+.ml-error input {
+  border-color: #f14c4c !important;
+}
+
 /* Mobile & Tablet Responsive Rules */
 @media (max-width: 600px) {
   body {
