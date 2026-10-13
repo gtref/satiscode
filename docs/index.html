@@ -111,7 +111,7 @@
                 </form>
               </div>
 
-              <div class="ml-form-successBody row-success" style="display: none">
+              <div class="ml-form-successBody row-success" role="status" tabindex="-1" style="display: none">
                 <div class="ml-form-successContent">
                   <h2>Thank you!</h2>
                   <p>You have successfully joined our subscriber list.</p>
@@ -123,7 +123,7 @@
         <script>
           function ml_webform_success_47072472() {
             var $ = ml_jQuery || jQuery;
-            $('.ml-subscribe-form-47072472 .row-success').show();
+            $('.ml-subscribe-form-47072472 .row-success').show().trigger('focus');
             $('.ml-subscribe-form-47072472 .row-form').hide();
           }
         </script>
