@@ -23,7 +23,7 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
-    "dompurify": "^3.4.13",
+    "dompurify": "^3.4.17",
     "highlight.js": "^11.11.1",
     "marked": "^17.0.1",
     "monaco-editor": "0.57.0",
