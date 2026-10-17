@@ -23,16 +23,16 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
-    "dompurify": "^3.4.13",
+    "dompurify": "^3.4.17",
     "highlight.js": "^11.11.1",
-    "marked": "^17.0.1",
+    "marked": "^18.1.1",
     "monaco-editor": "0.57.0",
     "monaco-languageclient": "^11.0.2",
     "vscode-ws-jsonrpc": "^4.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "electron": "^44.5.1",
+    "electron": "^44.7.0",
     "electron-builder": "^26.15.3",
     "eslint": "^10.12.0",
     "globals": "^17.12.0"
