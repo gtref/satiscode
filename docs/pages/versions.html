@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SATISCODE | Versions</title>
+    <link rel="stylesheet" href="../styles/style.css">
+  </head>
+  <body>
+    <main class="container">
+      <header class="header">
+        <h1>SATISCODE</h1>
+        <nav class="nav-links" aria-label="Main Navigation">
+          <button id="theme-toggle" class="theme-toggle" aria-label="Toggle Theme">
+            🌙 Dark Mode
+          </button>
+          <a href="../index.html" class="nav-btn">Home</a>
+          <a href="about.html" class="nav-btn">About</a>
+          <a href="contribute.html" class="nav-btn">Contributing</a>
+          <a href="sponsors.html" class="nav-btn">Sponsors</a>
+        </nav>
+      </header>
+
+      <section class="card intro">
+        <h2>Version History</h2>
+        <p>Published releases are listed automatically. Select a version to expand its changelog.</p>
+        <p id="release-status" role="status" aria-live="polite">Loading releases...</p>
+        <ul id="release-list" class="release-list"></ul>
+      </section>
+
+      <footer>
+        <p>&copy; 2026 gtref, All rights reserved</p>
+      </footer>
+    </main>
+    <script src="../script.js"></script>
+    <script src="../bot.js"></script>
+    <script src="../helpbox.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="../versions.js"></script>
+  </body>
+</html>

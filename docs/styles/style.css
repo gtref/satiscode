@@ -152,6 +152,41 @@ hr {
   display: inline-block;
 }
 
+.release-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.release-list > li + li {
+  margin-top: 0.75rem;
+}
+
+.release-entry {
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-color);
+}
+
+.release-entry summary {
+  cursor: pointer;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+}
+
+.release-entry summary:focus-visible {
+  outline: 2px solid var(--accent-blue);
+  outline-offset: 2px;
+}
+
+.release-notes {
+  margin: 0;
+  padding: 0 1rem 1rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-sans);
+}
+
 /* Contributors */
 #contributors {
   margin-top: 0.75rem;
@@ -647,4 +682,3 @@ footer {
     transition: none;
   }
 }
-

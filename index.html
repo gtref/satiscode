@@ -599,7 +599,39 @@
       }
       currentDirectory = directoryPath;
       await window.api.setGitWorkspace(directoryPath);
-      await renderDirectory(directoryPath, document.getElementById('tree-root'));
+      const treeRoot = document.getElementById('tree-root');
+      treeRoot.innerHTML = '';
+
+      const rootRow = document.createElement('div');
+      rootRow.className = 'tree-entry';
+      rootRow.title = directoryPath;
+
+      const rootChevron = document.createElement('span');
+      rootChevron.className = 'tree-chevron';
+      rootChevron.innerHTML = window.getChevronIcon(true);
+
+      const rootIcon = document.createElement('span');
+      rootIcon.className = 'tree-icon';
+      rootIcon.innerHTML = window.getFolderIcon(true);
+
+      const rootLabel = document.createElement('span');
+      rootLabel.textContent = directoryPath.split(/[\\/]/).filter(Boolean).pop() || directoryPath;
+
+      rootRow.append(rootChevron, rootIcon, rootLabel);
+      treeRoot.appendChild(rootRow);
+
+      const rootChildren = document.createElement('div');
+      rootChildren.className = 'tree-children';
+      rootChildren.dataset.loaded = 'true';
+      treeRoot.appendChild(rootChildren);
+
+      rootRow.addEventListener('click', () => {
+        rootChildren.hidden = !rootChildren.hidden;
+        rootChevron.innerHTML = window.getChevronIcon(!rootChildren.hidden);
+        rootIcon.innerHTML = window.getFolderIcon(!rootChildren.hidden);
+      });
+
+      await renderDirectory(directoryPath, rootChildren);
     }
 
       async function openLoadedFile(file) {

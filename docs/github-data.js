@@ -15,6 +15,22 @@ async function getContributors() {
   return res.json();
 }
 
+async function getVersionMetadata() {
+  const res = await fetch("version-metadata.json");
+  if (!res.ok) throw new Error("Failed to fetch version metadata");
+
+  const metadata = await res.json();
+  if (!metadata || !Array.isArray(metadata.versions) || !metadata.versions.every(version =>
+    version &&
+    typeof version.version === "string" &&
+    typeof version.name === "string"
+  )) {
+    throw new Error("Invalid version metadata");
+  }
+
+  return metadata;
+}
+
 // --- helpers ---
 function formatBytes(bytes) {
   const units = ["B", "KB", "MB", "GB"];
@@ -27,9 +43,16 @@ function formatBytes(bytes) {
 }
 
 // --- renderers ---
-function renderReleaseInfo(release) {
+function renderReleaseInfo(release, versionMetadata) {
   document.getElementById("version").textContent =
     release.tag_name || release.name || "unknown";
+
+  const releaseVersion = release.tag_name?.replace(/^v/i, "");
+  const namedVersion = versionMetadata?.versions.find(version =>
+    version.version.replace(/^v/i, "") === releaseVersion
+  );
+  document.getElementById("version-name").textContent =
+    namedVersion ? namedVersion.name : versionMetadata ? "Not assigned" : "Unavailable";
 
   document.getElementById("release-date").textContent =
     new Date(release.published_at).toLocaleDateString();
@@ -82,6 +105,7 @@ function renderContributors(contributors) {
 
 function renderReleaseUnavailable() {
   document.getElementById("version").textContent = "Unavailable";
+  document.getElementById("version-name").textContent = "Unavailable";
   document.getElementById("release-date").textContent = "Unavailable";
   document.getElementById("installer-size").textContent = "Unavailable";
 }
@@ -93,16 +117,24 @@ function renderContributorsUnavailable() {
 
 // --- bootstrap ---
 (async () => {
-  const [releaseResult, contributorsResult] = await Promise.allSettled([
+  const [releaseResult, contributorsResult, versionMetadataResult] = await Promise.allSettled([
     getLatestRelease(),
-    getContributors()
+    getContributors(),
+    getVersionMetadata()
   ]);
 
   if (releaseResult.status === "fulfilled") {
-    renderReleaseInfo(releaseResult.value);
+    const versionMetadata = versionMetadataResult.status === "fulfilled"
+      ? versionMetadataResult.value
+      : null;
+    renderReleaseInfo(releaseResult.value, versionMetadata);
   } else {
     console.error(releaseResult.reason);
     renderReleaseUnavailable();
+  }
+
+  if (versionMetadataResult.status === "rejected") {
+    console.error(versionMetadataResult.reason);
   }
 
   if (contributorsResult.status === "fulfilled") {
