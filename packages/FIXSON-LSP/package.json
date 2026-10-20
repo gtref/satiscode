@@ -4,7 +4,7 @@
   "description": "Language Server for the json language",
   "main": "dist/server.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --noEmit && esbuild src/server.ts --bundle --platform=node --target=node20 --outfile=dist/server.js",
     "start": "node dist/server.js",
     "watch": "tsc -w"
   },
@@ -13,7 +13,8 @@
     "vscode-languageserver-textdocument": "^1.0.12"
   },
   "devDependencies": {
-    "typescript": "^5.9.0",
-    "@types/node": "^24.0.0"
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.0"
   }
 }

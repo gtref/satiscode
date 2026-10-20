@@ -81,8 +81,8 @@
         "to": "PythonLSP"
       },
       {
-        "from": "packages/FIXSON-LSP",
-        "to": "FIXSON-LSP"
+        "from": "packages/FIXSON-LSP/dist",
+        "to": "FIXSON-LSP/dist"
       },
       {
         "from": "help",

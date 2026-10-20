@@ -1,10 +1,16 @@
 const cp = require("child_process");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const os = require("node:os");
 const path = require("path");
+
+const testDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "fixson-lsp-test-"));
+const serverPath = path.join(testDirectory, "server.js");
+fs.copyFileSync(path.join(__dirname, "dist", "server.js"), serverPath);
 
 const server = cp.spawn(
     process.execPath,
-    [path.join(__dirname, "dist", "server.js"), "--stdio"],
+    [serverPath, "--stdio"],
     {
         stdio: ["pipe", "pipe", "pipe"]
     }
@@ -87,6 +93,9 @@ server.on("exit", code => {
     } catch (error) {
         console.error(error);
         process.exitCode = 1;
+    } finally {
+        fs.rmSync(serverPath);
+        fs.rmdirSync(testDirectory);
     }
 });
 
