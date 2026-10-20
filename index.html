@@ -1091,7 +1091,7 @@
       });
 
       monaco.languages.registerCompletionItemProvider('json', {
-        triggerCharacters: ['"', ':'],
+        triggerCharacters: ['"'],
         provideCompletionItems: async (_model, position) => {
           if (!fixsonStarted) return { suggestions: [] };
           const result = await sendFixsonRequest('textDocument/completion', {
