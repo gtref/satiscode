@@ -122,9 +122,9 @@ hr {
   transition: background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.intro, 
-.features, 
-.release-info, 
+.intro,
+.features,
+.release-info,
 .card.contributors {
   font-family: var(--font-mono);
   font-size: 0.95rem;

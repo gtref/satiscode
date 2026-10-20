@@ -18,7 +18,7 @@
   <link id="markdown-code-theme" rel="stylesheet" href="node_modules/highlight.js/styles/github-dark.min.css">
   <script type="module">
     import { initIcons, getFileIcon, getFolderIcon, getChevronIcon, getUiIcon } from './icons.js';
-    import { loadTheme, applyTheme, getAvailableThemes } from './themes.js'; 
+    import { loadTheme, applyTheme, getAvailableThemes } from './themes.js';
     import { TabManager } from './UI/tab_manager/tabman.js';
     import { MarkdownView } from './UI/markdown_view/view.js';
 
@@ -403,7 +403,7 @@
       function applySourceLanguage(language) {
         manualLanguage = language === 'auto' ? null : language;
         const selectedLanguage = activeLanguage(currentFilePath);
-        
+
         monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
         updateSourceLanguageLabel();
 
@@ -433,31 +433,31 @@
           const row = document.createElement('div');
           row.className = 'tree-entry';
           row.title = entry.path;
-          
+
           const chevron = document.createElement('span');
           chevron.className = 'tree-chevron';
           chevron.innerHTML = entry.isDirectory ? window.getChevronIcon(false) : '';
-          
+
           const icon = document.createElement('span');
           icon.className = 'tree-icon';
           icon.innerHTML = entry.isDirectory ? window.getFolderIcon(false) : window.getFileIcon(entry.name);
-          
+
           const label = document.createElement('span');
           label.textContent = entry.name;
-          
+
           row.append(chevron, icon, label);
           container.appendChild(row);
-          
+
           if (entry.isDirectory) {
             const children = document.createElement('div');
             children.className = 'tree-children';
             children.hidden = true;
-            
+
             row.addEventListener('click', async () => {
               children.hidden = !children.hidden;
               chevron.innerHTML = window.getChevronIcon(!children.hidden);
               icon.innerHTML = window.getFolderIcon(!children.hidden);
-              
+
               if (!children.hidden && !children.dataset.loaded) {
                 children.dataset.loaded = 'true';
                 await renderDirectory(entry.path, children);
@@ -1449,9 +1449,9 @@
           event.stopImmediatePropagation();
           document.getElementById('open-folder-btn').click();
         } else if (event.key.toLowerCase() === 'f') {
-          event.preventDefault(); 
-          event.stopImmediatePropagation(); 
-          openFindDialog(); 
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          openFindDialog();
         }
       }, true);
 

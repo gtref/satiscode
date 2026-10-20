@@ -1,4 +1,4 @@
-[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://join.slack.com/t/a2-hc61499/shared_invite/zt-49ufy94zl-nTWdH_uBjDIkuPCbapoO0A) 
+[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://join.slack.com/t/a2-hc61499/shared_invite/zt-49ufy94zl-nTWdH_uBjDIkuPCbapoO0A)
 [![Satiscode | AlternativeTo](https://alternativeto.net/static/badges/badge-wide-color.svg)](https://alternativeto.net/software/satiscode/about/?utm_source=badge&utm_medium=referral)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gtref/satiscode)
 

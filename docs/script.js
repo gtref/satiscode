@@ -10,7 +10,7 @@ if (currentTheme) {
 
 toggleBtn.addEventListener('click', () => {
   let theme = document.documentElement.getAttribute('data-theme');
-  
+
   if (theme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'light');
     localStorage.setItem('theme', 'light');

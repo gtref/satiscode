@@ -9,10 +9,10 @@ assignees: ''
 ---
 
 # Describe what happened
-- 
-- 
-- 
-- 
+-
+-
+-
+-
 
 # Snippet of code that caused the error
 ```js
@@ -24,7 +24,7 @@ assignees: ''
 `Please put the error here`
 
 # Steps taken to resolve (Optional)
-- 
-- 
-- 
+-
+-
+-
 -
