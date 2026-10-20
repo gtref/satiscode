@@ -296,18 +296,20 @@ function startFixson(event, rootPath) {
   const projectRoot = path.resolve(rootPath || process.cwd());
   const fixsonCommand = getFixsonPath();
 
-  fixsonProcess = spawn(process.execPath, [fixsonCommand, '--stdio'], {
+  const child = spawn(process.execPath, [fixsonCommand, '--stdio'], {
     cwd: projectRoot,
     env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
     stdio: ['pipe', 'pipe', 'pipe']
   });
+  fixsonProcess = child;
 
   const processStarted = new Promise((resolve, reject) => {
-    fixsonProcess.once('spawn', () => resolve({ projectRoot, command: fixsonCommand }));
-    fixsonProcess.once('error', reject);
+    child.once('spawn', () => resolve({ projectRoot, command: fixsonCommand }));
+    child.once('error', reject);
   });
 
-  fixsonProcess.stdout.on('data', (chunk) => {
+  child.stdout.on('data', (chunk) => {
+    if (fixsonProcess !== child) return;
     fixsonBuffer = Buffer.concat([fixsonBuffer, chunk]);
 
     while (true) {
@@ -336,11 +338,19 @@ function startFixson(event, rootPath) {
     }
   });
 
-  fixsonProcess.stderr.on('data', (chunk) => sendToRenderer(event, 'fixson:stderr', chunk.toString()));
-  fixsonProcess.on('error', (error) => sendToRenderer(event, 'fixson:error', error.message));
-  fixsonProcess.on('exit', () => {
+  child.stderr.on('data', (chunk) => {
+    if (fixsonProcess !== child) return;
+    sendToRenderer(event, 'fixson:stderr', chunk.toString());
+  });
+  child.on('error', (error) => {
+    if (fixsonProcess !== child) return;
+    sendToRenderer(event, 'fixson:error', error.message);
+  });
+  child.on('exit', () => {
+    if (fixsonProcess !== child) return;
     sendToRenderer(event, 'fixson:exit');
     fixsonProcess = null;
+    fixsonBuffer = Buffer.alloc(0);
   });
 
   return processStarted;
