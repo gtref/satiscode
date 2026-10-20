@@ -46,5 +46,14 @@ contextBridge.exposeInMainWorld('api', {
   onPyrightMessage: (callback) => ipcRenderer.on('pyright:message', (_event, message) => callback(message)),
   onPyrightStderr: (callback) => ipcRenderer.on('pyright:stderr', (_event, message) => callback(message)),
   onPyrightError: (callback) => ipcRenderer.on('pyright:error', (_event, message) => callback(message)),
-  onPyrightExit: (callback) => ipcRenderer.on('pyright:exit', () => callback())
+  onPyrightExit: (callback) => ipcRenderer.on('pyright:exit', () => callback()),
+
+  // --- FIXSON ---
+  startFixson: (rootPath) => ipcRenderer.invoke('fixson:start', rootPath),
+  sendFixsonMessage: (message) => ipcRenderer.send('fixson:message', message),
+  stopFixson: () => ipcRenderer.send('fixson:stop'),
+  onFixsonMessage: (callback) => ipcRenderer.on('fixson:message', (_event, message) => callback(message)),
+  onFixsonStderr: (callback) => ipcRenderer.on('fixson:stderr', (_event, message) => callback(message)),
+  onFixsonError: (callback) => ipcRenderer.on('fixson:error', (_event, message) => callback(message)),
+  onFixsonExit: (callback) => ipcRenderer.on('fixson:exit', () => callback())
 });
