@@ -11,6 +11,8 @@ let clangdBuffer = Buffer.alloc(0);
 let isQuitting = false;
 let pyrightProcess = null;
 let pyrightBuffer = Buffer.alloc(0);
+let fixsonProcess = null;
+let fixsonBuffer = Buffer.alloc(0);
 let settingsManager = null;
 
 
@@ -28,6 +30,13 @@ function sendToPyright(message) {
   pyrightProcess.stdin.write(Buffer.concat([header, body]));
 }
 
+function sendToFixson(message) {
+  if (!fixsonProcess || fixsonProcess.stdin.destroyed) return;
+  const body = Buffer.from(JSON.stringify(message), 'utf8');
+  const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'ascii');
+  fixsonProcess.stdin.write(Buffer.concat([header, body]));
+}
+
 
 function sendToRenderer(event, channel, ...args) {
   if (!event.sender.isDestroyed()) event.sender.send(channel, ...args);
@@ -43,6 +52,12 @@ function stopPyright() {
   if (pyrightProcess) pyrightProcess.kill();
   pyrightProcess = null;
   pyrightBuffer = Buffer.alloc(0);
+}
+
+function stopFixson() {
+  if (fixsonProcess) fixsonProcess.kill();
+  fixsonProcess = null;
+  fixsonBuffer = Buffer.alloc(0);
 }
 
 
@@ -116,6 +131,30 @@ function gracefulStopPyright() {
   });
 }
 
+function gracefulStopFixson() {
+  if (!fixsonProcess) return Promise.resolve();
+  const processToStop = fixsonProcess;
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (fixsonProcess === processToStop) stopFixson();
+      resolve();
+    };
+    const timeout = setTimeout(finish, 1000);
+    processToStop.once('exit', finish);
+    sendToFixson({ jsonrpc: '2.0', id: Date.now(), method: 'shutdown', params: null });
+    setTimeout(() => {
+      if (!settled && !processToStop.killed) {
+        sendToFixson({ jsonrpc: '2.0', method: 'exit', params: null });
+      }
+    }, 250);
+  });
+}
+
+
 function getClangdPath() {
   const isWin = process.platform === 'win32';
   const clangdExecutable = isWin ? 'clangd.exe' : 'clangd';
@@ -126,6 +165,12 @@ function getClangdPath() {
 function getPyrightPath() {
   const baseDir = app.isPackaged ? process.resourcesPath : __dirname;
   return path.join(baseDir, 'PythonLSP', 'pyright-langserver.js');
+}
+
+function getFixsonPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'FIXSON-LSP', 'dist', 'server.js')
+    : path.join(__dirname, 'packages', 'FIXSON-LSP', 'dist', 'server.js');
 }
 
 
@@ -245,6 +290,62 @@ function startPyright(event, rootPath) {
   return processStarted;
 }
 
+function startFixson(event, rootPath) {
+  stopFixson();
+
+  const projectRoot = path.resolve(rootPath || process.cwd());
+  const fixsonCommand = getFixsonPath();
+
+  fixsonProcess = spawn(process.execPath, [fixsonCommand, '--stdio'], {
+    cwd: projectRoot,
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+
+  const processStarted = new Promise((resolve, reject) => {
+    fixsonProcess.once('spawn', () => resolve({ projectRoot, command: fixsonCommand }));
+    fixsonProcess.once('error', reject);
+  });
+
+  fixsonProcess.stdout.on('data', (chunk) => {
+    fixsonBuffer = Buffer.concat([fixsonBuffer, chunk]);
+
+    while (true) {
+      const headerEnd = fixsonBuffer.indexOf('\r\n\r\n');
+      if (headerEnd < 0) break;
+
+      const header = fixsonBuffer.subarray(0, headerEnd).toString('ascii');
+      const lengthMatch = header.match(/Content-Length:\s*(\d+)/i);
+      if (!lengthMatch) {
+        fixsonBuffer = fixsonBuffer.subarray(headerEnd + 4);
+        continue;
+      }
+
+      const bodyLength = Number(lengthMatch[1]);
+      const bodyStart = headerEnd + 4;
+      if (fixsonBuffer.length < bodyStart + bodyLength) break;
+
+      const body = fixsonBuffer.subarray(bodyStart, bodyStart + bodyLength).toString('utf8');
+      fixsonBuffer = fixsonBuffer.subarray(bodyStart + bodyLength);
+
+      try {
+        sendToRenderer(event, 'fixson:message', JSON.parse(body));
+      } catch (error) {
+        console.error('Invalid FIXSON message:', error);
+      }
+    }
+  });
+
+  fixsonProcess.stderr.on('data', (chunk) => sendToRenderer(event, 'fixson:stderr', chunk.toString()));
+  fixsonProcess.on('error', (error) => sendToRenderer(event, 'fixson:error', error.message));
+  fixsonProcess.on('exit', () => {
+    sendToRenderer(event, 'fixson:exit');
+    fixsonProcess = null;
+  });
+
+  return processStarted;
+}
+
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -334,19 +435,23 @@ ipcMain.on('clangd:stop', stopClangd);
 ipcMain.handle('pyright:start', (event, rootPath) => startPyright(event, rootPath));
 ipcMain.on('pyright:message', (_event, message) => sendToPyright(message));
 ipcMain.on('pyright:stop', stopPyright);
+ipcMain.handle('fixson:start', (event, rootPath) => startFixson(event, rootPath));
+ipcMain.on('fixson:message', (_event, message) => sendToFixson(message));
+ipcMain.on('fixson:stop', stopFixson);
 
 ipcMain.handle('app:exit', async () => {
   isQuitting = true;
-  await Promise.all([gracefulStopClangd(), gracefulStopPyright()]);
+  await Promise.all([gracefulStopClangd(), gracefulStopPyright(), gracefulStopFixson()]);
   app.quit();
 });
 app.on('before-quit', (event) => {
   if (isQuitting) return;
   isQuitting = true;
   event.preventDefault();
-  Promise.all([gracefulStopClangd(), gracefulStopPyright()]).finally(() => app.quit());
+  Promise.all([gracefulStopClangd(), gracefulStopPyright(), gracefulStopFixson()]).finally(() => app.quit());
 });
 app.on('will-quit', () => {
   stopClangd();
   stopPyright();
+  stopFixson();
 });

@@ -15,7 +15,7 @@
 
 
 
-Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Editor, and clangd.
+Satiscode is a lightweight Windows editor for C/C++, Python, and JSON, built with Electron and Monaco Editor.
 
 ## Features
 
@@ -24,6 +24,7 @@ Satiscode is a lightweight Windows C/C++ editor built with Electron, Monaco Edit
 - Web language detection for HTML, CSS/SCSS, JavaScript/JSX, TypeScript/TSX, and JSON
 - clangd diagnostics, completion, hover, and go-to-definition
 - PyRight diagnostics, completion, hover and go-to-definition for python
+- FIXSON diagnostics, completion, and hover for JSON
 - VS Code-style Problems panel with clickable diagnostics
 - Resizable Explorer file tree for the current directory
 - New, Open, Save, Save As, and graceful Exit operations
@@ -51,13 +52,14 @@ The editor remains usable when python is unavailable, but PyRight language serve
 
 ```powershell
 npm install
+npm run build
 npm start
 ```
 
 >[!WARNING]
-> A clean source checkout runs without clangd or Pyright because their server files are absent; the editor can still open and edit supported file types. Source mode looks for clangd in `bin/` and Pyright in `PythonLSP/` at the repository root. Packaged builds include these files in the application resources and load them from there.
+> A clean source checkout runs without clangd or Pyright because their server files are absent; the editor can still open and edit supported file types. Source mode looks for clangd in `bin/` and Pyright in `PythonLSP/` at the repository root. `npm run build` installs and compiles FIXSON from `packages/FIXSON-LSP`; packaged builds include it in the application resources.
 
-Opening a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file starts clangd only when its server files are available. Opening a `.py` file starts Pyright only when its server files are available. HTML, CSS, JavaScript, TypeScript, and JSON files use Monaco's built-in language support. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
+Opening a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file starts clangd only when its server files are available. Opening a `.py` file starts Pyright only when its server files are available. Opening a `.json` file starts FIXSON; `.jsonc` files retain Monaco's built-in support without strict JSON validation. HTML, CSS, JavaScript, and TypeScript use Monaco's built-in language support. For best project-wide header support, keep `.clangd`, `.git`, or `compile_commands.json` at the project root.
 
 ## Keyboard shortcuts
 
@@ -81,6 +83,7 @@ The installer is written to `dist\Satiscode Setup 1.0.0.exe`. The installer is u
 - `main.js`: Electron main process, filesystem APIs, clangd process bridge, and shutdown handling
 - `preload.js`: isolated renderer IPC API
 - `index.html`: Monaco editor UI, Explorer, Problems panel, and language-service client
+- `packages/FIXSON-LSP`: JSON language server sources and build configuration
 - `icons.js`: Loads the icon packs located in `icons/`
 - `themes.js`: Loads theme files from the `themes/` directory
 
@@ -108,4 +111,3 @@ Thanks to these awesome people for helping build **satiscode**:
 
 # Copy atributions
 This tool uses librarys and executables from the `clangd` util by `LLVM`, `PyRight` by `microsoft`. to see the copy atributions [please click here](NOTICES.md)
-

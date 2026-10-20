@@ -174,12 +174,15 @@
       let currentFilePath = null;
       let clangdRequestId = 0;
       let pyrightRequestId = 0;
+      let fixsonRequestId = 0;
       let documentVersion = 1;
       let changeTimeout = null;
       const clangdPendingRequests = new Map();
       const pyrightPendingRequests = new Map();
+      const fixsonPendingRequests = new Map();
       let clangdStarted = false;
       let pyrightStarted = false;
+      let fixsonStarted = false;
       let currentDirectory = null;
       let manualLanguage = null;
       let currentDocumentUri = null;
@@ -206,6 +209,7 @@
           gitOpenSavedFile: 'Git: open a saved file first', gitError: 'Git error',
           clangdIdle: 'clangd: idle', clangdReady: 'clangd: ready', clangdStarting: 'clangd: starting', clangdUnavailable: 'clangd: unavailable',
           pyrightReady: 'pyright: ready', pyrightStarting: 'pyright: starting', pyrightUnavailable: 'pyright: unavailable',
+          fixsonReady: 'fixson: ready', fixsonStarting: 'fixson: starting', fixsonUnavailable: 'fixson: unavailable',
           operational: 'satiscode: Operational', starting: 'satiscode: Starting', error: 'satiscode: Error', offline: 'satiscode: Offline'
         },
         es: {
@@ -223,6 +227,7 @@
           gitOpenSavedFile: 'Git: abre primero un archivo guardado', gitError: 'Error de Git',
           clangdIdle: 'clangd: inactivo', clangdReady: 'clangd: listo', clangdStarting: 'clangd: iniciando', clangdUnavailable: 'clangd: no disponible',
           pyrightReady: 'pyright: listo', pyrightStarting: 'pyright: iniciando', pyrightUnavailable: 'pyright: no disponible',
+          fixsonReady: 'fixson: listo', fixsonStarting: 'fixson: iniciando', fixsonUnavailable: 'fixson: no disponible',
           operational: 'satiscode: operativo', starting: 'satiscode: iniciando', error: 'satiscode: error', offline: 'satiscode: desconectado'
         }
       };
@@ -243,6 +248,7 @@
       const activeLanguage = (filePath) => manualLanguage || languageForPath(filePath || '');
       const isActiveCppLanguage = () => activeLanguage(currentFilePath) === 'c' || activeLanguage(currentFilePath) === 'cpp';
       const isActivePythonLanguage = () => activeLanguage(currentFilePath) === 'python';
+      const isActiveJsonLanguage = () => activeLanguage(currentFilePath) === 'json' && extensionForPath(currentFilePath || '') !== '.jsonc';
       const pathToUri = (filePath) => {
         const normalized = filePath.replace(/\\/g, '/');
         return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
@@ -255,7 +261,7 @@
         }
       };
       const virtualDocumentUri = (workspacePath, language) => {
-        const ext = language === 'c' ? 'c' : language === 'cpp' ? 'cpp' : language === 'python' ? 'py' : 'txt';
+        const ext = language === 'c' ? 'c' : language === 'cpp' ? 'cpp' : language === 'python' ? 'py' : language === 'json' ? 'json' : 'txt';
         return pathToUri(`${workspacePath}\\untitled.${ext}`);
       };
       const positionToLsp = (position) => ({ line: position.lineNumber - 1, character: position.column - 1 });
@@ -303,6 +309,7 @@
         if (window.editor) {
           monaco.editor.setModelMarkers(window.editor.getModel(), 'clangd', []);
           monaco.editor.setModelMarkers(window.editor.getModel(), 'pyright', []);
+          monaco.editor.setModelMarkers(window.editor.getModel(), 'fixson', []);
         }
       }
 
@@ -386,6 +393,11 @@
           window.api.stopPyright();
           pyrightStarted = false;
         }
+        if (fixsonStarted) {
+          if (currentDocumentUri) sendFixsonNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
+          window.api.stopFixson();
+          fixsonStarted = false;
+        }
       }
 
       function applySourceLanguage(language) {
@@ -396,19 +408,17 @@
         updateSourceLanguageLabel();
 
         if (isActiveCppLanguage()) {
-          if (pyrightStarted) {
-            if (currentDocumentUri) sendPyrightNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
-            window.api.stopPyright();
-            pyrightStarted = false;
-          }
+          stopLanguageServers();
+          clearProblems();
           startClangdServer();
         } else if (isActivePythonLanguage()) {
-          if (clangdStarted) {
-            if (currentDocumentUri) sendClangdNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
-            window.api.stopClangd();
-            clangdStarted = false;
-          }
+          stopLanguageServers();
+          clearProblems();
           startPyrightServer();
+        } else if (isActiveJsonLanguage()) {
+          stopLanguageServers();
+          clearProblems();
+          startFixsonServer();
         } else {
           stopLanguageServers();
           clearProblems();
@@ -487,6 +497,9 @@
         if (pyrightStarted) {
           sendPyrightNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
         }
+        if (fixsonStarted) {
+          sendFixsonNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+        }
       }
 
       if (tab) {
@@ -501,6 +514,10 @@
           if (pyrightStarted) {
             window.api.stopPyright();
             pyrightStarted = false;
+          }
+          if (fixsonStarted) {
+            window.api.stopFixson();
+            fixsonStarted = false;
           }
           if (clangdStarted && currentDocumentUri) {
             sendClangdNotification('textDocument/didOpen', {
@@ -524,6 +541,10 @@
             window.api.stopClangd();
             clangdStarted = false;
           }
+          if (fixsonStarted) {
+            window.api.stopFixson();
+            fixsonStarted = false;
+          }
           if (pyrightStarted && currentDocumentUri) {
             sendPyrightNotification('textDocument/didOpen', {
               textDocument: {
@@ -540,6 +561,32 @@
               pyrightStarted = false;
             }
             startPyrightServer();
+          }
+        } else if (isActiveJsonLanguage()) {
+          if (clangdStarted) {
+            window.api.stopClangd();
+            clangdStarted = false;
+          }
+          if (pyrightStarted) {
+            window.api.stopPyright();
+            pyrightStarted = false;
+          }
+          if (fixsonStarted && currentDocumentUri) {
+            sendFixsonNotification('textDocument/didOpen', {
+              textDocument: {
+                uri: currentDocumentUri,
+                languageId: 'json',
+                version: documentVersion,
+                text: window.editor.getValue()
+              }
+            });
+            setEditorStatus('fixsonReady');
+          } else {
+            if (fixsonStarted) {
+              window.api.stopFixson();
+              fixsonStarted = false;
+            }
+            startFixsonServer();
           }
         } else {
           stopLanguageServers();
@@ -696,12 +743,33 @@
         window.api.sendPyrightMessage({ jsonrpc: '2.0', method, params });
       }
 
+      function sendFixsonRequest(method, params) {
+        const id = ++fixsonRequestId;
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            fixsonPendingRequests.delete(id);
+            reject(new Error(`FIXSON request timed out: ${method}`));
+          }, 15000);
+          fixsonPendingRequests.set(id, {
+            resolve: (result) => { clearTimeout(timeout); resolve(result); },
+            reject: (error) => { clearTimeout(timeout); reject(error); }
+          });
+          window.api.sendFixsonMessage({ jsonrpc: '2.0', id, method, params });
+        });
+      }
+
+      function sendFixsonNotification(method, params) {
+        window.api.sendFixsonMessage({ jsonrpc: '2.0', method, params });
+      }
+
       function sendRequest(method, params) {
+        if (isActiveJsonLanguage()) return sendFixsonRequest(method, params);
         if (isActivePythonLanguage()) return sendPyrightRequest(method, params);
         return sendClangdRequest(method, params);
       }
 
       function sendNotification(method, params) {
+        if (isActiveJsonLanguage()) return sendFixsonNotification(method, params);
         if (isActivePythonLanguage()) return sendPyrightNotification(method, params);
         return sendClangdNotification(method, params);
       }
@@ -775,9 +843,47 @@
         });
       }
 
+      async function startFixsonServer() {
+        if (!isActiveJsonLanguage()) return;
+        if (fixsonStarted) window.api.stopFixson();
+        fixsonStarted = true;
+        setEditorStatus('fixsonStarting');
+        const workspacePath = currentDirectory || await window.api.getWorkspacePath();
+        const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
+        currentDocumentUri = currentDocumentUri || virtualDocumentUri(workspacePath, 'json');
+        console.info(`Starting FIXSON for ${currentDocumentUri}`);
+        window.api.startFixson(rootPath || undefined).then(() => sendFixsonRequest('initialize', {
+          processId: null,
+          rootUri: pathToUri(rootPath),
+          capabilities: {
+            textDocument: {
+              synchronization: { didSave: true },
+              completion: { completionItem: { snippetSupport: true } },
+              hover: { contentFormat: ['markdown', 'plaintext'] }
+            }
+          }
+        })).then(() => {
+          sendFixsonNotification('initialized', {});
+          sendFixsonNotification('textDocument/didOpen', {
+            textDocument: {
+              uri: currentDocumentUri,
+              languageId: 'json',
+              version: documentVersion,
+              text: window.editor.getValue()
+            }
+          });
+          setEditorStatus('fixsonReady');
+        }).catch((error) => {
+          fixsonStarted = false;
+          console.warn(`FIXSON is unavailable. JSON editing will continue without language services: ${error.message || error}`);
+          setEditorStatus('fixsonUnavailable');
+        });
+      }
+
       function startLanguageServer() {
         if (isActiveCppLanguage()) return startClangdServer();
         if (isActivePythonLanguage()) return startPyrightServer();
+        if (isActiveJsonLanguage()) return startFixsonServer();
       }
 
     require(['vs/editor/editor.main'], function() {
@@ -853,6 +959,40 @@
         const error = new Error('Pyright exited before completing its requests.');
         pyrightPendingRequests.forEach((request) => request.reject(error));
         pyrightPendingRequests.clear();
+      });
+      window.api.onFixsonMessage((message) => {
+        if (message.id !== undefined && fixsonPendingRequests.has(message.id)) {
+          const request = fixsonPendingRequests.get(message.id);
+          fixsonPendingRequests.delete(message.id);
+          if (message.error) request.reject(new Error(message.error.message || 'FIXSON request failed'));
+          else request.resolve(message.result);
+        }
+        if (message.method === 'textDocument/publishDiagnostics') {
+          const diagUri = message.params?.uri;
+          if (currentDocumentUri && diagUri && normalizeDocumentUri(diagUri) !== normalizeDocumentUri(currentDocumentUri)) return;
+          currentProblems = (message.params?.diagnostics || []).map((diagnostic) => ({
+            ...rangeToMonaco(diagnostic.range),
+            message: diagnostic.message,
+            severity: diagnostic.severity === 1 ? monaco.MarkerSeverity.Error : diagnostic.severity === 2 ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Info,
+            source: 'fixson'
+          }));
+          monaco.editor.setModelMarkers(window.editor.getModel(), 'fixson', currentProblems);
+          renderProblems();
+        }
+      });
+      window.api.onFixsonError((message) => {
+        fixsonStarted = false;
+        fixsonPendingRequests.forEach((request) => request.reject(new Error(message)));
+        fixsonPendingRequests.clear();
+        console.warn(`FIXSON is unavailable. JSON editing will continue without language services: ${message}`);
+        setEditorStatus('fixsonUnavailable');
+      });
+      window.api.onFixsonStderr((message) => console.warn(`FIXSON: ${message.trim()}`));
+      window.api.onFixsonExit(() => {
+        fixsonStarted = false;
+        const error = new Error('FIXSON exited before completing its requests.');
+        fixsonPendingRequests.forEach((request) => request.reject(error));
+        fixsonPendingRequests.clear();
       });
       applyInterfaceLanguage(window.appSettings?.language || 'en');
       updateSourceLanguageLabel();
@@ -950,6 +1090,41 @@
         }
       });
 
+      monaco.languages.registerCompletionItemProvider('json', {
+        triggerCharacters: ['"', ':'],
+        provideCompletionItems: async (_model, position) => {
+          if (!fixsonStarted) return { suggestions: [] };
+          const result = await sendFixsonRequest('textDocument/completion', {
+            textDocument: { uri: currentDocumentUri },
+            position: positionToLsp(position)
+          });
+          const items = result && (result.items || result) || [];
+          return {
+            suggestions: items.map((item) => ({
+              label: item.label,
+              kind: item.kind || monaco.languages.CompletionItemKind.Property,
+              insertText: item.insertText || item.label,
+              detail: item.detail
+            }))
+          };
+        }
+      });
+      monaco.languages.registerHoverProvider('json', {
+        provideHover: async (_model, position) => {
+          if (!fixsonStarted) return null;
+          const result = await sendFixsonRequest('textDocument/hover', {
+            textDocument: { uri: currentDocumentUri },
+            position: positionToLsp(position)
+          });
+          if (!result || !result.contents) return null;
+          const contents = Array.isArray(result.contents) ? result.contents : [result.contents];
+          return {
+            contents: contents.map((item) => ({ value: typeof item === 'string' ? item : item.value || '' })),
+            range: result.range && rangeToMonaco(result.range)
+          };
+        }
+      });
+
       window.editor.onDidChangeModelContent(() => {
         const activeTab = tabManager.getActiveTab();
         if (activeTab && !activeTab.isDirty) {
@@ -958,7 +1133,7 @@
         }
 
         if (!currentDocumentUri) return;
-        if (!clangdStarted && !pyrightStarted) return;
+        if (!clangdStarted && !pyrightStarted && !fixsonStarted) return;
         if (changeTimeout) clearTimeout(changeTimeout);
         changeTimeout = setTimeout(() => {
           documentVersion++;
@@ -970,6 +1145,8 @@
             sendClangdNotification('textDocument/didChange', payload);
           } else if (pyrightStarted && isActivePythonLanguage()) {
             sendPyrightNotification('textDocument/didChange', payload);
+          } else if (fixsonStarted && isActiveJsonLanguage()) {
+            sendFixsonNotification('textDocument/didChange', payload);
           }
         }, 150);
       });
@@ -989,6 +1166,7 @@
 
         const savedPath = await window.api.saveFile({ filePath: tab.filePath, content: tab.model.getValue() });
         if (!savedPath) return false;
+        const previousDocumentUri = currentDocumentUri;
 
         tab.filePath = savedPath;
         tab.title = savedPath.split(/[\\/]/).pop();
@@ -1002,8 +1180,14 @@
           updateSourceLanguageLabel();
           if (isActiveCppLanguage()) {
             if (pyrightStarted) {
+              if (previousDocumentUri) sendPyrightNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
               window.api.stopPyright();
               pyrightStarted = false;
+            }
+            if (fixsonStarted) {
+              if (previousDocumentUri) sendFixsonNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopFixson();
+              fixsonStarted = false;
             }
             if (!clangdStarted) {
               startClangdServer();
@@ -1012,13 +1196,47 @@
             }
           } else if (isActivePythonLanguage()) {
             if (clangdStarted) {
+              if (previousDocumentUri) sendClangdNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
               window.api.stopClangd();
               clangdStarted = false;
+            }
+            if (fixsonStarted) {
+              if (previousDocumentUri) sendFixsonNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopFixson();
+              fixsonStarted = false;
             }
             if (!pyrightStarted) {
               startPyrightServer();
             } else {
               sendPyrightNotification('textDocument/didSave', { textDocument: { uri: currentDocumentUri } });
+            }
+          } else if (isActiveJsonLanguage()) {
+            if (clangdStarted) {
+              if (previousDocumentUri) sendClangdNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopClangd();
+              clangdStarted = false;
+            }
+            if (pyrightStarted) {
+              if (previousDocumentUri) sendPyrightNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopPyright();
+              pyrightStarted = false;
+            }
+            if (!fixsonStarted) {
+              startFixsonServer();
+            } else if (previousDocumentUri !== currentDocumentUri) {
+              if (previousDocumentUri) {
+                sendFixsonNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              }
+              sendFixsonNotification('textDocument/didOpen', {
+                textDocument: {
+                  uri: currentDocumentUri,
+                  languageId: 'json',
+                  version: documentVersion,
+                  text: tab.model.getValue()
+                }
+              });
+            } else {
+              sendFixsonNotification('textDocument/didSave', { textDocument: { uri: currentDocumentUri } });
             }
           } else {
             stopLanguageServers();
