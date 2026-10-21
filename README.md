@@ -15,17 +15,21 @@
 
 
 
-Satiscode is a lightweight Windows editor for C/C++, Python, JSON, and XML, built with Electron and Monaco Editor.
+Satiscode is a lightweight Windows editor for C/C++, Python, JSON, XML, web languages, and Markdown, built with Electron and Monaco Editor.
+
+For installation and a walkthrough of the editor, see the [Satiscode usage guide](USAGE.md).
 
 ## Features
 
 - C and C++ language detection by file extension
-- Python language detection by file extention
+- Python language detection by file extension
 - Web language detection for HTML, CSS/SCSS, JavaScript/JSX, TypeScript/TSX, and JSON
 - clangd diagnostics, completion, hover, and go-to-definition
-- PyRight diagnostics, completion, hover and go-to-definition for python
+- Pyright diagnostics, completion, hover, and go-to-definition for Python
 - FIXSON diagnostics, completion, and hover for JSON
-- FIXML well-formedness diagnostics, element completion, and hover for XML
+- FIXML diagnostics, element completion, and hover for XML
+- Markdown preview and edit modes
+- Git status, staging, commits, pull, push, and blame
 - VS Code-style Problems panel with clickable diagnostics
 - Resizable Explorer file tree for the current directory
 - New, Open, Save, Save As, and graceful Exit operations
@@ -41,7 +45,7 @@ Satiscode is a lightweight Windows editor for C/C++, Python, JSON, and XML, buil
 - Windows 10 or newer
 - Node.js 20 or newer
 
-The editor remains usable when python is unavailable, but PyRight language server will not function correctly.
+The editor remains usable when Python is unavailable, but Python language services will not function correctly.
 
 >[!NOTE]
 > Please NOTE That from satiscode 1.2.0 onwards LLVM does not need to be installed. All new builds will contain clangd and its librarys and later there will be instructions for local testing.
@@ -60,16 +64,17 @@ npm start
 >[!WARNING]
 > A clean source checkout runs without clangd or Pyright because their server files are absent; the editor can still open and edit supported file types. Source mode looks for clangd in `bin/` and Pyright in `PythonLSP/` at the repository root. `npm run build` installs and compiles FIXSON and FIXML from their package directories; packaged builds include both bundles in the application resources.
 
-Opening a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file starts clangd only when its server files are available. Opening a `.py` file starts Pyright only when its server files are available. Opening a `.json` file starts FIXSON; `.jsonc` files retain Monaco's built-in support without strict JSON validation. XML documents (`.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, and `.plist`) start FIXML. HTML, CSS, JavaScript, and TypeScript use Monaco's built-in language support.
+Opening a `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, or `.hxx` file starts clangd only when its server files are available. Opening a `.py` file starts Pyright only when its server files are available. Opening a `.json` file starts FIXSON; `.jsonc` files retain Monaco's built-in support without strict JSON validation. XML documents (`.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, and `.plist`) start FIXML. HTML, CSS/SCSS, JavaScript/JSX, and TypeScript/TSX use Monaco's built-in language support. Markdown files (`.md` and `.markdown`) open in preview mode and can be switched to source editing.
 
 ## Keyboard shortcuts
 
 - `Ctrl+N`: New file
 - `Ctrl+O`: Open file
+- `Ctrl+K`: Open folder
 - `Ctrl+S`: Save
 - `Ctrl+Shift+S`: Save As
-- `Ctrl+f`: Find
-- `Ctrl+.`: Toggle Problems pannel
+- `Ctrl+F`: Find
+- `Ctrl+.`: Toggle Problems panel
 
 ## Build the Windows installer
 
@@ -113,3 +118,10 @@ Thanks to these awesome people for helping build **satiscode**:
 
 # Copy atributions
 This tool uses librarys and executables from the `clangd` util by `LLVM`, `PyRight` by `microsoft`. to see the copy atributions [please click here](NOTICES.md)
+
+# Packages
+See the repository's `packages/` directory for packages included with Satiscode. These packages are also published on npmjs.
+| Name | Readme link |
+|---|---|
+| FIXSON | [FIXSON-LSP JSON LSP](packages/FIXSON-LSP/README.md) |
+| FIXML | [FIXML-LSP XML LSP](packages/FIXML-LSP/README.md) |
