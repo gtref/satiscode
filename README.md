@@ -120,7 +120,7 @@ Thanks to these awesome people for helping build **satiscode**:
 This tool uses librarys and executables from the `clangd` util by `LLVM`, `PyRight` by `microsoft`. to see the copy atributions [please click here](NOTICES.md)
 
 # Packages
-Please look over the diretory `packages/` off the home branch to find packages that are included with satiscode. These packages are also published on npmjs.
+See the repository's `packages/` directory for packages included with Satiscode. These packages are also published on npmjs.
 | Name | Readme link |
 |---|---|
 | FIXSON | [FIXSON-LSP JSON LSP](packages/FIXSON-LSP/README.md) |

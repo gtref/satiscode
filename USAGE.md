@@ -6,7 +6,7 @@ This guide covers the main features in the Satiscode Windows desktop editor. For
 
 Download the latest Windows installer from the [Satiscode releases page](https://github.com/gtref/satiscode/releases/latest), run it, and launch Satiscode from the Start menu or desktop shortcut.
 
-Satiscode runs on Windows 10 or newer. Python must be installed for Python language services to work. Node.js is only needed if you are running Satiscode from a source checkout.
+Satiscode runs on Windows 10 or newer. Python must be installed for Python language services to work. Node.js 20 or newer is only needed if you are running Satiscode from a source checkout.
 
 ## Open and edit files
 
@@ -28,7 +28,7 @@ Satiscode normally selects the editor language from the file extension. Use the 
 | JSON: `.json` | FIXSON diagnostics, completion, and hover information |
 | JSONC: `.jsonc` | Monaco editor support; strict FIXSON validation is not started |
 | XML: `.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, `.plist` | FIXML diagnostics, element completion, and hover information |
-| JavaScript/TypeScript, HTML, CSS/SCSS | Monaco syntax editing support |
+| JavaScript/JSX, TypeScript/TSX, HTML, CSS/SCSS | Monaco syntax editing support |
 | Markdown: `.md`, `.markdown` | Preview and edit modes |
 | Other files | Plain-text editing |
 
