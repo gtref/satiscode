@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.1.3](https://github.com/gtref/satiscode/releases/tag/v2.1.3) - 2026-10-10
+
+- Added Help bot to website.
+- Added version name curious kea.
+- Fixed documentation typos.
+- Updated CSS.
+- Changes versions of esling and globals.
+
 ## [1.8.0](https://github.com/gtref/satiscode/releases/tag/v1.8.0) - 2026-10-04
 
 - Added a git sidebar

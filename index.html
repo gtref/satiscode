@@ -28,6 +28,7 @@
     window.getChevronIcon = getChevronIcon;
     window.getUiIcon = getUiIcon;
     window.MarkdownView = MarkdownView;
+    window.TabManager = TabManager;
 
     // Attach theme functions for internal renderer access
     window.loadTheme = loadTheme;
@@ -46,7 +47,6 @@
       : 'node_modules/highlight.js/styles/github-dark.min.css';
     document.getElementById('theme-select').value = savedTheme;
     await applyTheme(savedTheme);
-    window.TabManager = TabManager;
 
     // Initialize local icon system from icons/style1/icons.json
     await initIcons();
