@@ -24,7 +24,7 @@ export class TabManager {
 
       const tabEl = e.target.closest('[data-tab-id]');
       if (!tabEl) return;
-      
+
       const id = tabEl.dataset.tabId;
       if (e.target.classList.contains('close-btn')) {
         e.stopPropagation();
@@ -71,7 +71,7 @@ export class TabManager {
   async closeTab(id) {
     const index = this.tabs.findIndex(t => t.id === id);
     if (index === -1) return;
-    
+
     const tab = this.tabs[index];
     if (tab.isDirty) {
       if (this.onSave) {
@@ -115,7 +115,7 @@ export class TabManager {
 
   render() {
     if (!this.containerEl) return;
-    
+
     const tabsHtml = this.tabs.map(tab => `
       <div class="tab ${tab.id === this.activeTabId ? 'active' : ''}" data-tab-id="${tab.id}">
         <button class="tab-title" type="button" aria-pressed="${tab.id === this.activeTabId}">${escapeHtml(tab.title)}${tab.isDirty ? ' •' : ''}</button>

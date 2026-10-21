@@ -1,7 +1,7 @@
 {
-    "id": "dark", 
-    "name": "Dark Theme", 
-    "monacoTheme": "vs-dark", 
+    "id": "dark",
+    "name": "Dark Theme",
+    "monacoTheme": "vs-dark",
     "colors": {
         "vscode-bg": "#1e1e1e",
         "vscode-sidebar-bg": "#252526",

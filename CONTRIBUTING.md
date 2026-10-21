@@ -18,6 +18,26 @@ npm start
 
 Install LLVM if you are working on C/C++ language services. The expected executable is `clangd.exe`.
 
+## Pre-commit Hooks
+
+SatisCode uses pre-commit hooks to keep the codebase clean.
+
+### Install
+
+```bash
+pip install pre-commit
+python -m pre_commit install
+python -m pre_commit run --all-files
+```
+
+### Included checks
+- Removes trailing whitespace
+- Ensures files end with a newline
+- Detects merge conflicts
+- Validates JSON files
+- Validates YAML files
+- Runs linting checks
+
 ## Making changes
 
 - Keep renderer code isolated from Node.js APIs.
@@ -33,7 +53,7 @@ To maintain a clean and legally safe codebase:
 - Only submit code you wrote yourself or have the right to contribute.
 - Only use third-party code under licenses compatible with the project's MIT license; incompatible licenses, including GPL, are not permitted.
 - Satisfy all applicable third-party attribution and notice obligations documented in `NOTICES.md`.
-- AI-generated code **must be reviewed, rewritten, and validated** before submission.  
+- AI-generated code **must be reviewed, rewritten, and validated** before submission.
   Raw AI output is not acceptable without human verification.
 - Every commit must include a Developer Certificate of Origin (DCO) signoff.
 

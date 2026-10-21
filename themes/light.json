@@ -1,7 +1,7 @@
 {
-    "id": "light", 
-    "name": "Light Theme", 
-    "monacoTheme": "vs", 
+    "id": "light",
+    "name": "Light Theme",
+    "monacoTheme": "vs",
     "colors": {
         "vscode-bg": "#ffffff",
         "vscode-sidebar-bg": "#f3f3f3",
