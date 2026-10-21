@@ -1,9 +1,9 @@
 # @ronna/fixml-lsp
 
-[![npm version](https://img.shields.io/npm/v/%40ronna%2Ffixson-lsp)](https://www.npmjs.com/package/@ronna/fixson-lsp)
-[![npm downloads](https://img.shields.io/npm/dm/%40ronna%2Ffixson-lsp)](https://www.npmjs.com/package/@ronna/fixson-lsp)
+[![npm version](https://img.shields.io/npm/v/%40ronna%2Ffixml-lsp)](https://www.npmjs.com/package/@ronna/fixml-lsp)
+[![npm downloads](https://img.shields.io/npm/dm/%40ronna%2Ffixml-lsp)](https://www.npmjs.com/package/@ronna/fixml-lsp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Socket Badge](https://badge.socket.dev/npm/package/@ronna/fixson-lsp/latest)](https://badge.socket.dev/npm/package/@ronna/fixson-lsp/latest)
+[![Socket Badge](https://badge.socket.dev/npm/package/@ronna/fixml-lsp/latest)](https://badge.socket.dev/npm/package/@ronna/fixml-lsp/latest)
 
 A small Language Server Protocol (LSP) server for XML documents. It provides
 well-formedness diagnostics, element-name completions, and element hover
