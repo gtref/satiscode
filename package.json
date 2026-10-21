@@ -30,7 +30,7 @@
     "highlight.js": "^11.11.1",
     "marked": "^18.1.1",
     "monaco-editor": "0.57.0",
-    "monaco-languageclient": "^11.0.2",
+    "monaco-languageclient": "^11.0.3",
     "vscode-ws-jsonrpc": "^4.0.2"
   },
   "devDependencies": {
