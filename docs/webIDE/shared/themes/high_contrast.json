@@ -1,0 +1,21 @@
+{
+    "id": "high_contrast",
+    "name": "High Contrast Theme",
+    "monacoTheme": "hc-black",
+    "colors": {
+        "vscode-bg": "#000000",
+        "vscode-sidebar-bg": "#000000",
+        "vscode-toolbar-bg": "#000000",
+        "vscode-input-bg": "#000000",
+        "vscode-active-item": "#ffffff",
+        "vscode-hover-item": "#1a1a1a",
+        "vscode-border": "#ffffff",
+        "vscode-focus-border": "#ffffff",
+        "vscode-text-main": "#ffffff",
+        "vscode-text-muted": "#bfbfbf",
+        "vscode-text-active": "#ffffff",
+        "vscode-error": "#ff0000",
+        "vscode-warning": "#ffff00",
+        "vscode-badge-bg": "#ffffff"
+    }
+}
