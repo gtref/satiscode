@@ -74,6 +74,7 @@
         <button class="source-language-option" data-source-language="html"><span class="language-badge">&lt;&gt;</span><span data-i18n="sourceHtml">HTML</span></button>
         <button class="source-language-option" data-source-language="typescript"><span class="language-badge">TS</span><span data-i18n="sourceTypeScript">TypeScript</span></button>
         <button class="source-language-option" data-source-language="json"><span class="language-badge">{ }</span><span data-i18n="sourceJson">JSON</span></button>
+        <button class="source-language-option" data-source-language="xml"><span class="language-badge">&lt;/&gt;</span><span data-i18n="sourceXml">XML</span></button>
         <button class="source-language-option" data-source-language="plaintext"><span class="language-badge">Aa</span><span data-i18n="sourcePlainText">Plain Text</span></button>
         <button class="source-language-option" data-source-language="python"><span class="language-badge">Py</span><span data-i18n="sourcePython">Python</span></button>
         <button class="source-language-option" data-source-language="markdown"><span class="language-badge">MD</span><span data-i18n="sourceMarkdown">MarkDown</span></button>
@@ -175,14 +176,17 @@
       let clangdRequestId = 0;
       let pyrightRequestId = 0;
       let fixsonRequestId = 0;
+      let fixmlRequestId = 0;
       let documentVersion = 1;
       let changeTimeout = null;
       const clangdPendingRequests = new Map();
       const pyrightPendingRequests = new Map();
       const fixsonPendingRequests = new Map();
+      const fixmlPendingRequests = new Map();
       let clangdStarted = false;
       let pyrightStarted = false;
       let fixsonStarted = false;
+      let fixmlStarted = false;
       let currentDirectory = null;
       let manualLanguage = null;
       let currentDocumentUri = null;
@@ -191,6 +195,7 @@
         ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
         ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'], ['.cjs', 'javascript'],
         ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json'],
+        ['.xml', 'xml'], ['.xsd', 'xml'], ['.xsl', 'xml'], ['.xslt', 'xml'], ['.svg', 'xml'], ['.plist', 'xml'],
         ['.py', 'python'], ['.md', 'markdown'], ['.markdown', 'markdown']
       ]);
       const translations = {
@@ -198,7 +203,7 @@
           newFile: 'New', openFile: 'Open', openFolder: 'Open Folder', saveFile: 'Save', saveAs: 'Save As', gitBlame: '⑂ Blame',
           showGitBlame: 'Show Git blame for the active file', find: 'Find', exit: 'Exit', explorer: 'Explorer', sourceControl: 'Source Control',
           sourceLanguage: 'Select source language', sourceAuto: 'Auto', sourceC: 'C', sourceCpp: 'C++', sourceCss: 'CSS',
-          sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourcePlainText: 'Plain Text', sourcePython: 'Python', sourceMarkdown: 'Markdown',
+          sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourceXml: 'XML', sourcePlainText: 'Plain Text', sourcePython: 'Python', sourceMarkdown: 'Markdown',
           interfaceTheme: 'Interface theme', darkTheme: 'Dark Theme', lightTheme: 'Light Theme', highContrastTheme: 'High Contrast',
           changeLanguage: 'Change interface language', sidebarViews: 'Sidebar views', gitControls: 'Git controls', problems: 'Problems',
           resizeProblems: 'Resize Problems panel', noProblems: 'No problems detected', treePrompt: 'Open a file to browse its folder',
@@ -210,13 +215,14 @@
           clangdIdle: 'clangd: idle', clangdReady: 'clangd: ready', clangdStarting: 'clangd: starting', clangdUnavailable: 'clangd: unavailable',
           pyrightReady: 'pyright: ready', pyrightStarting: 'pyright: starting', pyrightUnavailable: 'pyright: unavailable',
           fixsonReady: 'fixson: ready', fixsonStarting: 'fixson: starting', fixsonUnavailable: 'fixson: unavailable',
+          fixmlReady: 'fixml: ready', fixmlStarting: 'fixml: starting', fixmlUnavailable: 'fixml: unavailable',
           operational: 'satiscode: Operational', starting: 'satiscode: Starting', error: 'satiscode: Error', offline: 'satiscode: Offline'
         },
         es: {
           newFile: 'Nuevo', openFile: 'Abrir archivo', openFolder: 'Abrir carpeta', saveFile: 'Guardar', saveAs: 'Guardar como', gitBlame: '⑂ Anotaciones',
           showGitBlame: 'Mostrar las anotaciones Git del archivo activo', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', sourceControl: 'Control de código fuente',
           sourceLanguage: 'Seleccionar lenguaje del archivo', sourceAuto: 'Automático', sourceC: 'C', sourceCpp: 'C++', sourceCss: 'CSS',
-          sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourcePlainText: 'Texto sin formato', sourcePython: 'Python', sourceMarkdown: 'Markdown',
+          sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourceXml: 'XML', sourcePlainText: 'Texto sin formato', sourcePython: 'Python', sourceMarkdown: 'Markdown',
           interfaceTheme: 'Tema de la interfaz', darkTheme: 'Tema oscuro', lightTheme: 'Tema claro', highContrastTheme: 'Alto contraste',
           changeLanguage: 'Cambiar el idioma de la interfaz', sidebarViews: 'Vistas de la barra lateral', gitControls: 'Controles de Git', problems: 'Problemas',
           resizeProblems: 'Cambiar el tamaño del panel de problemas', noProblems: 'No se detectaron problemas', treePrompt: 'Abre un archivo para explorar su carpeta',
@@ -228,6 +234,7 @@
           clangdIdle: 'clangd: inactivo', clangdReady: 'clangd: listo', clangdStarting: 'clangd: iniciando', clangdUnavailable: 'clangd: no disponible',
           pyrightReady: 'pyright: listo', pyrightStarting: 'pyright: iniciando', pyrightUnavailable: 'pyright: no disponible',
           fixsonReady: 'fixson: listo', fixsonStarting: 'fixson: iniciando', fixsonUnavailable: 'fixson: no disponible',
+          fixmlReady: 'fixml: listo', fixmlStarting: 'fixml: iniciando', fixmlUnavailable: 'fixml: no disponible',
           operational: 'satiscode: operativo', starting: 'satiscode: iniciando', error: 'satiscode: error', offline: 'satiscode: desconectado'
         }
       };
@@ -249,6 +256,7 @@
       const isActiveCppLanguage = () => activeLanguage(currentFilePath) === 'c' || activeLanguage(currentFilePath) === 'cpp';
       const isActivePythonLanguage = () => activeLanguage(currentFilePath) === 'python';
       const isActiveJsonLanguage = () => activeLanguage(currentFilePath) === 'json' && extensionForPath(currentFilePath || '') !== '.jsonc';
+      const isActiveXmlLanguage = () => activeLanguage(currentFilePath) === 'xml';
       const pathToUri = (filePath) => {
         const normalized = filePath.replace(/\\/g, '/');
         return encodeURI(`file://${normalized.startsWith('/') ? '' : '/'}${normalized}`);
@@ -310,6 +318,7 @@
           monaco.editor.setModelMarkers(window.editor.getModel(), 'clangd', []);
           monaco.editor.setModelMarkers(window.editor.getModel(), 'pyright', []);
           monaco.editor.setModelMarkers(window.editor.getModel(), 'fixson', []);
+          monaco.editor.setModelMarkers(window.editor.getModel(), 'fixml', []);
         }
       }
 
@@ -376,8 +385,8 @@
       function updateSourceLanguageLabel() {
         const language = activeLanguage(currentFilePath);
         const labels = translations[window.appSettings?.language] || translations.en;
-        const languageLabels = { auto: labels.sourceAuto, c: labels.sourceC, cpp: labels.sourceCpp, css: labels.sourceCss, javascript: labels.sourceJavaScript, html: labels.sourceHtml, typescript: labels.sourceTypeScript, json: labels.sourceJson, python: labels.sourcePython, plaintext: labels.sourcePlainText, markdown: labels.sourceMarkdown };
-        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', python: 'Py', plaintext: 'Aa', markdown: 'MD' };
+        const languageLabels = { auto: labels.sourceAuto, c: labels.sourceC, cpp: labels.sourceCpp, css: labels.sourceCss, javascript: labels.sourceJavaScript, html: labels.sourceHtml, typescript: labels.sourceTypeScript, json: labels.sourceJson, xml: labels.sourceXml, python: labels.sourcePython, plaintext: labels.sourcePlainText, markdown: labels.sourceMarkdown };
+        const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', xml: '</>', python: 'Py', plaintext: 'Aa', markdown: 'MD' };
         document.getElementById('source-language-label').textContent = languageLabels[language] || languageLabels.auto;
         document.querySelector('#source-language-btn .language-badge').textContent = icons[language] || icons.auto;
       }
@@ -397,6 +406,11 @@
           if (currentDocumentUri) sendFixsonNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
           window.api.stopFixson();
           fixsonStarted = false;
+        }
+        if (fixmlStarted) {
+          if (currentDocumentUri) sendFixmlNotification('textDocument/didClose', { textDocument: { uri: currentDocumentUri } });
+          window.api.stopFixml();
+          fixmlStarted = false;
         }
       }
 
@@ -419,6 +433,10 @@
           stopLanguageServers();
           clearProblems();
           startFixsonServer();
+        } else if (isActiveXmlLanguage()) {
+          stopLanguageServers();
+          clearProblems();
+          startFixmlServer();
         } else {
           stopLanguageServers();
           clearProblems();
@@ -500,6 +518,9 @@
         if (fixsonStarted) {
           sendFixsonNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
         }
+        if (fixmlStarted) {
+          sendFixmlNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+        }
       }
 
       if (tab) {
@@ -518,6 +539,10 @@
           if (fixsonStarted) {
             window.api.stopFixson();
             fixsonStarted = false;
+          }
+          if (fixmlStarted) {
+            window.api.stopFixml();
+            fixmlStarted = false;
           }
           if (clangdStarted && currentDocumentUri) {
             sendClangdNotification('textDocument/didOpen', {
@@ -545,6 +570,10 @@
             window.api.stopFixson();
             fixsonStarted = false;
           }
+          if (fixmlStarted) {
+            window.api.stopFixml();
+            fixmlStarted = false;
+          }
           if (pyrightStarted && currentDocumentUri) {
             sendPyrightNotification('textDocument/didOpen', {
               textDocument: {
@@ -571,6 +600,10 @@
             window.api.stopPyright();
             pyrightStarted = false;
           }
+          if (fixmlStarted) {
+            window.api.stopFixml();
+            fixmlStarted = false;
+          }
           if (fixsonStarted && currentDocumentUri) {
             sendFixsonNotification('textDocument/didOpen', {
               textDocument: {
@@ -587,6 +620,36 @@
               fixsonStarted = false;
             }
             startFixsonServer();
+          }
+        } else if (isActiveXmlLanguage()) {
+          if (clangdStarted) {
+            window.api.stopClangd();
+            clangdStarted = false;
+          }
+          if (pyrightStarted) {
+            window.api.stopPyright();
+            pyrightStarted = false;
+          }
+          if (fixsonStarted) {
+            window.api.stopFixson();
+            fixsonStarted = false;
+          }
+          if (fixmlStarted && currentDocumentUri) {
+            sendFixmlNotification('textDocument/didOpen', {
+              textDocument: {
+                uri: currentDocumentUri,
+                languageId: 'xml',
+                version: documentVersion,
+                text: window.editor.getValue()
+              }
+            });
+            setEditorStatus('fixmlReady');
+          } else {
+            if (fixmlStarted) {
+              window.api.stopFixml();
+              fixmlStarted = false;
+            }
+            startFixmlServer();
           }
         } else {
           stopLanguageServers();
@@ -762,14 +825,35 @@
         window.api.sendFixsonMessage({ jsonrpc: '2.0', method, params });
       }
 
+      function sendFixmlRequest(method, params) {
+        const id = ++fixmlRequestId;
+        return new Promise((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            fixmlPendingRequests.delete(id);
+            reject(new Error(`FIXML request timed out: ${method}`));
+          }, 15000);
+          fixmlPendingRequests.set(id, {
+            resolve: (result) => { clearTimeout(timeout); resolve(result); },
+            reject: (error) => { clearTimeout(timeout); reject(error); }
+          });
+          window.api.sendFixmlMessage({ jsonrpc: '2.0', id, method, params });
+        });
+      }
+
+      function sendFixmlNotification(method, params) {
+        window.api.sendFixmlMessage({ jsonrpc: '2.0', method, params });
+      }
+
       function sendRequest(method, params) {
         if (isActiveJsonLanguage()) return sendFixsonRequest(method, params);
+        if (isActiveXmlLanguage()) return sendFixmlRequest(method, params);
         if (isActivePythonLanguage()) return sendPyrightRequest(method, params);
         return sendClangdRequest(method, params);
       }
 
       function sendNotification(method, params) {
         if (isActiveJsonLanguage()) return sendFixsonNotification(method, params);
+        if (isActiveXmlLanguage()) return sendFixmlNotification(method, params);
         if (isActivePythonLanguage()) return sendPyrightNotification(method, params);
         return sendClangdNotification(method, params);
       }
@@ -880,10 +964,48 @@
         });
       }
 
+      async function startFixmlServer() {
+        if (!isActiveXmlLanguage()) return;
+        if (fixmlStarted) window.api.stopFixml();
+        fixmlStarted = true;
+        setEditorStatus('fixmlStarting');
+        const workspacePath = currentDirectory || await window.api.getWorkspacePath();
+        const rootPath = currentFilePath ? currentFilePath.substring(0, Math.max(currentFilePath.lastIndexOf('\\'), currentFilePath.lastIndexOf('/'))) : workspacePath;
+        currentDocumentUri = currentDocumentUri || virtualDocumentUri(workspacePath, 'xml');
+        console.info(`Starting FIXML for ${currentDocumentUri}`);
+        window.api.startFixml(rootPath || undefined).then(() => sendFixmlRequest('initialize', {
+          processId: null,
+          rootUri: pathToUri(rootPath),
+          capabilities: {
+            textDocument: {
+              synchronization: { didSave: true },
+              completion: { completionItem: { snippetSupport: true } },
+              hover: { contentFormat: ['markdown', 'plaintext'] }
+            }
+          }
+        })).then(() => {
+          sendFixmlNotification('initialized', {});
+          sendFixmlNotification('textDocument/didOpen', {
+            textDocument: {
+              uri: currentDocumentUri,
+              languageId: 'xml',
+              version: documentVersion,
+              text: window.editor.getValue()
+            }
+          });
+          setEditorStatus('fixmlReady');
+        }).catch((error) => {
+          fixmlStarted = false;
+          console.warn(`FIXML is unavailable. XML editing will continue without language services: ${error.message || error}`);
+          setEditorStatus('fixmlUnavailable');
+        });
+      }
+
       function startLanguageServer() {
         if (isActiveCppLanguage()) return startClangdServer();
         if (isActivePythonLanguage()) return startPyrightServer();
         if (isActiveJsonLanguage()) return startFixsonServer();
+        if (isActiveXmlLanguage()) return startFixmlServer();
       }
 
     require(['vs/editor/editor.main'], function() {
@@ -993,6 +1115,40 @@
         const error = new Error('FIXSON exited before completing its requests.');
         fixsonPendingRequests.forEach((request) => request.reject(error));
         fixsonPendingRequests.clear();
+      });
+      window.api.onFixmlMessage((message) => {
+        if (message.id !== undefined && fixmlPendingRequests.has(message.id)) {
+          const request = fixmlPendingRequests.get(message.id);
+          fixmlPendingRequests.delete(message.id);
+          if (message.error) request.reject(new Error(message.error.message || 'FIXML request failed'));
+          else request.resolve(message.result);
+        }
+        if (message.method === 'textDocument/publishDiagnostics') {
+          const diagUri = message.params?.uri;
+          if (currentDocumentUri && diagUri && normalizeDocumentUri(diagUri) !== normalizeDocumentUri(currentDocumentUri)) return;
+          currentProblems = (message.params?.diagnostics || []).map((diagnostic) => ({
+            ...rangeToMonaco(diagnostic.range),
+            message: diagnostic.message,
+            severity: diagnostic.severity === 1 ? monaco.MarkerSeverity.Error : diagnostic.severity === 2 ? monaco.MarkerSeverity.Warning : monaco.MarkerSeverity.Info,
+            source: 'fixml'
+          }));
+          monaco.editor.setModelMarkers(window.editor.getModel(), 'fixml', currentProblems);
+          renderProblems();
+        }
+      });
+      window.api.onFixmlError((message) => {
+        fixmlStarted = false;
+        fixmlPendingRequests.forEach((request) => request.reject(new Error(message)));
+        fixmlPendingRequests.clear();
+        console.warn(`FIXML is unavailable. XML editing will continue without language services: ${message}`);
+        setEditorStatus('fixmlUnavailable');
+      });
+      window.api.onFixmlStderr((message) => console.warn(`FIXML: ${message.trim()}`));
+      window.api.onFixmlExit(() => {
+        fixmlStarted = false;
+        const error = new Error('FIXML exited before completing its requests.');
+        fixmlPendingRequests.forEach((request) => request.reject(error));
+        fixmlPendingRequests.clear();
       });
       applyInterfaceLanguage(window.appSettings?.language || 'en');
       updateSourceLanguageLabel();
@@ -1124,6 +1280,40 @@
           };
         }
       });
+      monaco.languages.registerCompletionItemProvider('xml', {
+        triggerCharacters: ['<', '/'],
+        provideCompletionItems: async (_model, position) => {
+          if (!fixmlStarted) return { suggestions: [] };
+          const result = await sendFixmlRequest('textDocument/completion', {
+            textDocument: { uri: currentDocumentUri },
+            position: positionToLsp(position)
+          });
+          const items = result && (result.items || result) || [];
+          return {
+            suggestions: items.map((item) => ({
+              label: item.label,
+              kind: item.kind || monaco.languages.CompletionItemKind.Class,
+              insertText: item.insertText || item.label,
+              detail: item.detail
+            }))
+          };
+        }
+      });
+      monaco.languages.registerHoverProvider('xml', {
+        provideHover: async (_model, position) => {
+          if (!fixmlStarted) return null;
+          const result = await sendFixmlRequest('textDocument/hover', {
+            textDocument: { uri: currentDocumentUri },
+            position: positionToLsp(position)
+          });
+          if (!result || !result.contents) return null;
+          const contents = Array.isArray(result.contents) ? result.contents : [result.contents];
+          return {
+            contents: contents.map((item) => ({ value: typeof item === 'string' ? item : item.value || '' })),
+            range: result.range && rangeToMonaco(result.range)
+          };
+        }
+      });
 
       window.editor.onDidChangeModelContent(() => {
         const activeTab = tabManager.getActiveTab();
@@ -1133,7 +1323,7 @@
         }
 
         if (!currentDocumentUri) return;
-        if (!clangdStarted && !pyrightStarted && !fixsonStarted) return;
+        if (!clangdStarted && !pyrightStarted && !fixsonStarted && !fixmlStarted) return;
         if (changeTimeout) clearTimeout(changeTimeout);
         changeTimeout = setTimeout(() => {
           documentVersion++;
@@ -1147,6 +1337,8 @@
             sendPyrightNotification('textDocument/didChange', payload);
           } else if (fixsonStarted && isActiveJsonLanguage()) {
             sendFixsonNotification('textDocument/didChange', payload);
+          } else if (fixmlStarted && isActiveXmlLanguage()) {
+            sendFixmlNotification('textDocument/didChange', payload);
           }
         }, 150);
       });
@@ -1189,6 +1381,11 @@
               window.api.stopFixson();
               fixsonStarted = false;
             }
+            if (fixmlStarted) {
+              if (previousDocumentUri) sendFixmlNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopFixml();
+              fixmlStarted = false;
+            }
             if (!clangdStarted) {
               startClangdServer();
             } else {
@@ -1204,6 +1401,11 @@
               if (previousDocumentUri) sendFixsonNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
               window.api.stopFixson();
               fixsonStarted = false;
+            }
+            if (fixmlStarted) {
+              if (previousDocumentUri) sendFixmlNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopFixml();
+              fixmlStarted = false;
             }
             if (!pyrightStarted) {
               startPyrightServer();
@@ -1221,6 +1423,11 @@
               window.api.stopPyright();
               pyrightStarted = false;
             }
+            if (fixmlStarted) {
+              if (previousDocumentUri) sendFixmlNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopFixml();
+              fixmlStarted = false;
+            }
             if (!fixsonStarted) {
               startFixsonServer();
             } else if (previousDocumentUri !== currentDocumentUri) {
@@ -1237,6 +1444,39 @@
               });
             } else {
               sendFixsonNotification('textDocument/didSave', { textDocument: { uri: currentDocumentUri } });
+            }
+          } else if (isActiveXmlLanguage()) {
+            if (clangdStarted) {
+              if (previousDocumentUri) sendClangdNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopClangd();
+              clangdStarted = false;
+            }
+            if (pyrightStarted) {
+              if (previousDocumentUri) sendPyrightNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopPyright();
+              pyrightStarted = false;
+            }
+            if (fixsonStarted) {
+              if (previousDocumentUri) sendFixsonNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              window.api.stopFixson();
+              fixsonStarted = false;
+            }
+            if (!fixmlStarted) {
+              startFixmlServer();
+            } else if (previousDocumentUri !== currentDocumentUri) {
+              if (previousDocumentUri) {
+                sendFixmlNotification('textDocument/didClose', { textDocument: { uri: previousDocumentUri } });
+              }
+              sendFixmlNotification('textDocument/didOpen', {
+                textDocument: {
+                  uri: currentDocumentUri,
+                  languageId: 'xml',
+                  version: documentVersion,
+                  text: tab.model.getValue()
+                }
+              });
+            } else {
+              sendFixmlNotification('textDocument/didSave', { textDocument: { uri: currentDocumentUri } });
             }
           } else {
             stopLanguageServers();

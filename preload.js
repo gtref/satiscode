@@ -55,5 +55,14 @@ contextBridge.exposeInMainWorld('api', {
   onFixsonMessage: (callback) => ipcRenderer.on('fixson:message', (_event, message) => callback(message)),
   onFixsonStderr: (callback) => ipcRenderer.on('fixson:stderr', (_event, message) => callback(message)),
   onFixsonError: (callback) => ipcRenderer.on('fixson:error', (_event, message) => callback(message)),
-  onFixsonExit: (callback) => ipcRenderer.on('fixson:exit', () => callback())
+  onFixsonExit: (callback) => ipcRenderer.on('fixson:exit', () => callback()),
+
+  // --- FIXML ---
+  startFixml: (rootPath) => ipcRenderer.invoke('fixml:start', rootPath),
+  sendFixmlMessage: (message) => ipcRenderer.send('fixml:message', message),
+  stopFixml: () => ipcRenderer.send('fixml:stop'),
+  onFixmlMessage: (callback) => ipcRenderer.on('fixml:message', (_event, message) => callback(message)),
+  onFixmlStderr: (callback) => ipcRenderer.on('fixml:stderr', (_event, message) => callback(message)),
+  onFixmlError: (callback) => ipcRenderer.on('fixml:error', (_event, message) => callback(message)),
+  onFixmlExit: (callback) => ipcRenderer.on('fixml:exit', () => callback())
 });

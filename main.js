@@ -13,6 +13,8 @@ let pyrightProcess = null;
 let pyrightBuffer = Buffer.alloc(0);
 let fixsonProcess = null;
 let fixsonBuffer = Buffer.alloc(0);
+let fixmlProcess = null;
+let fixmlBuffer = Buffer.alloc(0);
 let settingsManager = null;
 
 
@@ -37,6 +39,13 @@ function sendToFixson(message) {
   fixsonProcess.stdin.write(Buffer.concat([header, body]));
 }
 
+function sendToFixml(message) {
+  if (!fixmlProcess || fixmlProcess.stdin.destroyed) return;
+  const body = Buffer.from(JSON.stringify(message), 'utf8');
+  const header = Buffer.from(`Content-Length: ${body.length}\r\n\r\n`, 'ascii');
+  fixmlProcess.stdin.write(Buffer.concat([header, body]));
+}
+
 
 function sendToRenderer(event, channel, ...args) {
   if (!event.sender.isDestroyed()) event.sender.send(channel, ...args);
@@ -58,6 +67,12 @@ function stopFixson() {
   if (fixsonProcess) fixsonProcess.kill();
   fixsonProcess = null;
   fixsonBuffer = Buffer.alloc(0);
+}
+
+function stopFixml() {
+  if (fixmlProcess) fixmlProcess.kill();
+  fixmlProcess = null;
+  fixmlBuffer = Buffer.alloc(0);
 }
 
 
@@ -154,6 +169,29 @@ function gracefulStopFixson() {
   });
 }
 
+function gracefulStopFixml() {
+  if (!fixmlProcess) return Promise.resolve();
+  const processToStop = fixmlProcess;
+  return new Promise((resolve) => {
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (fixmlProcess === processToStop) stopFixml();
+      resolve();
+    };
+    const timeout = setTimeout(finish, 1000);
+    processToStop.once('exit', finish);
+    sendToFixml({ jsonrpc: '2.0', id: Date.now(), method: 'shutdown', params: null });
+    setTimeout(() => {
+      if (!settled && !processToStop.killed) {
+        sendToFixml({ jsonrpc: '2.0', method: 'exit', params: null });
+      }
+    }, 250);
+  });
+}
+
 
 function getClangdPath() {
   const isWin = process.platform === 'win32';
@@ -171,6 +209,12 @@ function getFixsonPath() {
   return app.isPackaged
     ? path.join(process.resourcesPath, 'FIXSON-LSP', 'dist', 'server.js')
     : path.join(__dirname, 'packages', 'FIXSON-LSP', 'dist', 'server.js');
+}
+
+function getFixmlPath() {
+  return app.isPackaged
+    ? path.join(process.resourcesPath, 'FIXML-LSP', 'dist', 'server.js')
+    : path.join(__dirname, 'packages', 'FIXML-LSP', 'dist', 'server.js');
 }
 
 
@@ -356,6 +400,72 @@ function startFixson(event, rootPath) {
   return processStarted;
 }
 
+function startFixml(event, rootPath) {
+  stopFixml();
+
+  const projectRoot = path.resolve(rootPath || process.cwd());
+  const fixmlCommand = getFixmlPath();
+
+  const child = spawn(process.execPath, [fixmlCommand, '--stdio'], {
+    cwd: projectRoot,
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+    stdio: ['pipe', 'pipe', 'pipe']
+  });
+  fixmlProcess = child;
+
+  const processStarted = new Promise((resolve, reject) => {
+    child.once('spawn', () => resolve({ projectRoot, command: fixmlCommand }));
+    child.once('error', reject);
+  });
+
+  child.stdout.on('data', (chunk) => {
+    if (fixmlProcess !== child) return;
+    fixmlBuffer = Buffer.concat([fixmlBuffer, chunk]);
+
+    while (true) {
+      const headerEnd = fixmlBuffer.indexOf('\r\n\r\n');
+      if (headerEnd < 0) break;
+
+      const header = fixmlBuffer.subarray(0, headerEnd).toString('ascii');
+      const lengthMatch = header.match(/Content-Length:\s*(\d+)/i);
+      if (!lengthMatch) {
+        fixmlBuffer = fixmlBuffer.subarray(headerEnd + 4);
+        continue;
+      }
+
+      const bodyLength = Number(lengthMatch[1]);
+      const bodyStart = headerEnd + 4;
+      if (fixmlBuffer.length < bodyStart + bodyLength) break;
+
+      const body = fixmlBuffer.subarray(bodyStart, bodyStart + bodyLength).toString('utf8');
+      fixmlBuffer = fixmlBuffer.subarray(bodyStart + bodyLength);
+
+      try {
+        sendToRenderer(event, 'fixml:message', JSON.parse(body));
+      } catch (error) {
+        console.error('Invalid FIXML message:', error);
+      }
+    }
+  });
+
+  child.stderr.on('data', (chunk) => {
+    if (fixmlProcess !== child) return;
+    sendToRenderer(event, 'fixml:stderr', chunk.toString());
+  });
+  child.on('error', (error) => {
+    if (fixmlProcess !== child) return;
+    sendToRenderer(event, 'fixml:error', error.message);
+  });
+  child.on('exit', () => {
+    if (fixmlProcess !== child) return;
+    sendToRenderer(event, 'fixml:exit');
+    fixmlProcess = null;
+    fixmlBuffer = Buffer.alloc(0);
+  });
+
+  return processStarted;
+}
+
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -448,20 +558,24 @@ ipcMain.on('pyright:stop', stopPyright);
 ipcMain.handle('fixson:start', (event, rootPath) => startFixson(event, rootPath));
 ipcMain.on('fixson:message', (_event, message) => sendToFixson(message));
 ipcMain.on('fixson:stop', stopFixson);
+ipcMain.handle('fixml:start', (event, rootPath) => startFixml(event, rootPath));
+ipcMain.on('fixml:message', (_event, message) => sendToFixml(message));
+ipcMain.on('fixml:stop', stopFixml);
 
 ipcMain.handle('app:exit', async () => {
   isQuitting = true;
-  await Promise.all([gracefulStopClangd(), gracefulStopPyright(), gracefulStopFixson()]);
+  await Promise.all([gracefulStopClangd(), gracefulStopPyright(), gracefulStopFixson(), gracefulStopFixml()]);
   app.quit();
 });
 app.on('before-quit', (event) => {
   if (isQuitting) return;
   isQuitting = true;
   event.preventDefault();
-  Promise.all([gracefulStopClangd(), gracefulStopPyright(), gracefulStopFixson()]).finally(() => app.quit());
+  Promise.all([gracefulStopClangd(), gracefulStopPyright(), gracefulStopFixson(), gracefulStopFixml()]).finally(() => app.quit());
 });
 app.on('will-quit', () => {
   stopClangd();
   stopPyright();
   stopFixson();
+  stopFixml();
 });

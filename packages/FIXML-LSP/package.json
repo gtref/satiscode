@@ -1,0 +1,55 @@
+{
+  "name": "@ronna/fixml-lsp",
+  "version": "1.0.0",
+  "description": "An XML language server with diagnostics, completion, and hover support",
+  "license": "MIT",
+  "author": "gtref",
+  "homepage": "https://github.com/gtref/satiscode/tree/main/packages/FIXML-LSP",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gtref/satiscode.git",
+    "directory": "packages/FIXML-LSP"
+  },
+  "bugs": {
+    "url": "https://github.com/gtref/satiscode/issues"
+  },
+  "keywords": [
+    "xml",
+    "language-server",
+    "lsp",
+    "vscode-languageserver"
+  ],
+  "main": "dist/server.js",
+  "bin": {
+    "fixml-lsp": "dist/server.js"
+  },
+  "files": [
+    "dist/server.js",
+    "src/**/*.ts",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc --noEmit && esbuild src/server.ts --bundle --platform=node --target=node20 --outfile=dist/server.js",
+    "prepack": "npm run build",
+    "start": "node dist/server.js",
+    "test": "node --test test.js",
+    "watch": "tsc -w"
+  },
+  "dependencies": {
+    "saxes": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^5.9.0",
+    "vscode-languageserver": "^9.0.1",
+    "vscode-languageserver-textdocument": "^1.0.12"
+  }
+}

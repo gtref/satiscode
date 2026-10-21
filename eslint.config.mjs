@@ -3,6 +3,10 @@ import globals from "globals";
 import { defineConfig } from "eslint/config";
 
 export default defineConfig([
+    {
+        ignores: ["packages/FIXML-LSP/dist/**"]
+    },
+
     // Backend: Node + CommonJS (GitManager, stubs, runner, Electron main/preload)
     {
         files: [

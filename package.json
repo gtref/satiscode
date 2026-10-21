@@ -1,11 +1,11 @@
 {
   "name": "satiscode",
   "version": "2.2.6",
-  "description": "A lightweight C/C++, Python, and JSON editor powered by Monaco, clangd, Pyright, and FIXSON.",
+  "description": "A lightweight C/C++, Python, JSON, and XML editor powered by Monaco, clangd, Pyright, FIXSON, and FIXML.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "npm --prefix packages/FIXSON-LSP install && npm --prefix packages/FIXSON-LSP run build",
+    "build": "npm --prefix packages/FIXSON-LSP install && npm --prefix packages/FIXSON-LSP run build && npm --prefix packages/FIXML-LSP install && npm --prefix packages/FIXML-LSP run build",
     "dist:win": "npm run build && electron-builder --win nsis",
     "test": "npm run build && node --test",
     "lint": "eslint ."
@@ -17,6 +17,8 @@
     "pyright",
     "fixson",
     "json",
+    "fixml",
+    "xml",
     "c",
     "cpp",
     "python",
@@ -83,6 +85,10 @@
       {
         "from": "packages/FIXSON-LSP/dist",
         "to": "FIXSON-LSP/dist"
+      },
+      {
+        "from": "packages/FIXML-LSP/dist",
+        "to": "FIXML-LSP/dist"
       },
       {
         "from": "help",
