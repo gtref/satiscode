@@ -3,6 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/%40ronna%2Ffixson-lsp)](https://www.npmjs.com/package/@ronna/fixson-lsp)
 [![npm downloads](https://img.shields.io/npm/dm/%40ronna%2Ffixson-lsp)](https://www.npmjs.com/package/@ronna/fixson-lsp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+[![Socket Badge](https://badge.socket.dev/npm/package/@ronna/fixson-lsp/latest)](https://badge.socket.dev/npm/package/@ronna/fixson-lsp/latest)
 
 A small Language Server Protocol (LSP) server for JSON documents. It provides
 JSON syntax diagnostics, property-name completions, and a basic hover response.
