@@ -8,12 +8,15 @@ class GitUi {
     this.workspace = null;
     this.state = { mode: 'empty', entries: [], commits: [], message: 'Open a folder to use Git.', messageType: 'info' };
     this.listening = false;
+    this.refreshToken = 0;
+    this.commitMessage = '';
   }
 
   async setWorkspace(workspace) {
     this.workspace = workspace || null;
     this.gitman.setWorkspace(this.workspace);
     if (!this.workspace) {
+      ++this.refreshToken;
       this.state = { mode: 'empty', entries: [], commits: [], message: 'Open a folder to use Git.', messageType: 'info' };
       this.render();
       return;
@@ -26,7 +29,10 @@ class GitUi {
     this.listening = true;
     this.containerEl.addEventListener('click', (event) => this.handleClick(event));
     this.containerEl.addEventListener('input', (event) => {
-      if (event.target.id === 'git-commit-message') this.renderActionState();
+      if (event.target.id === 'git-commit-message') {
+        this.commitMessage = event.target.value;
+        this.renderActionState();
+      }
     });
   }
 
@@ -46,6 +52,7 @@ class GitUi {
     this.setMessage(`${this.actionLabel(method)}…`, 'loading');
     try {
       const output = await this.gitman[method](argument);
+      if (method === 'commit') this.commitMessage = '';
       await this.refresh(`${this.actionLabel(method)} completed${output ? `: ${output}` : '.'}`);
     } catch (error) {
       this.setMessage(error.message || String(error), 'error');
@@ -58,6 +65,7 @@ class GitUi {
 
   async refresh(successMessage = '') {
     if (!this.workspace) return;
+    const refreshToken = ++this.refreshToken;
     this.state = { ...this.state, mode: 'loading', message: 'Loading repository status…', messageType: 'loading' };
     this.render();
     try {
@@ -65,8 +73,10 @@ class GitUi {
         this.gitman.status(),
         typeof this.gitman.log === 'function' ? this.gitman.log().then((raw) => ({ raw }), (error) => ({ error: error?.message || String(error) })) : Promise.resolve({ raw: '' })
       ]);
+      if (refreshToken !== this.refreshToken) return;
       this.state = { mode: 'repository', entries: StatusStub.parse(raw), commits: LogStub.parse(log.raw), historyError: log.error || '', message: successMessage || 'Repository status is up to date.', messageType: successMessage ? 'success' : 'info' };
     } catch (error) {
+      if (refreshToken !== this.refreshToken) return;
       if (/not a git repository/i.test(error.message || '')) {
         this.state = { mode: 'non-repository', entries: [], commits: [], message: 'This folder is not a Git repository.', messageType: 'info' };
       } else {
@@ -147,7 +157,7 @@ class GitUi {
         history.append(item);
       }
       panel.append(history);
-      const input = this.create('input', { id: 'git-commit-message', className: 'git-commit-input', type: 'text', placeholder: 'Commit message', disabled: busy || !this.state.entries.length });
+      const input = this.create('input', { id: 'git-commit-message', className: 'git-commit-input', type: 'text', placeholder: 'Commit message', value: this.commitMessage, disabled: busy || !this.state.entries.length });
       input.setAttribute('aria-label', 'Commit message');
       panel.append(input, this.button('Commit', 'commit', true));
       const list = this.create('ul', { className: 'git-status-list' });

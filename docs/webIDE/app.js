@@ -1,6 +1,6 @@
 /* ==========================================================================
    SATISCODE WEB IDE MAIN APPLICATION SCRIPT
-   Uses shared main IDE internals (icons, themes, TabManager, MarkdownView)
+   Uses shared main IDE internals (icons, themes, TabManager)
    ========================================================================== */
 
 import { initIcons, getFileIcon, getFolderIcon, getChevronIcon, getUiIcon } from './shared/icons.js';
@@ -26,8 +26,12 @@ class WebMarkdownView {
       this.containerEl.replaceChildren(this.article);
     }
 
-    const html = window.marked ? window.marked.parse(markdown) : markdown;
-    const clean = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+    if (!window.marked || !window.DOMPurify) {
+      this.article.textContent = markdown;
+      return;
+    }
+    const html = window.marked.parse(markdown);
+    const clean = window.DOMPurify.sanitize(html);
     this.article.innerHTML = clean;
   }
 }
@@ -66,7 +70,8 @@ const translations = {
 let currentFilePath = null;
 let manualLanguage = null;
 let currentLanguage = 'en';
-let fixsonStarted = false;
+let fixsonStartPromise = null;
+const fixsonDocuments = new WeakMap();
 let fixsonRequestId = 0;
 const fixsonPendingRequests = new Map();
 let currentProblems = [];
@@ -159,7 +164,7 @@ function applyInterfaceLanguage(lang) {
 }
 
 // Initialize Monaco and Main App
-require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.51.0/min/vs' } });
+require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.57.0/min/vs' } });
 
 require(['vs/editor/editor.main'], async function (monaco) {
   window.monaco = monaco;
@@ -215,8 +220,11 @@ require(['vs/editor/editor.main'], async function (monaco) {
   // --- FIXSON JSON LSP Integration ---
   window.api.onFixsonMessage((msg) => {
     if (msg.method === 'textDocument/publishDiagnostics') {
-      currentProblems = msg.params?.diagnostics || [];
-      const markers = currentProblems.map((d) => ({
+      const tab = tabManager.tabs.find((tab) => fixsonDocuments.get(tab)?.uri === msg.params?.uri);
+      if (!tab) return;
+      const diagnostics = msg.params?.diagnostics || [];
+      fixsonDocuments.get(tab).diagnostics = diagnostics;
+      const markers = diagnostics.map((d) => ({
         startLineNumber: d.range.start.line + 1,
         startColumn: d.range.start.character + 1,
         endLineNumber: d.range.end.line + 1,
@@ -225,7 +233,9 @@ require(['vs/editor/editor.main'], async function (monaco) {
         severity: monaco.MarkerSeverity.Error,
         source: 'fixson'
       }));
-      monaco.editor.setModelMarkers(window.editor.getModel(), 'fixson', markers);
+      monaco.editor.setModelMarkers(tab.model, 'fixson', markers);
+      if (tab !== tabManager.getActiveTab()) return;
+      currentProblems = diagnostics;
       renderProblems();
     } else if (msg.id !== undefined && fixsonPendingRequests.has(msg.id)) {
       const request = fixsonPendingRequests.get(msg.id);
@@ -234,33 +244,45 @@ require(['vs/editor/editor.main'], async function (monaco) {
     }
   });
 
-  async function startFixsonServer() {
-    if (fixsonStarted) return;
-    fixsonStarted = true;
-    await window.api.startFixson();
-    window.api.sendFixsonMessage({
-      method: 'textDocument/didOpen',
-      params: {
-        textDocument: {
-          uri: `file://${currentFilePath || '/workspace/package.json'}`,
-          languageId: 'json',
-          version: 1,
-          text: window.editor.getValue()
+  async function startFixsonServer(tab = tabManager.getActiveTab()) {
+    if (!tab) return null;
+    if (!fixsonStartPromise) fixsonStartPromise = window.api.startFixson();
+    await fixsonStartPromise;
+    let document = fixsonDocuments.get(tab);
+    if (!document) {
+      document = {
+        uri: tab.filePath ? monaco.Uri.file(tab.filePath).toString() : `untitled:${tab.id}`,
+        version: 1,
+        diagnostics: []
+      };
+      fixsonDocuments.set(tab, document);
+      window.api.sendFixsonMessage({
+        method: 'textDocument/didOpen',
+        params: {
+          textDocument: {
+            uri: document.uri,
+            languageId: 'json',
+            version: document.version,
+            text: tab.model.getValue()
+          }
         }
-      }
-    });
+      });
+    }
+    return document;
   }
 
   monaco.languages.registerCompletionItemProvider('json', {
     triggerCharacters: ['"'],
     provideCompletionItems: async () => {
+      const document = await startFixsonServer();
+      if (!document) return { suggestions: [] };
       const id = ++fixsonRequestId;
       return new Promise((resolve, reject) => {
         fixsonPendingRequests.set(id, { resolve, reject });
         window.api.sendFixsonMessage({
           id,
           method: 'textDocument/completion',
-          params: { textDocument: { uri: `file://${currentFilePath}` } }
+          params: { textDocument: { uri: document.uri } }
         });
       }).then((res) => {
         const items = res?.items || [];
@@ -275,19 +297,21 @@ require(['vs/editor/editor.main'], async function (monaco) {
     }
   });
 
-  window.editor.onDidChangeModelContent(() => {
+  window.editor.onDidChangeModelContent(async () => {
     const activeTab = tabManager.getActiveTab();
     if (activeTab && !activeTab.isDirty) {
       activeTab.isDirty = true;
       tabManager.render();
     }
 
-    if (activeLanguage(currentFilePath) === 'json') {
+    if (activeTab && activeLanguage(currentFilePath) === 'json') {
+      const text = activeTab.model.getValue();
+      const document = await startFixsonServer(activeTab);
       window.api.sendFixsonMessage({
         method: 'textDocument/didChange',
         params: {
-          textDocument: { uri: `file://${currentFilePath}`, version: 2 },
-          contentChanges: [{ text: window.editor.getValue() }]
+          textDocument: { uri: document.uri, version: ++document.version },
+          contentChanges: [{ text }]
         }
       });
     }
@@ -317,13 +341,17 @@ require(['vs/editor/editor.main'], async function (monaco) {
     document.getElementById('tab-bar'),
     (tab) => {
       if (tab) {
+        manualLanguage = null;
         currentFilePath = tab.filePath;
         window.editor.setModel(tab.model);
+        monaco.editor.setModelLanguage(tab.model, activeLanguage(currentFilePath));
         updateMarkdownDisplay(tab);
         updateSourceLanguageLabel();
 
         if (activeLanguage(currentFilePath) === 'json') {
-          startFixsonServer();
+          currentProblems = fixsonDocuments.get(tab)?.diagnostics || [];
+          renderProblems();
+          startFixsonServer(tab);
         } else {
           currentProblems = [];
           monaco.editor.setModelMarkers(window.editor.getModel(), 'fixson', []);
@@ -428,6 +456,7 @@ require(['vs/editor/editor.main'], async function (monaco) {
       manualLanguage = lang === 'auto' ? null : lang;
       const selectedLanguage = activeLanguage(currentFilePath);
       monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
+      if (selectedLanguage === 'json') startFixsonServer();
       updateSourceLanguageLabel();
       document.getElementById('source-language-options').hidden = true;
     });

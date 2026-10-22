@@ -53,7 +53,7 @@
   async function saveProjectAsZip() {
     if (!window.JSZip) {
       alert('JSZip library is loading. Please try again in a moment.');
-      return;
+      return false;
     }
 
     const zip = new window.JSZip();
@@ -74,6 +74,7 @@
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    return true;
   }
 
   // --- In-Browser FIXSON JS Language Service ---
@@ -166,12 +167,26 @@
     getWorkspacePath: async () => activeWorkspacePath,
 
     saveFile: async (data) => {
-      if (data && data.filePath) {
-        const entry = virtualWorkspace.files.get(data.filePath);
-        if (entry) entry.content = data.content;
+      if (!data || typeof data.content !== 'string') return null;
+      let filePath = data.filePath;
+      if (!filePath) {
+        let counter = 1;
+        do {
+          filePath = `${activeWorkspacePath}/Untitled-${counter++}.txt`;
+        } while (virtualWorkspace.files.has(filePath));
       }
-      await saveProjectAsZip();
-      return data?.filePath || `${activeWorkspacePath}/satiscode-project.zip`;
+      virtualWorkspace.files.set(filePath, {
+        name: filePath.split('/').pop(),
+        path: filePath,
+        content: data.content,
+        isDirectory: false
+      });
+      try {
+        return await saveProjectAsZip() ? filePath : null;
+      } catch (error) {
+        console.error('Unable to export project:', error);
+        return null;
+      }
     },
 
     saveProjectZip: saveProjectAsZip,
@@ -224,13 +239,13 @@
         input.webkitdirectory = true;
         input.onchange = async () => {
           if (input.files && input.files.length > 0) {
-            const folderName = input.files[0].webkitRelativePath.split('/')[0] || 'folder';
+            const folderName = input.files[0].webkitRelativePath?.split('/')[0] || 'folder';
             activeWorkspacePath = `/${folderName}`;
             virtualWorkspace.files.clear();
 
             for (const file of Array.from(input.files)) {
               const content = await file.text();
-              const filePath = `${activeWorkspacePath}/${file.name}`;
+              const filePath = `/${file.webkitRelativePath || `${folderName}/${file.name}`}`;
               virtualWorkspace.files.set(filePath, {
                 name: file.name,
                 path: filePath,
