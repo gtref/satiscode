@@ -9,7 +9,10 @@
     "dist:win": "npm run build && electron-builder --win nsis",
     "test": "npm run test:all",
     "test:all": "npm run build && node --test",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "typecheck": "npm --prefix packages/FIXSON-LSP run typecheck && npm --prefix packages/FIXML-LSP run typecheck",
+    "verify-assets": "node scripts/verify-assets.js",
+    "depcheck": "node scripts/check-dependencies.js"
   },
   "keywords": [
     "electron",
@@ -38,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "depcheck": "^1.4.7",
     "electron": "^44.9.1",
     "electron-builder": "^26.15.3",
     "eslint": "^10.13.0",

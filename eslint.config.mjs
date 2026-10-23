@@ -4,7 +4,14 @@ import { defineConfig } from "eslint/config";
 
 export default defineConfig([
     {
-        ignores: ["packages/FIXML-LSP/dist/**"]
+        ignores: [
+            "dist/**",
+            "PythonLSP/**",
+            "bin/**",
+            "lib/**",
+            "packages/**/dist/**",
+            "packages/**/node_modules/**"
+        ]
     },
 
     // Backend: Node + CommonJS (GitManager, stubs, runner, Electron main/preload)

@@ -37,6 +37,7 @@
   },
   "scripts": {
     "build": "tsc --noEmit && esbuild src/server.ts --bundle --platform=node --target=node20 --outfile=dist/server.js",
+    "typecheck": "tsc --noEmit",
     "prepack": "npm run build",
     "start": "node dist/server.js",
     "test": "node --test test.js",

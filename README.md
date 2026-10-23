@@ -95,6 +95,64 @@ The installer is written to `dist\Satiscode Setup 1.0.0.exe`. The installer is u
 - `icons.js`: Loads the icon packs located in `icons/`
 - `themes.js`: Loads theme files from the `themes/` directory
 
+## CI/CD Architecture
+
+SatisCode maintains automated quality, security, and build validation pipelines using GitHub Actions:
+
+### Workflows
+
+| Workflow | File | Triggers | Description |
+|---|---|---|---|
+| **CI** | `.github/workflows/ci.yml` | `push: [main]`, `pull_request: [main]` | Runs linting, TypeScript compiler checks, OS-matrix test suites, and production asset verification. |
+| **CodeQL** | `.github/workflows/codeql.yml` | `push: [main]`, `pull_request: [main]`, weekly schedule | GitHub Advanced Security CodeQL static analysis for JavaScript & TypeScript. |
+| **Gitleaks** | `.github/workflows/gitleaks.yml` | `push: [main]`, `pull_request: [main]` | Fast secret and credential scanning across commits and pull request diffs. |
+| **Dependency Health** | `.github/workflows/dependency-health.yml` | `push: [main]`, `pull_request: [main]`, weekly schedule | Scans for undeclared missing dependencies and audits unused packages via `depcheck`. |
+| **Dependabot** | `.github/dependabot.yml` | Weekly schedule | Automated weekly dependency updates for GitHub Actions and all package manifests (`/`, `packages/FIXSON-LSP`, `packages/FIXML-LSP`). |
+
+### CI Jobs & Matrix Strategy
+
+- **`lint`**: Runs ESLint across all repository code on `ubuntu-latest`.
+- **`typecheck`**: Runs `tsc --noEmit` across TypeScript packages (`FIXSON-LSP`, `FIXML-LSP`) to fail on any type error.
+- **`test`**: Runs project unit and integration tests under Node.js 20 on an operating system matrix (`windows-latest` and `ubuntu-latest`).
+- **`build`**: Compiles LSP server bundles, synchronizes Web IDE assets, and verifies all production bundles exist and compile properly across the OS matrix (`windows-latest` and `ubuntu-latest`).
+
+### Performance & Caching
+
+- **Dependency Caching**: Workflows use `actions/setup-node@v4` with cache keying on both the root `package-lock.json` and subpackage `packages/*/package-lock.json`.
+- **Concurrency Cancellation**: Workflows define `concurrency` groups that cancel obsolete in-flight runs on pull request branches (`cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}`), while allowing pushes to `main` to run to completion.
+
+### Local Quality Commands
+
+```bash
+# Run linting
+npm run lint
+
+# Run TypeScript compilation check
+npm run typecheck
+
+# Run test suite
+npm test
+
+# Run build and verify distribution assets
+npm run build
+npm run verify-assets
+
+# Run dependency health audit
+npm run depcheck
+```
+
+### Recommended Branch Protection Rules
+
+To protect the `main` branch, configure the following required status checks in repository settings:
+- `lint`
+- `typecheck`
+- `test (ubuntu-latest)`
+- `test (windows-latest)`
+- `build (ubuntu-latest)`
+- `build (windows-latest)`
+- `CodeQL`
+- `Gitleaks`
+
 ## Security notes
 
 The renderer uses context isolation and does not have direct Node.js access. Filesystem and process operations are exposed through the preload bridge. Do not add unrestricted filesystem or shell APIs to the renderer.
