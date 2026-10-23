@@ -1,0 +1,26 @@
+name: Test IDE by running npm test suite.
+
+on:
+    pull_request:
+        branches: ["main"]
+    workflow_dispatch:
+permissions:
+    contents: read
+
+concurrency:
+    group: "test-npm"
+
+jobs:
+    test:
+        runs-on: windows-latest
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: 20.x
+            - name: Install dependencies
+              run: npm ci
+            - name: Run project-wide tests
+              run: npm run test:all

@@ -7,7 +7,8 @@
     "start": "electron .",
     "build": "npm --prefix packages/FIXSON-LSP install && npm --prefix packages/FIXSON-LSP run build && npm --prefix packages/FIXML-LSP install && npm --prefix packages/FIXML-LSP run build",
     "dist:win": "npm run build && electron-builder --win nsis",
-    "test": "npm run build && node --test",
+    "test": "npm run test:all",
+    "test:all": "npm run build && node --test",
     "lint": "eslint ."
   },
   "keywords": [
