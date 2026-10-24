@@ -135,7 +135,16 @@
   <script>
     require.config({ paths: { 'vs': 'node_modules/monaco-editor/min/vs' } });
 
-    require(['vs/editor/editor.main'], function (monaco) {
+    const rendererDomReady = new Promise((resolve) => {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', resolve, { once: true });
+      } else {
+        resolve();
+      }
+    });
+
+    require(['vs/editor/editor.main'], async function (monaco) {
+      await rendererDomReady;
       window.monaco = monaco;
 
       window.addEventListener('error', (event) => {
