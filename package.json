@@ -1,6 +1,6 @@
 {
   "name": "satiscode",
-  "version": "2.2.6",
+  "version": "2.2.9",
   "description": "A lightweight C/C++, Python, JSON, and XML editor powered by Monaco, clangd, Pyright, FIXSON, and FIXML.",
   "main": "main.js",
   "scripts": {
@@ -76,10 +76,6 @@
     ],
     "extraResources": [
       {
-        "from": "bin",
-        "to": "bin"
-      },
-      {
         "from": "lib",
         "to": "lib"
       },
@@ -101,7 +97,13 @@
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "extraResources": [
+        {
+          "from": "bin",
+          "to": "bin"
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,
