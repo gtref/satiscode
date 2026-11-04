@@ -1,6 +1,6 @@
 {
   "name": "@ronna/fixson-lsp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A JSON language server with diagnostics, completion, and hover support",
   "license": "MIT",
   "author": "gtref",

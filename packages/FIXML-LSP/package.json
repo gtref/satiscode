@@ -1,6 +1,6 @@
 {
   "name": "@ronna/fixml-lsp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "An XML language server with diagnostics, completion, and hover support",
   "license": "MIT",
   "author": "gtref",
