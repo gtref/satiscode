@@ -39,7 +39,7 @@ For installation and a walkthrough of the editor, see the [Satiscode usage guide
 - Windows NSIS installer support
 
 >[!TIP]
-> [Join the beta](https://satiscorp.wordpress.com)
+> [Join the beta](https://livepreview.usecartouche.com/satiscorp/)
 
 # Requirements
 
