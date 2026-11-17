@@ -33,3 +33,17 @@ Saturday 24th october 2026 (New Zealand Time)
 ### Notes
 
 Nothing of note has occured yet.
+
+
+# 15-11-2026
+November 15th sunday 2026 (New Zealand Time)
+
+## Changes
+- Dependency updates
+
+### Current Open PRs
+- #87: Add Web IDE version with JS LSP, ZIP export, and shared internals
+
+### Notes
+
+Nothing of note has occured yet.
