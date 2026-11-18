@@ -1,11 +1,6 @@
-### Updated `NOTICES.md`
+# Third-Party Notices & Attributions
 
-Because LLVM/`clangd` is licensed under the **Apache License v2.0 with LLVM Exceptions**, you must include a notice in your project when redistributing its binaries.
-
-
-# Third-Party Notices
-
-This application redistributes third-party software components subject to their respective licenses.
+Satiscode redistributes or interfaces with third-party software components subject to their respective open-source licenses.
 
 ---
 

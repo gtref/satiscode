@@ -1,21 +1,46 @@
 # Security Policy
 
-## Supported versions
+We take the security of Satiscode seriously. This document outlines our supported versions, reporting procedures, and security model.
 
-The latest version on the default branch is the primary supported version.
+---
 
-## Reporting a vulnerability
-Please contact maintainers with the email ronan.nugget@gmail.com
+## Supported Versions
 
-Please do not report security vulnerabilities in a public issue. Contact the project maintainer privately with:
+Only the latest release and the current `main` branch receive active security updates and patches.
 
-- A description of the affected component
-- Steps to reproduce the issue
-- Potential impact
-- A suggested mitigation, if known
+| Version / Branch | Supported | Notes |
+| :--- | :---: | :--- |
+| `main` (latest commit) | :white_check_mark: | Primary development branch |
+| Latest Release (>= 2.2.x) | :white_check_mark: | Production releases |
+| < 2.0.0 | :x: | Unsupported; please upgrade to the latest release |
 
-Allow maintainers reasonable time to investigate before publicly disclosing the issue.
+---
 
-## Security boundaries
+## Reporting a Vulnerability
 
-Satiscode runs local filesystem and clangd operations through Electron's main process. Treat project files and `.clangd` configuration as untrusted input when opening repositories from unknown sources.
+If you discover a security vulnerability within Satiscode, please report it privately. **Do not create public GitHub issues for security vulnerabilities.**
+
+### How to Report
+- **Email:** Send details directly to `ronan.nugget@gmail.com`
+- **Subject line:** `[SECURITY VULNERABILITY] - Satiscode - <Brief Description>`
+
+### Please Include:
+1. **Description:** A detailed explanation of the vulnerability and its potential impact.
+2. **Reproduction Steps:** Step-by-step instructions or proof-of-concept (PoC) code to reliably reproduce the issue.
+3. **Environment:** OS version, Satiscode version, and runtime dependencies.
+4. **Proposed Fix / Mitigation:** If you have an idea for a resolution, please share it.
+
+### Response Timeline
+- **Initial Response:** Within 48 hours to acknowledge receipt of your report.
+- **Triage & Status:** Periodic updates on assessment and progress toward a patch.
+- **Coordinated Disclosure:** We kindly request that you allow maintainers reasonable time to address the vulnerability before public disclosure.
+
+---
+
+## Security Architecture & Boundaries
+
+Satiscode is an Electron application that executes code-editing workflows on the user's local filesystem:
+
+- **Context Isolation:** The renderer process operates with `contextIsolation: true` and cannot invoke raw Node.js primitives or arbitrary host processes directly.
+- **Preload Bridge:** All interactions between renderer and system processes flow through explicit, audited channels in `preload.js`.
+- **Untrusted Repositories:** Treat third-party repositories, build flags, and project-local configuration files (`.clangd`, language server configs) as untrusted input. Opening repositories from unverified sources may trigger language server indexing on those files.

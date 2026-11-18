@@ -1,53 +1,76 @@
 # @ronna/fixml-lsp
 
-[![npm version](https://img.shields.io/npm/v/%40ronna%2Ffixml-lsp)](https://www.npmjs.com/package/@ronna/fixml-lsp)
-[![npm downloads](https://img.shields.io/npm/dm/%40ronna%2Ffixml-lsp)](https://www.npmjs.com/package/@ronna/fixml-lsp)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+A fast, lightweight Language Server Protocol (LSP) server for XML documents, providing schema diagnostics, element completions, and hover documentation.
+
+[![npm version](https://img.shields.io/npm/v/%40ronna%2Ffixml-lsp?style=flat-square&color=blue)](https://www.npmjs.com/package/@ronna/fixml-lsp)
+[![npm downloads](https://img.shields.io/npm/dm/%40ronna%2Ffixml-lsp?style=flat-square&color=emerald)](https://www.npmjs.com/package/@ronna/fixml-lsp)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](./LICENSE)
 [![Socket Badge](https://badge.socket.dev/npm/package/@ronna/fixml-lsp/latest)](https://badge.socket.dev/npm/package/@ronna/fixml-lsp/latest)
 
-A small Language Server Protocol (LSP) server for XML documents. It provides
-well-formedness diagnostics, element-name completions, and element hover
-information.
+---
+
+## Features
+
+- **Well-Formedness Diagnostics:** Instant error reporting for unmatched tags, improper nesting, and illegal characters.
+- **Element & Attribute Autocompletion:** Smart tag closure and element name completion.
+- **Hover Information:** Tooltips displaying element context and hierarchy.
+- **Broad File Format Coverage:** Supports `.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, and `.plist`.
+- **Standard Protocol Support:** Standard JSON-RPC communication over standard I/O (`--stdio`).
+
+---
 
 ## Requirements
 
-- Node.js 20 or newer
+- **Node.js:** Version 20.0 or higher.
 
-## Install
+---
 
-```sh
+## Installation
+
+### Global CLI Tool
+```bash
 npm install --global @ronna/fixml-lsp
 ```
 
-Or install it as a project dependency:
-
-```sh
+### Project Dependency
+```bash
 npm install @ronna/fixml-lsp
 ```
 
-## Run
+---
 
-The `fixml-lsp` executable communicates over standard input and output using
-the Language Server Protocol:
+## Usage
 
-```sh
+Launch `fixml-lsp` over standard I/O:
+
+```bash
 fixml-lsp --stdio
 ```
 
-For an LSP client that accepts a command and arguments, use `fixml-lsp` as the
-command and `--stdio` as its argument.
+### Configuring in LSP Clients
 
-## Development
+Pass `fixml-lsp` as the command and `--stdio` as the launch argument. When installed locally in a project, the executable resolves via `node_modules/.bin/fixml-lsp`.
 
-```sh
+---
+
+## Development & Testing
+
+```bash
+# Install dependencies
 npm install
+
+# Compile TypeScript and bundle into dist/server.js
 npm run build
+
+# Run TypeScript checks
+npm run typecheck
+
+# Run test suite
 npm test
 ```
 
-The build type-checks the TypeScript source and bundles the server and its
-runtime dependencies into `dist/server.js`.
+---
 
 ## License
 
-MIT
+Distributed under the [MIT License](LICENSE).

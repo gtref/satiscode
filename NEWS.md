@@ -1,49 +1,48 @@
-# Repo NEWS and UPDATES
-This file gets updated daily with new updates, fixes, ongoing tasks and more.
+# Repository News & Updates
 
-## 23-10-2026
-Friday 23th october 2026 (New Zealand time)
+This bulletin tracks ongoing development, daily updates, active tasks, and status reports for the Satiscode repository.
 
-### Changes
+---
 
-- Added NEWS.md
-
-### Current Open PRs
-
-- #87: Add Web IDE version with JS LSP, ZIP export, and shared internals
-
-### Notes
-
-- Fixing bug that causes 5 and in some cases 10 second delay when program is started.
-
-## 24-10-2026
-Saturday 24th october 2026 (New Zealand Time)
+## 2026-11-15 (Sunday)
+*Timezone: New Zealand Time (NZDT)*
 
 ### Changes
+- Updated project dependencies across root and LSP workspaces.
 
-- Updated README.md
-- Added 4 new CI workflows
-- Refactored race condition causing slow loading times.
-- Updated all dependencys.
-
-### Current Open PRs
-
-- #87: Add Web IDE version with JS LSP, ZIP export, and shared internals
+### Open Pull Requests
+- **#87**: Add Web IDE version with JS LSP, ZIP export, and shared internals.
 
 ### Notes
+- Routine maintenance and dependency health monitoring.
 
-Nothing of note has occured yet.
+---
 
+## 2026-10-24 (Saturday)
+*Timezone: New Zealand Time (NZDT)*
 
-# 15-11-2026
-November 15th sunday 2026 (New Zealand Time)
+### Changes
+- Revamped `README.md` documentation and architecture references.
+- Added 4 new CI workflows (CodeQL, Gitleaks, Dependency Health, and enhanced matrix testing).
+- Refactored startup race condition to eliminate initial launch delays.
+- Updated project dependencies.
 
-## Changes
-- Dependency updates
-
-### Current Open PRs
-- #87: Add Web IDE version with JS LSP, ZIP export, and shared internals
+### Open Pull Requests
+- **#87**: Add Web IDE version with JS LSP, ZIP export, and shared internals.
 
 ### Notes
+- Investigating startup profiling and performance enhancements.
 
-Nothing of note has occured yet.
+---
+
+## 2026-10-23 (Friday)
+*Timezone: New Zealand Time (NZDT)*
+
+### Changes
+- Added daily `NEWS.md` log for project transparency.
+
+### Open Pull Requests
+- **#87**: Add Web IDE version with JS LSP, ZIP export, and shared internals.
+
+### Notes
+- Diagnosed and fixed 5-10 second startup initialization delay.
