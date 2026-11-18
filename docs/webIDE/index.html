@@ -6,14 +6,15 @@
   <title>Satiscode Web IDE</title>
   <link rel="stylesheet" href="shared/styles/style1.css">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.51.0/min/vs/editor/editor.main.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/monaco-editor@0.57.0/min/vs/editor/editor.main.css" integrity="sha384-h3Pml8012xDelgjWIfvjv8T/9ptDUnH1yJrSjj78OtB8P1yT/3pmrp6Y7S2cNUV4" crossorigin="anonymous">
   <link rel="stylesheet" href="shared/UI/markdown_view/style.css">
-  <link id="markdown-code-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css">
+  <link id="markdown-code-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/styles/github-dark.min.css" integrity="sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH" crossorigin="anonymous">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG" crossorigin="anonymous"></script>
   <script src="web-api.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.51.0/min/vs/loader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@18.1.1/lib/marked.umd.js" integrity="sha384-rATToyt6602Jnq8c7w8HZwmyOUgPL7mzxX01FBWoV48ns/EgkakGozpES+PnaYOI" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.17/dist/purify.min.js" integrity="sha384-P0JNneQf81HOl9VwNXK76cQ9VMD6Nfsnepxb0cCOg8+UzEdzgPHAPV4wVQrvYQSx" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.11.1/highlight.min.js" integrity="sha384-RH2xi4eIQ/gjtbs9fUXM68sLSi99C7ZWBRX1vDrVv6GQXRibxXLbwO2NGZB74MbU" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.57.0/min/vs/loader.js" integrity="sha384-jwxunh5pHKFzi60XobDcwOM7qnk4lSGpdBU/hNn9pUGp+ZUpaHJqadNLRF2k+jPu" crossorigin="anonymous"></script>
   <script type="module" src="app.js"></script>
 </head>
 <body>
@@ -21,9 +22,7 @@
     <button id="new-btn" data-i18n="newFile">New</button>
     <button id="open-btn" data-i18n="openFile">Open</button>
     <button id="open-folder-btn" data-i18n="openFolder">Open Folder</button>
-    <button id="save-btn" data-i18n="saveFile">Save</button>
-    <button id="save-as-btn" data-i18n="saveAs">Save As</button>
-    <button id="git-blame-btn" data-i18n="gitBlame" data-i18n-title="showGitBlame" data-i18n-aria="showGitBlame" title="Show Git blame for the active file" aria-label="Show Git blame">⑂ Blame</button>
+    <button id="save-btn" data-i18n="saveFile">Save Zip</button>
     <button id="find-btn" data-i18n="find">Find</button>
     <a href="../index.html" id="exit-btn" class="toolbar-link" data-i18n="exit">Exit</a>
     <div id="source-language-menu">
@@ -65,14 +64,10 @@
   <div id="content">
     <nav id="activity-bar" aria-label="Sidebar views" data-i18n-aria="sidebarViews">
       <button class="activity-button" type="button" data-sidebar-target="file-tree" aria-label="Explorer" title="Explorer" data-i18n-title="explorer" data-i18n-aria="explorer" aria-pressed="true">▤</button>
-      <button class="activity-button" type="button" data-sidebar-target="git-sidebar" aria-label="Source Control" title="Source Control" data-i18n-title="sourceControl" data-i18n-aria="sourceControl" aria-pressed="false">⑂</button>
     </nav>
     <aside id="file-tree">
       <div id="tree-header" data-i18n="explorer">Explorer</div>
       <div id="tree-root"></div>
-    </aside>
-    <aside id="git-sidebar" aria-label="Git controls" data-i18n-aria="gitControls" hidden>
-      <div id="git-sidebar-mount"></div>
     </aside>
     <div id="workspace">
       <div id="tab-bar" class="tab-bar"></div>
@@ -100,14 +95,6 @@
     <span id="find-match-count"></span>
     <button id="find-close-btn" aria-label="Close">✕</button>
   </div>
-
-  <dialog id="blame-dialog" aria-labelledby="blame-title">
-    <header class="blame-header">
-      <h2 id="blame-title" data-i18n="gitBlameTitle">Git Blame</h2>
-      <button id="blame-close-btn" type="button" aria-label="Close Git blame" data-i18n-aria="close">×</button>
-    </header>
-    <pre id="blame-output"></pre>
-  </dialog>
 
   <dialog id="name-setup-dialog" aria-labelledby="name-setup-title">
     <form id="name-setup-form">

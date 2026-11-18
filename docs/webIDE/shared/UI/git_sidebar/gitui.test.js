@@ -7,7 +7,7 @@ class FakeElement {
   append(...children) { this.children.push(...children); }
   replaceChildren(...children) { this.children = children; }
   setAttribute(name, value) { this[name] = value; }
-  addEventListener() {}
+  addEventListener(type, listener) { this.listeners ||= {}; this.listeners[type] = listener; }
   querySelector(selector) {
     const matches = (element) => selector.startsWith('#') ? element.id === selector.slice(1) : selector.startsWith('.') ? element.className?.split(' ').includes(selector.slice(1)) : selector === '[data-git-action="commit"]' && element.dataset.gitAction === 'commit';
     const visit = (element) => matches(element) ? element : element.children.map(visit).find(Boolean);
@@ -126,4 +126,59 @@ test('keeps status available on history failure and clears the error after recov
   assert.equal(ui.state.historyError, '');
   assert.match(container.textContent, /No commits yet/);
   assert.doesNotMatch(container.textContent, /Unable to load commit history/);
+});
+
+
+test('only the newest refresh can apply success or failure, even after changing or clearing workspaces', async () => {
+  for (const staleFails of [false, true]) {
+    for (const nextWorkspace of ['/other', null]) {
+      let finish;
+      const pending = new Promise((resolve, reject) => { finish = () => staleFails ? reject(new Error('stale failure')) : resolve(' M stale.js'); });
+      const gitman = { setWorkspace() {}, status: () => pending };
+      const ui = new GitUi(createContainer(), { gitman });
+      const oldRefresh = ui.setWorkspace('/workspace');
+      gitman.status = async () => ' M current.js';
+      await ui.setWorkspace(nextWorkspace);
+      const currentState = ui.state;
+      finish();
+      await oldRefresh;
+      assert.equal(ui.state, currentState);
+      assert.equal(ui.state.mode, nextWorkspace ? 'repository' : 'empty');
+    }
+  }
+  const pending = deferred();
+  const gitman = { setWorkspace() {}, status: () => pending.promise };
+  const ui = new GitUi(createContainer(), { gitman });
+  const oldRefresh = ui.setWorkspace('/workspace');
+  gitman.status = async () => ' M newest.js';
+  await ui.refresh();
+  pending.resolve(' M stale.js');
+  await oldRefresh;
+  assert.match(ui.containerEl.textContent, /newest.js/);
+  assert.doesNotMatch(ui.containerEl.textContent, /stale.js/);
+});
+
+test('preserves commit input through loading and failure and clears it after a successful commit', async () => {
+  const container = createContainer();
+  const pending = deferred();
+  const gitman = { setWorkspace() {}, status: async () => ' M file.js', commit: () => pending.promise };
+  const ui = new GitUi(container, { gitman });
+  ui.initListeners();
+  await ui.setWorkspace('/workspace');
+  const input = container.querySelector('#git-commit-message');
+  input.value = 'Keep this draft';
+  container.listeners.input({ target: input });
+  const action = ui.runAction('commit', input.value);
+  assert.equal(container.querySelector('#git-commit-message').value, 'Keep this draft');
+  pending.resolve('');
+  await action;
+  assert.equal(ui.commitMessage, '');
+  assert.equal(container.querySelector('#git-commit-message').value, '');
+  input.value = 'Retry this draft';
+  container.listeners.input({ target: input });
+  gitman.commit = async () => { throw new Error('commit rejected'); };
+  await ui.runAction('commit', input.value);
+  await ui.refresh();
+  assert.equal(ui.commitMessage, 'Retry this draft');
+  assert.equal(container.querySelector('#git-commit-message').value, 'Retry this draft');
 });

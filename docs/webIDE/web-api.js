@@ -41,21 +41,68 @@
       ['/workspace/script.py', { name: 'script.py', path: '/workspace/script.py', content: 'def main():\n    print("Hello from Python in Satiscode Web IDE!")\n\nif __name__ == "__main__":\n    main()\n', isDirectory: false }],
       ['/workspace/index.html', { name: 'index.html', path: '/workspace/index.html', content: '<!DOCTYPE html>\n<html>\n<head>\n  <title>Satiscode Sample</title>\n</head>\n<body>\n  <h1>Satiscode Web IDE</h1>\n</body>\n</html>\n', isDirectory: false }],
       ['/workspace/style.css', { name: 'style.css', path: '/workspace/style.css', content: 'body {\n  font-family: sans-serif;\n  background: #1e1e1e;\n  color: #cccccc;\n}\n', isDirectory: false }],
+      ['/workspace/package.json', { name: 'package.json', path: '/workspace/package.json', content: '{\n  "name": "satiscode-project",\n  "version": "1.0.0"\n}\n', isDirectory: false }],
       ['/workspace/app.js', { name: 'app.js', path: '/workspace/app.js', content: 'console.log("Satiscode Web IDE initialized.");\n', isDirectory: false }],
-      ['/workspace/README.md', { name: 'README.md', path: '/workspace/README.md', content: '# Satiscode Web IDE\n\nWelcome to Satiscode Web IDE running in your browser.\n\n## Features\n- C/C++, Python, Web Dev, and Markdown support\n- Tabbed editing using Monaco\n- Live Markdown preview\n- Local file open/save support\n', isDirectory: false }]
+      ['/workspace/README.md', { name: 'README.md', path: '/workspace/README.md', content: '# Satiscode Web IDE\n\nWelcome to Satiscode Web IDE running in your browser.\n\n## Features\n- C/C++, Python, Web Dev, JSON, and Markdown support\n- Tabbed editing using Monaco\n- Live Markdown preview\n- In-browser FIXSON JSON LSP validation & auto-completion\n- Project export as ZIP archive\n', isDirectory: false }]
     ])
   };
 
   let activeWorkspacePath = '/workspace';
 
-  function downloadFile(filename, content) {
+  // --- ZIP Save Functionality ---
+  async function saveProjectAsZip() {
+    if (!window.JSZip) {
+      alert('JSZip library is loading. Please try again in a moment.');
+      return false;
+    }
+
+    const zip = new window.JSZip();
+    for (const [filePath, file] of virtualWorkspace.files.entries()) {
+      if (!file.isDirectory) {
+        const relativePath = filePath.startsWith('/') ? filePath.slice(1) : filePath;
+        zip.file(relativePath, file.content);
+      }
+    }
+
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(content);
-    a.download = filename;
+    a.href = url;
+    a.download = 'satiscode-project.zip';
     a.style.display = 'none';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return true;
+  }
+
+  // --- In-Browser FIXSON JS Language Service ---
+  let fixsonDiagnosticsListener = null;
+
+  function validateJsonDocument(uri, text) {
+    const diagnostics = [];
+    try {
+      JSON.parse(text);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      diagnostics.push({
+        severity: 1, // Error
+        range: {
+          start: { line: 0, character: 0 },
+          end: { line: 0, character: Math.min(100, text.length || 1) }
+        },
+        message: `FIXSON JSON Error: ${message}`,
+        source: 'fixson'
+      });
+    }
+
+    if (fixsonDiagnosticsListener) {
+      fixsonDiagnosticsListener({
+        method: 'textDocument/publishDiagnostics',
+        params: { uri, diagnostics }
+      });
+    }
   }
 
   // Define window.api translation layer
@@ -120,24 +167,29 @@
     getWorkspacePath: async () => activeWorkspacePath,
 
     saveFile: async (data) => {
-      let targetPath = data.filePath;
-      if (!targetPath) {
-        const fileName = prompt('Save As file name:', 'untitled.txt');
-        if (!fileName) return null;
-        targetPath = `${activeWorkspacePath}/${fileName}`;
+      if (!data || typeof data.content !== 'string') return null;
+      let filePath = data.filePath;
+      if (!filePath) {
+        let counter = 1;
+        do {
+          filePath = `${activeWorkspacePath}/Untitled-${counter++}.txt`;
+        } while (virtualWorkspace.files.has(filePath));
       }
-
-      const fileName = targetPath.split(/[\\/]/).pop();
-      virtualWorkspace.files.set(targetPath, {
-        name: fileName,
-        path: targetPath,
+      virtualWorkspace.files.set(filePath, {
+        name: filePath.split('/').pop(),
+        path: filePath,
         content: data.content,
         isDirectory: false
       });
-
-      downloadFile(fileName, data.content);
-      return targetPath;
+      try {
+        return await saveProjectAsZip() ? filePath : null;
+      } catch (error) {
+        console.error('Unable to export project:', error);
+        return null;
+      }
     },
+
+    saveProjectZip: saveProjectAsZip,
 
     listDirectory: async (directoryPath) => {
       const dir = directoryPath || activeWorkspacePath;
@@ -187,13 +239,13 @@
         input.webkitdirectory = true;
         input.onchange = async () => {
           if (input.files && input.files.length > 0) {
-            const folderName = input.files[0].webkitRelativePath.split('/')[0] || 'folder';
+            const folderName = input.files[0].webkitRelativePath?.split('/')[0] || 'folder';
             activeWorkspacePath = `/${folderName}`;
             virtualWorkspace.files.clear();
 
             for (const file of Array.from(input.files)) {
               const content = await file.text();
-              const filePath = `${activeWorkspacePath}/${file.name}`;
+              const filePath = `/${file.webkitRelativePath || `${folderName}/${file.name}`}`;
               virtualWorkspace.files.set(filePath, {
                 name: file.name,
                 path: filePath,
@@ -210,18 +262,8 @@
       });
     },
 
-    setGitWorkspace: async (workspace) => {
-      console.log('Web IDE Git workspace set:', workspace);
-    },
-
-    gitBlame: async (_workspace, filePath) => {
-      const fileName = filePath ? filePath.split(/[\\/]/).pop() : 'file';
-      return {
-        ok: true,
-        stdout: `1a2b3c4d (${loadSettings().userName || 'Developer'} 2026-01-01 12:00:00 +0000 1) Web IDE local file: ${fileName}`,
-        stderr: ''
-      };
-    },
+    setGitWorkspace: async () => {},
+    gitBlame: async () => ({ ok: true, stdout: '', stderr: '' }),
 
     getSettings: async () => loadSettings(),
 
@@ -248,28 +290,51 @@
       window.location.href = '../index.html';
     },
 
-    // --- Language Server Stubs for Web Environment ---
-    startClangd: async () => { throw new Error('clangd is unavailable in Web IDE'); },
+    // --- In-Browser JS FIXSON LSP Implementation ---
+    startFixson: async () => {
+      console.log('FIXSON JSON LSP started in browser');
+      return true;
+    },
+    sendFixsonMessage: (msg) => {
+      if (msg.method === 'textDocument/didOpen' || msg.method === 'textDocument/didChange') {
+        const uri = msg.params.textDocument.uri;
+        const text = msg.params.contentChanges
+          ? msg.params.contentChanges[0].text
+          : msg.params.textDocument.text;
+        validateJsonDocument(uri, text);
+      } else if (msg.method === 'textDocument/completion' && fixsonDiagnosticsListener) {
+        const items = ['name', 'version', 'description', 'author', 'license', 'homepage', 'repository', 'dependencies'].map((label) => ({
+          label,
+          kind: 10 // Property
+        }));
+        fixsonDiagnosticsListener({ id: msg.id, result: { items } });
+      } else if (msg.method === 'textDocument/hover' && fixsonDiagnosticsListener) {
+        fixsonDiagnosticsListener({
+          id: msg.id,
+          result: { contents: { kind: 'plaintext', value: 'Fixson JSON Document (Web LSP)' } }
+        });
+      }
+    },
+    stopFixson: () => {},
+    onFixsonMessage: (cb) => { fixsonDiagnosticsListener = cb; },
+    onFixsonStderr: () => {},
+    onFixsonError: () => {},
+    onFixsonExit: () => {},
+
+    // Unused desktop LSPs
+    startClangd: async () => { throw new Error('clangd native binary unavailable in Web IDE'); },
     sendClangdMessage: () => {},
     stopClangd: () => {},
     onClangdMessage: () => {},
     onClangdStderr: () => {},
     onClangdError: () => {},
 
-    startPyright: async () => { throw new Error('pyright is unavailable in Web IDE'); },
+    startPyright: async () => { throw new Error('pyright process unavailable in Web IDE'); },
     sendPyrightMessage: () => {},
     stopPyright: () => {},
     onPyrightMessage: () => {},
     onPyrightStderr: () => {},
     onPyrightError: () => {},
-    onPyrightExit: () => {},
-
-    startFixson: async () => { throw new Error('FIXSON is unavailable in Web IDE'); },
-    sendFixsonMessage: () => {},
-    stopFixson: () => {},
-    onFixsonMessage: () => {},
-    onFixsonStderr: () => {},
-    onFixsonError: () => {},
-    onFixsonExit: () => {}
+    onPyrightExit: () => {}
   };
 })();

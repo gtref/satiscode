@@ -34,6 +34,9 @@ function buildWebIdeShared() {
     copyRecursiveSync(srcPath, destPath);
   });
 
+  // The desktop MarkdownView imports node_modules; the web app has its own view.
+  fs.rmSync(path.join(targetDir, 'UI', 'markdown_view', 'view.js'), { force: true });
+
   console.log('Successfully synced main IDE internals to docs/webIDE/shared/');
 }
 

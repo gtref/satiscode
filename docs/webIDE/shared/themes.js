@@ -3,7 +3,8 @@ const themeCache = new Map();
 
 export async function loadTheme(themeId) {
     if (themeCache.has(themeId)) return themeCache.get(themeId);
-    const response = await fetch(`./themes/${themeId}.json`);
+    const response = await fetch(new URL(`./themes/${themeId}.json`, import.meta.url));
+    if (!response.ok) throw new Error(`Failed to load theme ${themeId}: HTTP ${response.status}`);
     const theme = await response.json();
     themeCache.set(themeId, theme);
     return theme;

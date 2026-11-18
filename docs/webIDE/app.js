@@ -1,6 +1,6 @@
 /* ==========================================================================
    SATISCODE WEB IDE MAIN APPLICATION SCRIPT
-   Uses shared main IDE internals (icons, themes, TabManager, MarkdownView)
+   Uses shared main IDE internals (icons, themes, TabManager)
    ========================================================================== */
 
 import { initIcons, getFileIcon, getFolderIcon, getChevronIcon, getUiIcon } from './shared/icons.js';
@@ -12,7 +12,6 @@ window.getFolderIcon = getFolderIcon;
 window.getChevronIcon = getChevronIcon;
 window.getUiIcon = getUiIcon;
 
-// Custom MarkdownView for Web environment using CDN Marked & DOMPurify
 class WebMarkdownView {
   constructor(containerEl) {
     this.containerEl = containerEl;
@@ -27,48 +26,56 @@ class WebMarkdownView {
       this.containerEl.replaceChildren(this.article);
     }
 
-    const html = window.marked ? window.marked.parse(markdown) : markdown;
-    const clean = window.DOMPurify ? window.DOMPurify.sanitize(html) : html;
+    if (!window.marked || !window.DOMPurify) {
+      this.article.textContent = markdown;
+      return;
+    }
+    const html = window.marked.parse(markdown);
+    const clean = window.DOMPurify.sanitize(html);
     this.article.innerHTML = clean;
   }
 }
 
 const translations = {
   en: {
-    newFile: 'New', openFile: 'Open', openFolder: 'Open Folder', saveFile: 'Save', saveAs: 'Save As', gitBlame: '⑂ Blame',
-    showGitBlame: 'Show Git blame for the active file', find: 'Find', exit: 'Exit', explorer: 'Explorer', sourceControl: 'Source Control',
+    newFile: 'New', openFile: 'Open', openFolder: 'Open Folder', saveFile: 'Save Zip', saveAs: 'Save As',
+    find: 'Find', exit: 'Exit', explorer: 'Explorer',
     sourceLanguage: 'Select source language', sourceAuto: 'Auto', sourceC: 'C', sourceCpp: 'C++', sourceCss: 'CSS',
     sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourcePlainText: 'Plain Text', sourcePython: 'Python', sourceMarkdown: 'Markdown',
     interfaceTheme: 'Interface theme', darkTheme: 'Dark Theme', lightTheme: 'Light Theme',
-    changeLanguage: 'Change interface language', sidebarViews: 'Sidebar views', gitControls: 'Git controls', problems: 'Problems',
+    changeLanguage: 'Change interface language', sidebarViews: 'Sidebar views', problems: 'Problems',
     resizeProblems: 'Resize Problems panel', noProblems: 'No problems detected', treePrompt: 'Open a file to browse its folder',
     findInFile: 'Find in file', findPlaceholder: 'Find...', previousMatch: 'Previous match', nextMatch: 'Next match', close: 'Close',
     markdownViewMode: 'Markdown view mode', markdownPreview: 'Preview', markdownEdit: 'Edit',
-    gitBlameTitle: 'Git Blame', noBlameData: 'No blame data available in Web IDE.', welcome: 'Welcome to Satiscode Web IDE', namePrompt: 'What should we call you?', yourName: 'Your name',
+    welcome: 'Welcome to Satiscode Web IDE', namePrompt: 'What should we call you?', yourName: 'Your name',
     notNow: 'Not now', continue: 'Continue', languageReady: 'language: ready', languagePlainText: 'language: plain text',
-    gitOpenSavedFile: 'Git: open a saved file first', gitError: 'Git error',
-    operational: 'satiscode: Operational'
+    operational: 'satiscode: Operational', fixsonReady: 'fixson: ready', fixsonStarting: 'fixson: starting'
   },
   es: {
-    newFile: 'Nuevo', openFile: 'Abrir archivo', openFolder: 'Abrir carpeta', saveFile: 'Guardar', saveAs: 'Guardar como', gitBlame: '⑂ Anotaciones',
-    showGitBlame: 'Mostrar las anotaciones Git del archivo activo', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', sourceControl: 'Control de código fuente',
+    newFile: 'Nuevo', openFile: 'Abrir archivo', openFolder: 'Abrir carpeta', saveFile: 'Guardar Zip', saveAs: 'Guardar como',
+    find: 'Buscar', exit: 'Salir', explorer: 'Explorador',
     sourceLanguage: 'Seleccionar lenguaje del archivo', sourceAuto: 'Automático', sourceC: 'C', sourceCpp: 'C++', sourceCss: 'CSS',
     sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourcePlainText: 'Texto sin formato', sourcePython: 'Python', sourceMarkdown: 'Markdown',
     interfaceTheme: 'Tema de la interfaz', darkTheme: 'Tema oscuro', lightTheme: 'Tema claro',
-    changeLanguage: 'Cambiar el idioma de la interfaz', sidebarViews: 'Vistas de la barra lateral', gitControls: 'Controles de Git', problems: 'Problemas',
+    changeLanguage: 'Cambiar el idioma de la interfaz', sidebarViews: 'Vistas de la barra lateral', problems: 'Problemas',
     resizeProblems: 'Cambiar el tamaño del panel de problemas', noProblems: 'No se detectaron problemas', treePrompt: 'Abre un archivo para explorar su carpeta',
     findInFile: 'Buscar en el archivo', findPlaceholder: 'Buscar...', previousMatch: 'Coincidencia anterior', nextMatch: 'Siguiente coincidencia', close: 'Cerrar',
     markdownViewMode: 'Modo de vista de Markdown', markdownPreview: 'Vista previa', markdownEdit: 'Editar',
-    gitBlameTitle: 'Anotaciones de Git', noBlameData: 'No hay datos de anotaciones disponibles en Web IDE.', welcome: 'Te damos la bienvenida a Satiscode Web IDE', namePrompt: '¿Cómo te llamamos?', yourName: 'Tu nombre',
+    welcome: 'Te damos la bienvenida a Satiscode Web IDE', namePrompt: '¿Cómo te llamamos?', yourName: 'Tu nombre',
     notNow: 'Ahora no', continue: 'Continuar', languageReady: 'idioma: listo', languagePlainText: 'idioma: texto sin formato',
-    gitOpenSavedFile: 'Git: abre primero un archivo guardado', gitError: 'Error de Git',
-    operational: 'satiscode: operativo'
+    operational: 'satiscode: operativo', fixsonReady: 'fixson: listo', fixsonStarting: 'fixson: iniciando'
   }
 };
 
 let currentFilePath = null;
 let manualLanguage = null;
 let currentLanguage = 'en';
+let fixsonStartPromise = null;
+const fixsonDocuments = new WeakMap();
+let fixsonRequestId = 0;
+const fixsonPendingRequests = new Map();
+let currentProblems = [];
+
 let appSettings = await window.api.getSettings();
 currentLanguage = appSettings.language || 'en';
 
@@ -115,11 +122,21 @@ function updateSourceLanguageLabel() {
 function renderProblems() {
   const list = document.getElementById('problems-list');
   const count = document.getElementById('problems-count');
-  if (count) count.textContent = '0';
+  if (count) count.textContent = String(currentProblems.length);
+
   if (list) {
     const labels = translations[currentLanguage] || translations.en;
-    const nameNotice = appSettings.userName ? `, ${escapeHtml(appSettings.userName)}` : '';
-    list.innerHTML = `<div id="no-problems">${labels.noProblems}${nameNotice}.</div>`;
+    if (currentProblems.length > 0) {
+      list.innerHTML = currentProblems.map((prob) => `
+        <div class="problem">
+          <span class="problem-icon">×</span>
+          <span class="problem-message">${escapeHtml(prob.message)}</span>
+        </div>
+      `).join('');
+    } else {
+      const nameNotice = appSettings.userName ? `, ${escapeHtml(appSettings.userName)}` : '';
+      list.innerHTML = `<div id="no-problems">${labels.noProblems}${nameNotice}.</div>`;
+    }
   }
 }
 
@@ -147,12 +164,17 @@ function applyInterfaceLanguage(lang) {
 }
 
 // Initialize Monaco and Main App
-require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.51.0/min/vs' } });
+require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.57.0/min/vs' } });
 
 require(['vs/editor/editor.main'], async function (monaco) {
   window.monaco = monaco;
 
-  // Custom theme loader override for shared themes
+  // Initialize SVG Icon system
+  await initIcons();
+  if (document.getElementById('language-button-icon')) {
+    document.getElementById('language-button-icon').innerHTML = getUiIcon('translate') || '🌐';
+  }
+
   async function loadWebTheme(themeId) {
     const response = await fetch(`./shared/themes/${themeId}.json`);
     return await response.json();
@@ -175,17 +197,6 @@ require(['vs/editor/editor.main'], async function (monaco) {
   document.getElementById('theme-select').value = savedTheme;
   await applyWebTheme(savedTheme);
 
-  // Initialize shared icons
-  try {
-    const iconRes = await fetch('./shared/icons/style1/icons.json');
-    const iconMap = await iconRes.json();
-    if (document.getElementById('language-button-icon')) {
-      document.getElementById('language-button-icon').innerHTML = iconMap.ui?.translate || '🌐';
-    }
-  } catch {
-    // fallback
-  }
-
   window.editor = monaco.editor.create(document.getElementById('editor'), {
     value: '',
     language: 'plaintext',
@@ -205,6 +216,106 @@ require(['vs/editor/editor.main'], async function (monaco) {
     document.getElementById('markdown-preview').hidden = !isPreview;
     if (isPreview) markdownView.render(tab.model.getValue());
   }
+
+  // --- FIXSON JSON LSP Integration ---
+  window.api.onFixsonMessage((msg) => {
+    if (msg.method === 'textDocument/publishDiagnostics') {
+      const tab = tabManager.tabs.find((tab) => fixsonDocuments.get(tab)?.uri === msg.params?.uri);
+      if (!tab) return;
+      const diagnostics = msg.params?.diagnostics || [];
+      fixsonDocuments.get(tab).diagnostics = diagnostics;
+      const markers = diagnostics.map((d) => ({
+        startLineNumber: d.range.start.line + 1,
+        startColumn: d.range.start.character + 1,
+        endLineNumber: d.range.end.line + 1,
+        endColumn: d.range.end.character + 1,
+        message: d.message,
+        severity: monaco.MarkerSeverity.Error,
+        source: 'fixson'
+      }));
+      monaco.editor.setModelMarkers(tab.model, 'fixson', markers);
+      if (tab !== tabManager.getActiveTab()) return;
+      currentProblems = diagnostics;
+      renderProblems();
+    } else if (msg.id !== undefined && fixsonPendingRequests.has(msg.id)) {
+      const request = fixsonPendingRequests.get(msg.id);
+      fixsonPendingRequests.delete(msg.id);
+      if (msg.error) request.reject(msg.error); else request.resolve(msg.result);
+    }
+  });
+
+  async function startFixsonServer(tab = tabManager.getActiveTab()) {
+    if (!tab) return null;
+    if (!fixsonStartPromise) fixsonStartPromise = window.api.startFixson();
+    await fixsonStartPromise;
+    let document = fixsonDocuments.get(tab);
+    if (!document) {
+      document = {
+        uri: tab.filePath ? monaco.Uri.file(tab.filePath).toString() : `untitled:${tab.id}`,
+        version: 1,
+        diagnostics: []
+      };
+      fixsonDocuments.set(tab, document);
+      window.api.sendFixsonMessage({
+        method: 'textDocument/didOpen',
+        params: {
+          textDocument: {
+            uri: document.uri,
+            languageId: 'json',
+            version: document.version,
+            text: tab.model.getValue()
+          }
+        }
+      });
+    }
+    return document;
+  }
+
+  monaco.languages.registerCompletionItemProvider('json', {
+    triggerCharacters: ['"'],
+    provideCompletionItems: async () => {
+      const document = await startFixsonServer();
+      if (!document) return { suggestions: [] };
+      const id = ++fixsonRequestId;
+      return new Promise((resolve, reject) => {
+        fixsonPendingRequests.set(id, { resolve, reject });
+        window.api.sendFixsonMessage({
+          id,
+          method: 'textDocument/completion',
+          params: { textDocument: { uri: document.uri } }
+        });
+      }).then((res) => {
+        const items = res?.items || [];
+        return {
+          suggestions: items.map((item) => ({
+            label: item.label,
+            kind: monaco.languages.CompletionItemKind.Property,
+            insertText: `"${item.label}": ""`
+          }))
+        };
+      }).catch(() => ({ suggestions: [] }));
+    }
+  });
+
+  window.editor.onDidChangeModelContent(async () => {
+    const activeTab = tabManager.getActiveTab();
+    if (activeTab && !activeTab.isDirty) {
+      activeTab.isDirty = true;
+      tabManager.render();
+    }
+
+    if (activeTab && activeLanguage(currentFilePath) === 'json') {
+      const text = activeTab.model.getValue();
+      const document = await startFixsonServer(activeTab);
+      window.api.sendFixsonMessage({
+        method: 'textDocument/didChange',
+        params: {
+          textDocument: { uri: document.uri, version: ++document.version },
+          contentChanges: [{ text }]
+        }
+      });
+    }
+  });
 
   async function saveTab(tab) {
     if (!tab) return false;
@@ -230,10 +341,22 @@ require(['vs/editor/editor.main'], async function (monaco) {
     document.getElementById('tab-bar'),
     (tab) => {
       if (tab) {
+        manualLanguage = null;
         currentFilePath = tab.filePath;
         window.editor.setModel(tab.model);
+        monaco.editor.setModelLanguage(tab.model, activeLanguage(currentFilePath));
         updateMarkdownDisplay(tab);
         updateSourceLanguageLabel();
+
+        if (activeLanguage(currentFilePath) === 'json') {
+          currentProblems = fixsonDocuments.get(tab)?.diagnostics || [];
+          renderProblems();
+          startFixsonServer(tab);
+        } else {
+          currentProblems = [];
+          monaco.editor.setModelMarkers(window.editor.getModel(), 'fixson', []);
+          renderProblems();
+        }
       } else {
         currentFilePath = null;
         const emptyModel = monaco.editor.createModel('', 'plaintext');
@@ -267,7 +390,7 @@ require(['vs/editor/editor.main'], async function (monaco) {
 
       const icon = document.createElement('span');
       icon.className = 'tree-icon';
-      icon.textContent = getFileIcon(entry.name);
+      icon.innerHTML = (typeof getFileIcon === 'function') ? getFileIcon(entry.name) : '';
 
       const label = document.createElement('span');
       label.textContent = entry.name;
@@ -293,17 +416,18 @@ require(['vs/editor/editor.main'], async function (monaco) {
 
   await refreshDirectory();
 
-  // Open first file automatically
+  // Open package.json or first file automatically
   const dirFiles = await window.api.listDirectory();
   if (dirFiles && dirFiles.length > 0) {
-    const first = await window.api.readFile(dirFiles[0].path);
+    const targetFile = dirFiles.find((f) => f.name === 'package.json') || dirFiles[0];
+    const first = await window.api.readFile(targetFile.path);
     const model = monaco.editor.createModel(first.content, languageForPath(first.path));
     tabManager.openTab(first.path, model, first.path.split(/[\\/]/).pop());
   } else {
     createNewTab();
   }
 
-  // Bind Buttons
+  // Bind Toolbar Buttons
   document.getElementById('new-btn').addEventListener('click', () => createNewTab());
   document.getElementById('open-btn').addEventListener('click', async () => {
     const file = await window.api.openFile();
@@ -318,29 +442,7 @@ require(['vs/editor/editor.main'], async function (monaco) {
     if (folderPath) await refreshDirectory();
   });
   document.getElementById('save-btn').addEventListener('click', async () => {
-    await saveTab(tabManager.getActiveTab());
-  });
-  document.getElementById('save-as-btn').addEventListener('click', async () => {
-    const savedPath = await window.api.saveFile({ filePath: null, content: window.editor.getValue() });
-    if (savedPath) {
-      const file = await window.api.readFile(savedPath);
-      const model = monaco.editor.createModel(file.content, languageForPath(savedPath));
-      tabManager.openTab(savedPath, model, savedPath.split(/[\\/]/).pop());
-      await refreshDirectory();
-    }
-  });
-
-  document.getElementById('git-blame-btn').addEventListener('click', async () => {
-    const workspace = await window.api.getWorkspacePath();
-    const result = await window.api.gitBlame(workspace, currentFilePath);
-    const labels = translations[currentLanguage] || translations.en;
-    document.getElementById('blame-title').textContent = `${labels.gitBlameTitle}: ${currentFilePath || 'Untitled'}`;
-    document.getElementById('blame-output').textContent = result.stdout || labels.noBlameData;
-    document.getElementById('blame-dialog').showModal();
-  });
-
-  document.getElementById('blame-close-btn').addEventListener('click', () => {
-    document.getElementById('blame-dialog').close();
+    await window.api.saveProjectZip();
   });
 
   // Source Language Dropdown
@@ -354,6 +456,7 @@ require(['vs/editor/editor.main'], async function (monaco) {
       manualLanguage = lang === 'auto' ? null : lang;
       const selectedLanguage = activeLanguage(currentFilePath);
       monaco.editor.setModelLanguage(window.editor.getModel(), selectedLanguage);
+      if (selectedLanguage === 'json') startFixsonServer();
       updateSourceLanguageLabel();
       document.getElementById('source-language-options').hidden = true;
     });
@@ -377,21 +480,6 @@ require(['vs/editor/editor.main'], async function (monaco) {
     appSettings = await window.api.setLanguage(option.dataset.language);
     applyInterfaceLanguage(appSettings.language);
     languageOptions.hidden = true;
-  });
-
-  // Sidebar Toggles
-  document.querySelectorAll('[data-sidebar-target]').forEach((button) => {
-    button.addEventListener('click', () => {
-      const target = document.getElementById(button.dataset.sidebarTarget);
-      const shouldShow = target.hidden;
-      document.querySelectorAll('#file-tree, #git-sidebar').forEach((panel) => {
-        panel.hidden = panel !== target || !shouldShow;
-      });
-      document.querySelectorAll('[data-sidebar-target]').forEach((item) => {
-        item.setAttribute('aria-pressed', String(shouldShow && item === button));
-      });
-      requestAnimationFrame(() => window.editor?.layout());
-    });
   });
 
   // Markdown controls
