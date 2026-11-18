@@ -1,75 +1,99 @@
 # Using Satiscode
 
-This guide covers the main features in the Satiscode Windows desktop editor. For development setup, see [README.md](README.md) and [CONTRIBUTING.md](CONTRIBUTING.md).
+A practical user guide for the Satiscode desktop editor on Windows. For developer setup and architecture details, refer to the [Contributing Guide](CONTRIBUTING.md) and [README](README.md).
 
-## Install and start
+---
 
-Download the latest Windows installer from the [Satiscode releases page](https://github.com/gtref/satiscode/releases/latest), run it, and launch Satiscode from the Start menu or desktop shortcut.
+## Installation & Setup
 
-Satiscode runs on Windows 10 or newer. Python must be installed for Python language services to work. Node.js 20 or newer is only needed if you are running Satiscode from a source checkout.
+1. Download the latest installer (`.exe`) from the [Satiscode Releases page](https://github.com/gtref/satiscode/releases/latest).
+2. Run the installer and launch Satiscode from your Start Menu or desktop shortcut.
 
-## Open and edit files
+> [!NOTE]
+> **System Requirements:** Windows 10 or newer (64-bit).
+> - **C/C++ Support:** Built-in `clangd` binaries are bundled with packaged releases.
+> - **Python Support:** Requires a local Python 3.8+ installation for Pyright language services.
+> - **Node.js:** Only required if building or running Satiscode directly from source.
 
-- Select **Open** or press `Ctrl+O` to open a file.
-- Select **Open Folder** or press `Ctrl+K` to open a workspace folder. Use the Explorer sidebar to browse and open files in that folder.
-- Select **New** or press `Ctrl+N` to create an untitled tab. Use **Save** (`Ctrl+S`) to save it for the first time, or **Save As** (`Ctrl+Shift+S`) to choose a new path for an existing file.
-- Switch between open files using the tabs. The **+** button creates another tab. Close a tab with its close button or middle-click it. If a tab has unsaved changes, Satiscode asks whether to save or discard them before closing.
+---
 
-The editor marks unsaved changes in the tab. Save your work before exiting or closing a tab.
+## Workspace & File Operations
 
-## Language support
+| Operation | Keyboard Shortcut | Toolbar Action | Description |
+| :--- | :---: | :---: | :--- |
+| **New File** | `Ctrl+N` | `New` | Opens an untitled document tab in the editor buffer. |
+| **Open File** | `Ctrl+O` | `Open` | Opens a file picker to load an existing file. |
+| **Open Folder** | `Ctrl+K` | `Open Folder` | Loads a directory workspace into the Explorer sidebar. |
+| **Save File** | `Ctrl+S` | `Save` | Writes changes in the active buffer to disk. |
+| **Save As** | `Ctrl+Shift+S` | `Save As` | Saves the active document under a new filename/path. |
+| **Find in File** | `Ctrl+F` | `Find` | Opens the in-editor search bar with regex/match controls. |
+| **Toggle Problems**| `Ctrl+.` | `Problems` | Displays compiler errors, warnings, and LSP diagnostics. |
 
-Satiscode normally selects the editor language from the file extension. Use the language selector in the toolbar to override it for the active file, or choose **Auto** to return to automatic selection.
+### Tab Management
+- **Multiple Tabs:** Click the **`+`** button in the tab bar or press `Ctrl+N` to open additional documents.
+- **Unsaved Changes Indicator:** An indicator dot appears on tabs containing unsaved modifications.
+- **Closing Tabs:** Click the `×` button or middle-click the tab. If changes are unsaved, Satiscode prompts you to save or discard before closing.
 
-| Files | Language support |
-| --- | --- |
-| C/C++: `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, `.hxx` | clangd diagnostics, completion, hover information, and go-to-definition |
-| Python: `.py` | Pyright diagnostics, completion, hover information, and go-to-definition |
-| JSON: `.json` | FIXSON diagnostics, completion, and hover information |
-| JSONC: `.jsonc` | Monaco editor support; strict FIXSON validation is not started |
-| XML: `.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, `.plist` | FIXML diagnostics, element completion, and hover information |
-| JavaScript/JSX, TypeScript/TSX, HTML, CSS/SCSS | Monaco syntax editing support |
-| Markdown: `.md`, `.markdown` | Preview and edit modes |
-| Other files | Plain-text editing |
+---
 
-Language services report diagnostics in the **Problems** panel. Press `Ctrl+.` to show or hide it; select a problem to jump to its location. The C/C++, Python, JSON, and XML language servers provide the services listed above. If a language server is unavailable, Satiscode can still open and edit the file, but that server's diagnostics and code intelligence will not be available.
+## Language Intelligence & LSP Support
 
-For Markdown files, use **Preview** and **Edit** above the document to switch between the rendered preview and source text. Preview updates from the open document's current contents.
+Satiscode automatically detects file types by extension and starts the appropriate Language Server Protocol (LSP) server in the background:
 
-## Search and navigation
+| Language Family | File Extensions | Language Server / Engine | Capabilities |
+| :--- | :--- | :--- | :--- |
+| **C / C++** | `.c`, `.cc`, `.cpp`, `.cxx`, `.h`, `.hh`, `.hpp`, `.hxx` | `clangd` (LLVM) | Full diagnostics, autocomplete, hover tooltips, go-to-definition |
+| **Python** | `.py` | `pyright` (Microsoft) | Type inference, completions, diagnostics, symbol hover |
+| **JSON** | `.json` | `@ronna/fixson-lsp` | Syntax diagnostics, key completions, hover schema |
+| **JSON with Comments** | `.jsonc` | Monaco Built-in | Syntax highlighting and bracket matching |
+| **XML / SVG / Plist** | `.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, `.plist` | `@ronna/fixml-lsp` | Well-formedness checks, element autocompletion, hover documentation |
+| **Web Languages** | `.html`, `.css`, `.scss`, `.js`, `.jsx`, `.ts`, `.tsx` | Monaco Built-in | Full syntax highlighting, indentation rules, bracket matching |
+| **Markdown** | `.md`, `.markdown` | Custom Viewer | Live preview toggle (`Preview` / `Edit`) with instant rendering |
+| **Plain Text** | All other formats | Monaco Built-in | Fast raw text editing |
 
-Press `Ctrl+F` or select **Find** to search within the active file. Use the previous and next controls to move between matches. For supported language servers, hover over symbols for details, request completion while typing, or use go-to-definition to navigate to a declaration.
+### Manual Language Override
+If automatic detection does not match your preference, click the **Language** selector in the top toolbar to choose any supported language manually, or select **Auto** to return to extension-based detection.
 
-## Git
+### Problems Panel
+Press `Ctrl+.` to toggle the **Problems** panel at the bottom of the editor. Diagnostics reported by `clangd`, `pyright`, `fixson`, and `fixml` appear in real time. Clicking any diagnostic jumps directly to the line and column in the active file.
 
-Open a folder first, then select **Source Control** in the activity bar to view its Git status and recent commits. Git must be installed and available on your system.
+---
 
-- Select **Refresh** to reload repository status.
-- Select **Stage all** to stage all changes in the workspace.
-- Enter a commit message and select **Commit** to commit the staged changes.
-- Select **Pull** or **Push** to synchronize with the configured remote. Your Git remote and authentication must already be set up.
-- If the folder is not yet a repository, select **Init repository** to initialize one.
+## Markdown Preview
 
-To see line-by-line history for a saved file, open it and select **Blame**. The file must be inside the currently open Git workspace.
+For Markdown documents (`.md`, `.markdown`):
+- Click **Preview** above the editor to view the formatted HTML document.
+- Click **Edit** to return to raw Markdown editing mode.
+- Previews re-render dynamically as edits are made.
 
-## Appearance and interface language
+---
 
-Choose **Dark Theme**, **Light Theme**, or **High Contrast** from the theme selector. Use the language button in the toolbar to switch the interface between English and Spanish. These preferences are saved.
+## Integrated Git Version Control
 
-## Keyboard shortcuts
+Open a project folder with `Ctrl+K`, then select **Source Control** in the activity sidebar to access Git features:
 
-| Shortcut | Action |
-| --- | --- |
-| `Ctrl+N` | Create a new tab |
-| `Ctrl+O` | Open a file |
-| `Ctrl+K` | Open a folder |
-| `Ctrl+S` | Save the active file |
-| `Ctrl+Shift+S` | Save the active file as a new file |
-| `Ctrl+F` | Find in the active file |
-| `Ctrl+.` | Toggle the Problems panel |
+- **Status & Diffs:** View modified, staged, and untracked files in the current repository.
+- **Stage All:** Click **Stage all** to stage workspace modifications.
+- **Commit:** Enter a commit message into the prompt and click **Commit**.
+- **Push / Pull:** Synchronize branches with your configured Git remote directly from the toolbar.
+- **Initialize Repository:** Click **Init repository** if the current folder is not yet version-controlled.
+- **Git Blame:** View line-by-line author and commit history for any saved file in the workspace.
+
+---
+
+## Themes & Localization
+
+- **Color Themes:** Switch between **Dark Theme**, **Light Theme**, and **High Contrast** using the theme picker in the top menu.
+- **Interface Language:** Toggle between English and Spanish interface labels on the fly.
+- Preferences are automatically remembered across editor sessions.
+
+---
 
 ## Troubleshooting
 
-- **A language server is unavailable:** Check the language status in the toolbar. Python language services require Python to be installed. A clean source checkout may not include the clangd or Pyright server files; see the development notes in [README.md](README.md).
-- **Git actions fail:** Confirm Git is installed and available on your system. For Push and Pull, check that the repository has a remote and that your Git credentials are configured.
-- **A file has no diagnostics:** Confirm the correct language is selected and that the relevant language server is available. JSONC files use Monaco support without FIXSON diagnostics.
+| Issue | Likely Cause | Solution |
+| :--- | :--- | :--- |
+| **Python diagnostics not appearing** | Python is not found in system PATH | Ensure Python 3.8+ is installed and checked in Windows environment variables. |
+| **C/C++ LSP not starting in source mode** | Missing `clangd` in local source checkout | Install LLVM on your system or run a packaged release installer. |
+| **Git operations fail** | Git executable not found or missing remote credentials | Ensure Git is installed (`git --version` in terminal) and remote credentials are saved via credential helper. |
+| **No diagnostics for `.jsonc`** | Expected behavior | `.jsonc` files intentionally run in Monaco basic mode to allow comments without JSON grammar errors. |
