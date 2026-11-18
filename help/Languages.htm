@@ -7,39 +7,45 @@
 </HEAD>
 <BODY>
 <h1>Language Support</h1>
-<p>SatisCode IDE provides support for a wide variety of programming languages, featuring built-in Language Server Protocol (LSP) engines for deep code intelligence.</p>
+<p>Satiscode detects the editor language from a file's extension. You can also choose a language manually from the toolbar, or select <strong>Auto</strong> to restore automatic detection.</p>
 
 <hr>
-<h2>LSP-Powered Languages</h2>
+<h2>Language Services</h2>
 <div class="box">
 <h3>Python (Powered by Pyright)</h3>
-<p>Python editing in SatisCode is powered by Microsoft's <strong>Pyright</strong> language server (bundled in <code>PythonLSP/</code>). Features include:</p>
+<p>Python files (<code>.py</code>) use Pyright for diagnostics, completion, hover information, and go-to-definition. Python must be installed for Python language services to work correctly.</p>
 <ul>
-<li><strong>Real-time Static Type Checking:</strong> Instant syntax and type error detection reported in the Problems panel (<code>Ctrl + .</code>).</li>
-<li><strong>IntelliSense & Auto-Completion:</strong> Context-aware completion suggestions for modules, functions, variables, and methods.</li>
-<li><strong>Hover Documentation:</strong> Hover over any symbol to inspect its signature, type annotations, and docstrings.</li>
-<li><strong>Go to Definition:</strong> Jump directly to symbol definitions across your workspace.</li>
+<li>Diagnostics are listed in the Problems panel, toggled with <code>Ctrl + .</code>.</li>
+<li>Completion suggestions are available while editing.</li>
+<li>Hover over symbols for information and use go-to-definition to navigate.</li>
 </ul>
 </div>
 
 <div class="box">
 <h3>C and C++ (Powered by clangd)</h3>
-<p>C and C++ files are powered by LLVM's <strong>clangd</strong> server, providing fast background indexing, error diagnostics, auto-completion, and navigation.</p>
+<p>C and C++ files (<code>.c</code>, <code>.cc</code>, <code>.cpp</code>, <code>.cxx</code>, <code>.h</code>, <code>.hh</code>, <code>.hpp</code>, and <code>.hxx</code>) use clangd for diagnostics, completion, hover information, and go-to-definition.</p>
+</div>
+
+<div class="box">
+<h3>JSON and XML</h3>
+<p>JSON files (<code>.json</code>) use FIXSON for diagnostics, completion, and hover information. JSONC (<code>.jsonc</code>) uses the editor's built-in support without strict FIXSON validation.</p>
+<p>XML, XSD, XSL, XSLT, SVG, and plist files use FIXML for diagnostics, element completion, and hover information.</p>
 </div>
 
 <hr>
 <h2>Syntax-Supported Languages</h2>
-<p>SatisCode also supports syntax highlighting and smart indentation for:</p>
+<p>Monaco provides editor support for these additional languages and formats:</p>
 <ul>
-<li>JavaScript & TypeScript</li>
-<li>HTML & CSS</li>
-<li>JSON & JSONC</li>
+<li>JavaScript and TypeScript, including JSX and TSX</li>
+<li>HTML, CSS, and SCSS</li>
+<li>JSONC</li>
+<li>Markdown files (<code>.md</code> and <code>.markdown</code>) with Preview and Edit modes</li>
 <li>Plain Text</li>
 </ul>
 
 <hr>
-<h2>Switching Languages</h2>
-<p>SatisCode automatically detects language based on file extension (such as <code>.py</code> for Python or <code>.cpp</code> for C++). You can also manually switch the active language at any time using the language selector dropdown in the top toolbar.</p>
+<h2>Language Server Availability</h2>
+<p>If a language server is unavailable, the file can still be opened and edited, but that server's diagnostics and code intelligence will not be available. A clean source checkout may not contain the clangd or Pyright server files; see the development notes in the project README.</p>
 
 <br>
 <a href="index.htm">Home</a> | <a href="general.htm">General Help</a> | <a href="Keybinds.htm">Keybinds</a>

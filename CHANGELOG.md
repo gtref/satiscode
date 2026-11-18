@@ -1,48 +1,74 @@
 # Changelog
 
-## [2.1.3](https://github.com/gtref/satiscode/releases/tag/v2.1.3) - 2026-10-10
+All notable changes to Satiscode are documented in this file. The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-- Added Help bot to website.
-- Added version name curious kea.
-- Fixed documentation typos.
-- Updated CSS.
-- Changes versions of esling and globals.
+---
+
+## [2.1.3](https://github.com/gtref/satiscode/releases/tag/v2.1.3) - 2026-10-10
+*Codename: Curious Kea*
+
+### Added
+- Interactive help bot on the documentation website.
+- Official release codename: Curious Kea.
+
+### Changed
+- Updated interface styling and CSS variables for a cleaner editor look.
+- Upgraded ESLint and `globals` development dependencies.
+
+### Fixed
+- Fixed typographical errors across project documentation.
+
+---
 
 ## [1.8.0](https://github.com/gtref/satiscode/releases/tag/v1.8.0) - 2026-10-04
 
-- Added a git sidebar
-- Added pyright python language server
-- Added sidebar.
-- Removed patch generation API
-- Update the pyright python `PATH`
+### Added
+- Integrated Git sidebar supporting staging, commits, push, pull, and repository initialization.
+- Pyright language server integration for Python diagnostics and autocomplete.
+- Configurable Pyright binary path resolution.
+
+### Removed
+- Deprecated patch generation API.
+
+---
 
 ## [1.4.0](https://github.com/gtref/satiscode/releases/tag/v1.4.0) - 2026-09-15
 
-- Added Tab manager
-- Added python stntax support.
-- Added ghost text support.
-- Added conceptual Code base indexing API.
-- Added more icons to the icon pack.
-- Added local in project dir clangd. `( ONLY FOR INSTALLED VERSION )`
-- Changed CSS to be softer.
-- Added a conceptual status indicater elelement to the index.html file.
+### Added
+- Tab management system with multi-file buffer support and dirty indicators.
+- Python syntax highlighting and language definition.
+- Monaco ghost text support for inline suggestions.
+- Prototype codebase indexing API.
+- Expanded icon pack in `icons/style1/`.
+- Embedded project-local `clangd` support for packaged builds.
+- Status indicator element in the bottom status bar.
+
+### Changed
+- Refined UI CSS for a softer, modern appearance.
+
+---
 
 ## [1.1.0](https://github.com/gtref/satiscode/releases/tag/v1.1.0) - 2026-09-10
 
-- Added styles directory for root css files.
-- Added auto language detection and manual language selector
-- Added Icons directory with icon metadata for each style.
-- Added openfolder option.
-- Added support for html, css and js files.
+### Added
+- Dedicated `styles/` directory for modular stylesheet management.
+- Automatic file language detection with manual selector override in toolbar.
+- Icon pack directory with per-style metadata (`icons/style1/icons.json`).
+- Open Folder (`Ctrl+K`) workspace navigation.
+- Full syntax support for HTML, CSS, JavaScript, and JSON.
 
+---
 
 ## [1.0.0](https://github.com/gtref/satiscode/releases/tag/v1.0.0) - 2026-09-08
 
-- Added Monaco-based C/C++ editing
-- Added clangd diagnostics, completion, hover, and definition support
-- Added C/C++ file detection and project-root discovery
-- Added Explorer file tree and Problems panel
-- Added graceful clangd shutdown
-- Added file-operation toolbar and keyboard shortcuts
-- Added English and Spanish interface labels
-- Added Windows NSIS installer configuration
+### Added
+- Initial public release of Satiscode.
+- Monaco-based editor engine optimized for C/C++.
+- Full `clangd` LSP integration: diagnostics, code completion, hover tooltips, and go-to-definition.
+- C/C++ file extension detection and workspace root discovery.
+- Resizable Explorer file tree and VS Code-style Problems panel.
+- Graceful `clangd` process lifecycle and shutdown handling.
+- Toolbar for rapid file operations (`New`, `Open`, `Save`, `Save As`).
+- Comprehensive keyboard shortcuts for common editing tasks.
+- Bilingual interface support (English and Spanish).
+- Windows NSIS installer build configuration with `electron-builder`.

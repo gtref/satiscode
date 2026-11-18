@@ -1,11 +1,45 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
-
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Maintain GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "dependencies"
+      - "actions"
+
+  # Maintain root npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps"
+    labels:
+      - "dependencies"
+      - "npm"
+
+  # Maintain FIXSON-LSP package dependencies
+  - package-ecosystem: "npm"
+    directory: "/packages/FIXSON-LSP"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(fixson)"
+    labels:
+      - "dependencies"
+      - "lsp"
+
+  # Maintain FIXML-LSP package dependencies
+  - package-ecosystem: "npm"
+    directory: "/packages/FIXML-LSP"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "deps(fixml)"
+    labels:
+      - "dependencies"
+      - "lsp"

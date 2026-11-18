@@ -1,14 +1,18 @@
 {
   "name": "satiscode",
-  "version": "2.2.6",
-  "description": "A lightweight C/C++, Python, and JSON editor powered by Monaco, clangd, Pyright, and FIXSON.",
+  "version": "2.2.9",
+  "description": "A lightweight C/C++, Python, JSON, and XML editor powered by Monaco, clangd, Pyright, FIXSON, and FIXML.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "npm --prefix packages/FIXSON-LSP install && npm --prefix packages/FIXSON-LSP run build && node scripts/build-webide.js",
+    "build": "npm --prefix packages/FIXSON-LSP install && npm --prefix packages/FIXSON-LSP run build && npm --prefix packages/FIXML-LSP install && npm --prefix packages/FIXML-LSP run build && node scripts/build-webide.js",
     "dist:win": "npm run build && electron-builder --win nsis",
-    "test": "npm run build && node --test",
-    "lint": "eslint ."
+    "test": "npm run test:all",
+    "test:all": "npm run build && node --test",
+    "lint": "eslint .",
+    "typecheck": "npm --prefix packages/FIXSON-LSP run typecheck && npm --prefix packages/FIXML-LSP run typecheck",
+    "verify-assets": "node scripts/verify-assets.js",
+    "depcheck": "node scripts/check-dependencies.js"
   },
   "keywords": [
     "electron",
@@ -17,6 +21,8 @@
     "pyright",
     "fixson",
     "json",
+    "fixml",
+    "xml",
     "c",
     "cpp",
     "python",
@@ -28,17 +34,18 @@
   "dependencies": {
     "dompurify": "^3.4.17",
     "highlight.js": "^11.11.1",
-    "marked": "^18.1.1",
+    "marked": "^18.2.0",
     "monaco-editor": "0.57.0",
     "monaco-languageclient": "^11.0.3",
     "vscode-ws-jsonrpc": "^4.0.2"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "electron": "^44.9.0",
-    "electron-builder": "^26.15.3",
+    "depcheck": "^1.4.7",
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0",
     "eslint": "^10.13.0",
-    "globals": "^17.12.0"
+    "globals": "^17.14.0"
   },
   "overrides": {
     "dompurify": "$dompurify"
@@ -69,10 +76,6 @@
     ],
     "extraResources": [
       {
-        "from": "bin",
-        "to": "bin"
-      },
-      {
         "from": "lib",
         "to": "lib"
       },
@@ -85,12 +88,22 @@
         "to": "FIXSON-LSP/dist"
       },
       {
+        "from": "packages/FIXML-LSP/dist",
+        "to": "FIXML-LSP/dist"
+      },
+      {
         "from": "help",
         "to": "help"
       }
     ],
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "extraResources": [
+        {
+          "from": "bin",
+          "to": "bin"
+        }
+      ]
     },
     "nsis": {
       "oneClick": false,

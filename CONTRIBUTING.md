@@ -1,121 +1,135 @@
 # Contributing to Satiscode
 
-Thank you for helping improve Satiscode.
+Thank you for your interest in improving Satiscode! Whether you are fixing bugs, implementing language server features, refining the UI, or improving documentation, your contributions are welcome.
 
-## Before you start
+---
 
-1. Check existing issues and pull requests.
-2. For large or architectural changes, open an issue describing the proposed approach.
-3. Keep changes focused and preserve the existing Electron, Monaco, and clangd/Pyright architecture.
-4. Ensure all contributions are original or properly licensed.
+## Getting Started
 
-## Local setup
+1. **Check Existing Issues & PRs:** Look through active [Issues](https://github.com/gtref/satiscode/issues) and [Pull Requests](https://github.com/gtref/satiscode/pulls) to avoid duplicate work.
+2. **Propose Major Architectural Changes:** For large architectural updates or new subsystem integrations, please open an issue first to discuss the design.
+3. **Preserve Architecture:** Respect the Electron main/preload/renderer security boundaries and language server lifecycle.
+4. **License Compatibility:** All contributions must be original or compatible with Satiscode's MIT license.
+
+---
+
+## Local Development Setup
+
+### Prerequisites
+- **Operating System:** Windows 10/11 (for desktop app execution), or Linux/macOS for core package builds and CI testing.
+- **Node.js:** Version 20 or newer.
+- **C/C++ Language Services (Optional for dev):** `clangd` (LLVM) installed and accessible if working on C/C++ language features.
+- **Python Language Services (Optional for dev):** Python 3.8+ installed if working on Python language features.
+
+### Installation & Launch
 
 ```powershell
+# Clone your fork
+git clone https://github.com/<your-username>/satiscode.git
+cd satiscode
+
+# Install all dependencies and build subpackages
 npm install
+npm run build
+
+# Start the Electron application
 npm start
 ```
 
-Install LLVM if you are working on C/C++ language services. The expected executable is `clangd.exe`.
+---
 
-## Pre-commit Hooks
+## Pre-Commit Hooks
 
-SatisCode uses pre-commit hooks to keep the codebase clean.
-
-### Install
+We use `pre-commit` to maintain formatting and code quality consistency.
 
 ```bash
+# Install pre-commit
 pip install pre-commit
-python -m pre_commit install
-python -m pre_commit run --all-files
+
+# Register the Git hooks
+pre-commit install
+
+# Run checks against all files manually
+pre-commit run --all-files
 ```
 
-### Included checks
+### Configured Checks:
 - Removes trailing whitespace
-- Ensures files end with a newline
-- Detects merge conflicts
-- Validates JSON files
-- Validates YAML files
-- Runs linting checks
+- Enforces trailing newlines
+- Flags accidental merge conflict markers
+- Validates JSON and YAML syntax
+- Runs ESLint validation
 
-## Making changes
+---
 
-- Keep renderer code isolated from Node.js APIs.
-- Route filesystem and child-process operations through `preload.js` and `main.js`.
-- Preserve support for both C and C++ file extensions.
-- Keep user-facing failures recoverable where possible.
-- Avoid committing generated `dist` output or `node_modules`.
+## Quality Checks & Validation
 
-## Code provenance and licensing
+Before submitting a pull request, run the local quality suite to ensure CI will pass cleanly:
 
-To maintain a clean and legally safe codebase:
+```bash
+# 1. Run ESLint across codebase
+npm run lint
 
-- Only submit code you wrote yourself or have the right to contribute.
-- Only use third-party code under licenses compatible with the project's MIT license; incompatible licenses, including GPL, are not permitted.
-- Satisfy all applicable third-party attribution and notice obligations documented in `NOTICES.md`.
-- AI-generated code **must be reviewed, rewritten, and validated** before submission.
-  Raw AI output is not acceptable without human verification.
-- Every commit must include a Developer Certificate of Origin (DCO) signoff.
+# 2. Run TypeScript compiler checks on LSP packages
+npm run typecheck
 
-### Developer Certificate of Origin (DCO)
+# 3. Run full test suite
+npm test
 
-By adding a `Signed-off-by:` line, you certify that:
+# 4. Compile LSP packages and verify distribution assets
+npm run build
+npm run verify-assets
 
-> You wrote the code or have the right to submit it under the project’s license.
-
-Git can add this automatically:
-
-```powershell
-git commit -s
+# 5. Audit dependency health
+npm run depcheck
 ```
 
-All pull requests must contain commits with valid signoffs.
-
-## Validation
-
-Run these checks before opening a pull request:
-
-```powershell
-node --check main.js
-node --check preload.js
-npm start
-```
-
-For installer changes, also run:
+For installer or packaging modifications, also test packaging:
 
 ```powershell
 npm run dist:win
 ```
 
-## Pull requests
+---
 
-Include:
+## Code Guidelines & Security Boundaries
 
-- A concise description of the problem and solution
-- User-visible behavior changes
-- Validation steps and results
-- Screenshots for visual changes when useful
-- Confirmation that all commits include `Signed-off-by:` lines
+- **Process Isolation:** The renderer process must never import Node.js core modules directly (`fs`, `child_process`, etc.).
+- **Preload Channel:** All filesystem and background process calls must pass through typed IPC methods defined in `preload.js` and handled in `main.js`.
+- **Error Recovery:** Keep user-facing filesystem and language-server errors recoverable with graceful fallback messages.
+- **Build Artifacts:** Do not commit compiled outputs (`dist/`, `packages/*/dist/`), coverage directories, or `node_modules/`.
 
-## Commit messages
+---
 
-Use short, imperative messages such as:
+## Licensing, Signoffs & AI-Assisted Code Policy
 
-- `Add header diagnostics`
-- `Fix Explorer refresh`
-- `Improve Pyright initialization`
-- `Refactor LSP routing`
+### Developer Certificate of Origin (DCO)
 
-Commit messages should describe *what* and *why*, not *how*.
+All commits must include a `Signed-off-by:` trailer to certify that you have the right to contribute the code under the project's MIT license.
 
-### AI-Assisted Code Policy
+Git can append this flag automatically using the `-s` switch:
 
-If any part of a commit contains code generated or significantly influenced by an AI system, the commit **must** include the following Git trailer:
+```bash
+git commit -s -m "Fix Explorer file tree selection state"
+```
 
+### Code Provenance & AI-Assisted Code Policy
+
+- Code must be original or properly licensed under an MIT-compatible license (GPL or copyleft code is strictly prohibited).
+- Respect third-party notice obligations documented in [NOTICES.md](NOTICES.md).
+- Any AI-generated code must be thoroughly reviewed, tested, and validated by a human developer. Raw AI output without review is not accepted.
+- If code is generated or substantially influenced by AI, acknowledge it in the commit footer using the standard trailer:
+
+```text
 Co-authored-by: AI Assistant <ai@example.com>
+```
 
-Rules:
-- The developer must write the commit message themselves.
-- The trailer must appear at the bottom of the commit message.
-- There must be one blank line before trailers.
-- Use the exact casing and punctuation shown above.
+---
+
+## Pull Request Guidelines
+
+When submitting a pull request:
+1. Provide a clear summary of what was changed and why.
+2. Outline verification steps showing how you tested the change.
+3. Attach screenshots or GIFs for visual and UI modifications.
+4. Ensure all CI quality checks (`lint`, `typecheck`, `test`, `build`) pass locally.
