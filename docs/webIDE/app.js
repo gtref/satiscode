@@ -42,7 +42,7 @@ const translations = {
     sourceToml: 'TOML', sourceSql: 'SQL',
     interfaceTheme: 'Interface theme', darkTheme: 'Dark Theme', lightTheme: 'Light Theme',
     changeLanguage: 'Change interface language', sidebarViews: 'Sidebar views', gitControls: 'Git controls', problems: 'Problems',
-    resizeProblems: 'Resize Problems panel', noProblems: 'No problems detected', treePrompt: 'Open a file to browse its folder',
+    resizeProblems: 'Resize Problems panel', resizeSidebar: 'Resize sidebar', noProblems: 'No problems detected', treePrompt: 'Open a file to browse its folder',
     findInFile: 'Find in file', findPlaceholder: 'Find...', previousMatch: 'Previous match', nextMatch: 'Next match', close: 'Close',
     markdownViewMode: 'Markdown view mode', markdownPreview: 'Preview', markdownEdit: 'Edit',
     gitBlameTitle: 'Git Blame', noBlameData: 'No blame data available in Web IDE.', welcome: 'Welcome to Satiscode Web IDE', namePrompt: 'What should we call you?', yourName: 'Your name',
@@ -58,7 +58,7 @@ const translations = {
     sourceToml: 'TOML', sourceSql: 'SQL',
     interfaceTheme: 'Tema de la interfaz', darkTheme: 'Tema oscuro', lightTheme: 'Tema claro',
     changeLanguage: 'Cambiar el idioma de la interfaz', sidebarViews: 'Vistas de la barra lateral', gitControls: 'Controles de Git', problems: 'Problemas',
-    resizeProblems: 'Cambiar el tamaño del panel de problemas', noProblems: 'No se detectaron problemas', treePrompt: 'Abre un archivo para explorar su carpeta',
+    resizeProblems: 'Cambiar el tamaño del panel de problemas', resizeSidebar: 'Cambiar el tamaño de la barra lateral', noProblems: 'No se detectaron problemas', treePrompt: 'Abre un archivo para explorar su carpeta',
     findInFile: 'Buscar en el archivo', findPlaceholder: 'Buscar...', previousMatch: 'Coincidencia anterior', nextMatch: 'Siguiente coincidencia', close: 'Cerrar',
     markdownViewMode: 'Modo de vista de Markdown', markdownPreview: 'Vista previa', markdownEdit: 'Editar',
     gitBlameTitle: 'Anotaciones de Git', noBlameData: 'No hay datos de anotaciones disponibles en Web IDE.', welcome: 'Te damos la bienvenida a Satiscode Web IDE', namePrompt: '¿Cómo te llamamos?', yourName: 'Tu nombre',
@@ -448,7 +448,80 @@ require(['vs/editor/editor.main'], async function (monaco) {
     languageOptions.hidden = true;
   });
 
-  // Sidebar Toggles
+  // Sidebar Resizing & Toggles
+  const sidebarResizer = document.getElementById('sidebar-resizer');
+  function updateSidebarResizer() {
+    const fileTree = document.getElementById('file-tree');
+    const gitSidebar = document.getElementById('git-sidebar');
+    if (sidebarResizer) {
+      const anyOpen = (fileTree && !fileTree.hidden) || (gitSidebar && !gitSidebar.hidden);
+      sidebarResizer.hidden = !anyOpen;
+    }
+  }
+
+  const savedSidebarWidth = localStorage.getItem('satiscode-sidebar-width');
+  if (savedSidebarWidth) {
+    document.documentElement.style.setProperty('--sidebar-width', `${savedSidebarWidth}px`);
+  }
+  updateSidebarResizer();
+
+  let resizingSidebar = false;
+  if (sidebarResizer) {
+    sidebarResizer.addEventListener('mousedown', (event) => {
+      resizingSidebar = true;
+      sidebarResizer.classList.add('resizing');
+      document.body.style.cursor = 'ew-resize';
+      document.body.style.userSelect = 'none';
+      event.preventDefault();
+    });
+  }
+
+  let resizingProblems = false;
+  const problemsResizer = document.getElementById('problems-resizer');
+  if (problemsResizer) {
+    problemsResizer.addEventListener('mousedown', () => {
+      resizingProblems = true;
+      document.body.style.cursor = 'ns-resize';
+      document.body.style.userSelect = 'none';
+    });
+  }
+
+  window.addEventListener('mousemove', (event) => {
+    if (resizingSidebar) {
+      const activityBar = document.getElementById('activity-bar');
+      const leftOffset = activityBar ? activityBar.getBoundingClientRect().right : 48;
+      const minWidth = 170;
+      const maxWidth = Math.max(minWidth, window.innerWidth - 300);
+      const newWidth = Math.max(minWidth, Math.min(event.clientX - leftOffset, maxWidth));
+      document.documentElement.style.setProperty('--sidebar-width', `${newWidth}px`);
+    }
+    if (resizingProblems) {
+      const workspaceBottom = document.getElementById('workspace').getBoundingClientRect().bottom;
+      const height = Math.max(80, Math.min(workspaceBottom - event.clientY, window.innerHeight - 120));
+      document.getElementById('problems-panel').style.height = `${height}px`;
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (resizingSidebar) {
+      resizingSidebar = false;
+      sidebarResizer?.classList.remove('resizing');
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      const currentWidth = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-width').trim();
+      if (currentWidth) {
+        localStorage.setItem('satiscode-sidebar-width', parseInt(currentWidth, 10));
+      }
+      window.editor?.layout();
+    }
+    if (resizingProblems) {
+      resizingProblems = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+      window.editor?.layout();
+    }
+  });
+
   document.querySelectorAll('[data-sidebar-target]').forEach((button) => {
     button.addEventListener('click', () => {
       const target = document.getElementById(button.dataset.sidebarTarget);
@@ -459,6 +532,7 @@ require(['vs/editor/editor.main'], async function (monaco) {
       document.querySelectorAll('[data-sidebar-target]').forEach((item) => {
         item.setAttribute('aria-pressed', String(shouldShow && item === button));
       });
+      updateSidebarResizer();
       requestAnimationFrame(() => window.editor?.layout());
     });
   });
