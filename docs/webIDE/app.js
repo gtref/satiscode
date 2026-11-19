@@ -336,7 +336,7 @@ require(['vs/editor/editor.main'], async function (monaco) {
 
       const icon = document.createElement('span');
       icon.className = 'tree-icon';
-      icon.textContent = getFileIcon(entry.name);
+      icon.innerHTML = entry.isDirectory ? getFolderIcon(false) : getFileIcon(entry.name);
 
       const label = document.createElement('span');
       label.textContent = entry.name;
