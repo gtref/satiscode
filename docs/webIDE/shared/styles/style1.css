@@ -23,14 +23,65 @@
   --vscode-warning: #cca700;
   --vscode-badge-bg: #4d4d4d;
 
+  /* Scrollbars */
+  --vscode-scrollbar-thumb: rgba(121, 121, 121, 0.4);
+  --vscode-scrollbar-thumb-hover: rgba(100, 100, 100, 0.7);
+  --vscode-scrollbar-thumb-active: rgba(191, 191, 191, 0.4);
+
+  /* Layout */
+  --sidebar-width: 260px;
+
   /* Typography */
   --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --font-mono: "Consolas", "Courier New", monospace;
 }
 
+:root[data-theme="light"],
+[data-theme="light"] {
+  --vscode-scrollbar-thumb: rgba(100, 100, 100, 0.25);
+  --vscode-scrollbar-thumb-hover: rgba(100, 100, 100, 0.45);
+  --vscode-scrollbar-thumb-active: rgba(0, 0, 0, 0.5);
+}
+
 /* Reset & Base Setup */
 * {
   box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--vscode-scrollbar-thumb) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: var(--vscode-scrollbar-thumb);
+  border-radius: 5px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--vscode-scrollbar-thumb-hover);
+}
+
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--vscode-scrollbar-thumb-active);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
 }
 
 html, body {
@@ -211,11 +262,39 @@ body {
   color: var(--vscode-text-muted);
   font-size: 21px;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.activity-button .sidebar-icon {
+  width: 22px;
+  height: 22px;
+  display: block;
+  margin: 0 auto;
+  pointer-events: none;
+  opacity: 0.7;
+  transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+:root:not([data-theme="light"]) .activity-button .sidebar-icon {
+  filter: invert(0.85);
+}
+
+:root:not([data-theme="light"]) .activity-button:hover .sidebar-icon,
+:root:not([data-theme="light"]) .activity-button[aria-pressed="true"] .sidebar-icon {
+  filter: invert(1);
 }
 
 .activity-button:hover,
 .activity-button[aria-pressed="true"] {
   color: var(--vscode-text-active);
+}
+
+.activity-button:hover .sidebar-icon,
+.activity-button[aria-pressed="true"] .sidebar-icon {
+  opacity: 1;
 }
 
 .activity-button[aria-pressed="true"] {
@@ -228,14 +307,15 @@ body {
 
 /* Sidebar File Tree */
 #file-tree {
-  width: 250px;
-  min-width: 150px;
-  max-width: 400px;
+  width: var(--sidebar-width, 260px);
+  min-width: 170px;
+  max-width: 800px;
   background-color: var(--vscode-sidebar-bg);
   border-right: 1px solid var(--vscode-border);
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 #file-tree[hidden],
@@ -258,17 +338,41 @@ body {
 }
 
 #git-sidebar {
-  width: min(260px, 28vw);
-  min-width: 190px;
+  width: var(--sidebar-width, 260px);
+  min-width: 170px;
+  max-width: 800px;
   padding: 10px;
   background-color: var(--vscode-sidebar-bg);
   border-right: 1px solid var(--vscode-border);
   overflow-y: auto;
+  flex-shrink: 0;
 }
 
 #git-sidebar input,
 #git-sidebar button {
   width: 100%;
+}
+
+/* Sidebar Resizer */
+.sidebar-resizer {
+  width: 6px;
+  cursor: ew-resize;
+  position: relative;
+  z-index: 10;
+  margin-left: -3px;
+  margin-right: -3px;
+  background-color: transparent;
+  transition: background-color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-resizer:hover,
+.sidebar-resizer.resizing {
+  background-color: var(--vscode-focus-border);
+}
+
+.sidebar-resizer[hidden] {
+  display: none;
 }
 
 .tree-entry {
@@ -733,8 +837,9 @@ body {
 .name-setup-actions button { padding: 6px 12px; border: 1px solid var(--vscode-border); background: var(--vscode-toolbar-bg); color: var(--vscode-text-main); cursor: pointer; }
 
 @media (max-width: 760px) {
-  #file-tree { width: 190px; min-width: 150px; }
-  #git-sidebar { width: 190px; min-width: 160px; padding: 7px; }
+  #file-tree,
+  #git-sidebar { width: var(--sidebar-width, 190px); min-width: 140px; }
+  #git-sidebar { padding: 7px; }
   .git-actions { grid-template-columns: 1fr; }
   #blame-dialog { width: calc(100vw - 20px); }
 }
