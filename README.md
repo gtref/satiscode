@@ -11,7 +11,7 @@
 [![CodeQL](https://github.com/gtref/satiscode/actions/workflows/codeql.yml/badge.svg)](https://github.com/gtref/satiscode/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack&logoColor=white)](https://join.slack.com/t/a2-hc61499/shared_invite/zt-49ufy94zl-nTWdH_uBjDIkuPCbapoO0A)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/gtref/satiscode)
+[![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask%20Docs-0969da?logo=readme&logoColor=white)](https://deepwiki.com/gtref/satiscode)
 [![AlternativeTo](https://alternativeto.net/static/badges/badge-wide-color.svg)](https://alternativeto.net/software/satiscode/about/?utm_source=badge&utm_medium=referral)
 
 [Download Installer](https://github.com/gtref/satiscode/releases/latest) • [Usage Guide](USAGE.md) • [Daily News](NEWS.md) • [Changelog](CHANGELOG.md) • [Contributing](CONTRIBUTING.md)
@@ -58,6 +58,8 @@ Satiscode combines the power of Microsoft's **Monaco Editor** with deep, dedicat
 | **Python** | `.py` | `pyright` | Diagnostics, Completion, Hover, Go-to-Definition |
 | **JSON** | `.json` | `FIXSON-LSP` | Syntax Diagnostics, Autocomplete, Hover |
 | **JSONC** | `.jsonc` | Monaco Built-in | Syntax Highlight, Bracket Matching |
+| **TOML** | `.toml` | Monarch Engine | Syntax Highlight, Key-Value and Table Formatting |
+| **SQL / Databases** | `.sql`, `.db`, `.sqlite`, `.sqlite3` | Monaco Built-in | Full SQL syntax styling and keyword highlight |
 | **XML / SVG / Plist** | `.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, `.plist` | `FIXML-LSP` | Well-Formedness Checks, Completion, Hover |
 | **Web Technologies** | `.html`, `.css`, `.scss`, `.js`, `.jsx`, `.ts`, `.tsx` | Monaco Built-in | Syntax Highlight, Smart Indent, Bracket Matching |
 | **Markdown** | `.md`, `.markdown` | Custom Viewer | Live Rendered Preview, Split Editing Mode |
