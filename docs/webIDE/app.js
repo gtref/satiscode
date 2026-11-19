@@ -39,6 +39,7 @@ const translations = {
     showGitBlame: 'Show Git blame for the active file', find: 'Find', exit: 'Exit', explorer: 'Explorer', sourceControl: 'Source Control',
     sourceLanguage: 'Select source language', sourceAuto: 'Auto', sourceC: 'C', sourceCpp: 'C++', sourceCss: 'CSS',
     sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourcePlainText: 'Plain Text', sourcePython: 'Python', sourceMarkdown: 'Markdown',
+    sourceToml: 'TOML', sourceSql: 'SQL',
     interfaceTheme: 'Interface theme', darkTheme: 'Dark Theme', lightTheme: 'Light Theme',
     changeLanguage: 'Change interface language', sidebarViews: 'Sidebar views', gitControls: 'Git controls', problems: 'Problems',
     resizeProblems: 'Resize Problems panel', noProblems: 'No problems detected', treePrompt: 'Open a file to browse its folder',
@@ -54,6 +55,7 @@ const translations = {
     showGitBlame: 'Mostrar las anotaciones Git del archivo activo', find: 'Buscar', exit: 'Salir', explorer: 'Explorador', sourceControl: 'Control de código fuente',
     sourceLanguage: 'Seleccionar lenguaje del archivo', sourceAuto: 'Automático', sourceC: 'C', sourceCpp: 'C++', sourceCss: 'CSS',
     sourceJavaScript: 'JavaScript', sourceHtml: 'HTML', sourceTypeScript: 'TypeScript', sourceJson: 'JSON', sourcePlainText: 'Texto sin formato', sourcePython: 'Python', sourceMarkdown: 'Markdown',
+    sourceToml: 'TOML', sourceSql: 'SQL',
     interfaceTheme: 'Tema de la interfaz', darkTheme: 'Tema oscuro', lightTheme: 'Tema claro',
     changeLanguage: 'Cambiar el idioma de la interfaz', sidebarViews: 'Vistas de la barra lateral', gitControls: 'Controles de Git', problems: 'Problemas',
     resizeProblems: 'Cambiar el tamaño del panel de problemas', noProblems: 'No se detectaron problemas', treePrompt: 'Abre un archivo para explorar su carpeta',
@@ -75,7 +77,9 @@ currentLanguage = appSettings.language || 'en';
 const languageByExtension = new Map([
   ['.html', 'html'], ['.htm', 'html'], ['.css', 'css'], ['.scss', 'scss'],
   ['.js', 'javascript'], ['.jsx', 'javascript'], ['.mjs', 'javascript'],
-  ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'],
+  ['.ts', 'typescript'], ['.tsx', 'typescript'], ['.json', 'json'], ['.jsonc', 'json'],
+  ['.toml', 'toml'],
+  ['.db', 'sql'], ['.sqlite', 'sql'], ['.sqlite3', 'sql'], ['.sql', 'sql'],
   ['.py', 'python'], ['.md', 'markdown'], ['.markdown', 'markdown'],
   ['.c', 'c'], ['.cpp', 'cpp'], ['.cc', 'cpp'], ['.h', 'cpp']
 ]);
@@ -102,9 +106,10 @@ function updateSourceLanguageLabel() {
   const languageLabels = {
     auto: labels.sourceAuto, c: labels.sourceC, cpp: labels.sourceCpp, css: labels.sourceCss,
     javascript: labels.sourceJavaScript, html: labels.sourceHtml, typescript: labels.sourceTypeScript,
-    json: labels.sourceJson, python: labels.sourcePython, plaintext: labels.sourcePlainText, markdown: labels.sourceMarkdown
+    json: labels.sourceJson, python: labels.sourcePython, plaintext: labels.sourcePlainText, markdown: labels.sourceMarkdown,
+    toml: labels.sourceToml || 'TOML', sql: labels.sourceSql || 'SQL'
   };
-  const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', python: 'Py', plaintext: 'Aa', markdown: 'MD' };
+  const icons = { auto: '◇', c: 'C', cpp: 'C++', css: '#', javascript: 'JS', html: '<>', typescript: 'TS', json: '{}', python: 'Py', plaintext: 'Aa', markdown: 'MD', toml: 'TOML', sql: 'SQL' };
 
   const labelEl = document.getElementById('source-language-label');
   const badgeEl = document.querySelector('#source-language-btn .language-badge');
@@ -151,6 +156,70 @@ require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-edi
 
 require(['vs/editor/editor.main'], async function (monaco) {
   window.monaco = monaco;
+
+  // Register custom Monarch tokenizer for TOML
+  monaco.languages.register({ id: 'toml', extensions: ['.toml'], aliases: ['TOML', 'toml'] });
+  monaco.languages.setLanguageConfiguration('toml', {
+    comments: { lineComment: '#' },
+    brackets: [['[', ']'], ['{', '}'], ['(', ')']],
+    autoClosingPairs: [
+      { open: '{', close: '}' },
+      { open: '[', close: ']' },
+      { open: '(', close: ')' },
+      { open: '"', close: '"' },
+      { open: "'", close: "'" }
+    ],
+    surroundingPairs: [
+      { open: '{', close: '}' },
+      { open: '[', close: ']' },
+      { open: '(', close: ')' },
+      { open: '"', close: '"' },
+      { open: "'", close: "'" }
+    ]
+  });
+  monaco.languages.setMonarchTokensProvider('toml', {
+    defaultToken: '',
+    tokenPostfix: '.toml',
+    keywords: ['true', 'false', 'inf', 'nan'],
+    tokenizer: {
+      root: [
+        [/^\[\[?[^\]]+\]\]?/, 'metatag'],
+        [/[a-zA-Z0-9_\-]+(?=\s*=)/, 'key'],
+        [/=/, 'delimiter'],
+        [/#.*$/, 'comment'],
+        [/"([^"\\]|\\.)*"/, 'string'],
+        [/'[^']*'/, 'string'],
+        [/"""/, 'string', '@mlstring'],
+        [/'''/, 'string', '@mlliteral'],
+        [/\b(true|false)\b/, 'keyword'],
+        [/\b\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?\b/, 'type'],
+        [/[-+]?\b\d+(?:\.\d+)?(?:[eE][-+]?\d+)?\b/, 'number'],
+        [/0x[0-9a-fA-F_]+/, 'number.hex'],
+        [/0o[0-7_]+/, 'number.octal'],
+        [/0b[01_]+/, 'number.binary'],
+        [/[{}()[\],]/, 'delimiter']
+      ],
+      mlstring: [
+        [/[^"\\]+/, 'string'],
+        [/\\./, 'string.escape'],
+        [/"""/, 'string', '@pop'],
+        [/"/, 'string']
+      ],
+      mlliteral: [
+        [/[^']+/, 'string'],
+        [/'''/, 'string', '@pop'],
+        [/'/, 'string']
+      ]
+    }
+  });
+
+  if (monaco.languages?.json?.jsonDefaults) {
+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+      validate: true,
+      allowComments: true,
+      trailingCommas: 'ignore'
+    });
+  }
 
   // Custom theme loader override for shared themes
   async function loadWebTheme(themeId) {

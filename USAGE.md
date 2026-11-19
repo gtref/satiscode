@@ -46,6 +46,8 @@ Satiscode automatically detects file types by extension and starts the appropria
 | **Python** | `.py` | `pyright` (Microsoft) | Type inference, completions, diagnostics, symbol hover |
 | **JSON** | `.json` | `@ronna/fixson-lsp` | Syntax diagnostics, key completions, hover schema |
 | **JSON with Comments** | `.jsonc` | Monaco Built-in | Syntax highlighting and bracket matching |
+| **TOML** | `.toml` | Monarch Engine | Syntax highlighting, table headers, key-value and multiline string parsing |
+| **SQL / Databases** | `.sql`, `.db`, `.sqlite`, `.sqlite3` | Monaco Built-in | Full SQL syntax styling and query keyword highlighting |
 | **XML / SVG / Plist** | `.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, `.plist` | `@ronna/fixml-lsp` | Well-formedness checks, element autocompletion, hover documentation |
 | **Web Languages** | `.html`, `.css`, `.scss`, `.js`, `.jsx`, `.ts`, `.tsx` | Monaco Built-in | Full syntax highlighting, indentation rules, bracket matching |
 | **Markdown** | `.md`, `.markdown` | Custom Viewer | Live preview toggle (`Preview` / `Edit`) with instant rendering |

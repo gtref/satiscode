@@ -58,6 +58,8 @@ Satiscode combines the power of Microsoft's **Monaco Editor** with deep, dedicat
 | **Python** | `.py` | `pyright` | Diagnostics, Completion, Hover, Go-to-Definition |
 | **JSON** | `.json` | `FIXSON-LSP` | Syntax Diagnostics, Autocomplete, Hover |
 | **JSONC** | `.jsonc` | Monaco Built-in | Syntax Highlight, Bracket Matching |
+| **TOML** | `.toml` | Monarch Engine | Syntax Highlight, Key-Value and Table Formatting |
+| **SQL / Databases** | `.sql`, `.db`, `.sqlite`, `.sqlite3` | Monaco Built-in | Full SQL syntax styling and keyword highlight |
 | **XML / SVG / Plist** | `.xml`, `.xsd`, `.xsl`, `.xslt`, `.svg`, `.plist` | `FIXML-LSP` | Well-Formedness Checks, Completion, Hover |
 | **Web Technologies** | `.html`, `.css`, `.scss`, `.js`, `.jsx`, `.ts`, `.tsx` | Monaco Built-in | Syntax Highlight, Smart Indent, Bracket Matching |
 | **Markdown** | `.md`, `.markdown` | Custom Viewer | Live Rendered Preview, Split Editing Mode |
