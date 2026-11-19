@@ -246,10 +246,9 @@ require(['vs/editor/editor.main'], async function (monaco) {
 
   // Initialize shared icons
   try {
-    const iconRes = await fetch('./shared/icons/style1/icons.json');
-    const iconMap = await iconRes.json();
+    await initIcons();
     if (document.getElementById('language-button-icon')) {
-      document.getElementById('language-button-icon').innerHTML = iconMap.ui?.translate || '🌐';
+      document.getElementById('language-button-icon').innerHTML = getUiIcon('translate') || '🌐';
     }
   } catch {
     // fallback
