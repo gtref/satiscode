@@ -415,7 +415,9 @@ body {
 }
 
 .language-badge svg,
-.tree-icon svg {
+.tree-icon svg,
+.tree-icon img,
+.file-icon {
   width: 16px;
   height: 16px;
   display: inline-block;
