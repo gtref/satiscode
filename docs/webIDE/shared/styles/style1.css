@@ -227,12 +227,12 @@ body {
   transition: opacity 0.15s ease, filter 0.15s ease;
 }
 
-:root:not([data-theme="light"]) .activity-button[data-sidebar-target="git-sidebar"] .sidebar-icon {
+:root:not([data-theme="light"]) .activity-button .sidebar-icon {
   filter: invert(0.85);
 }
 
-:root:not([data-theme="light"]) .activity-button[data-sidebar-target="git-sidebar"]:hover .sidebar-icon,
-:root:not([data-theme="light"]) .activity-button[data-sidebar-target="git-sidebar"][aria-pressed="true"] .sidebar-icon {
+:root:not([data-theme="light"]) .activity-button:hover .sidebar-icon,
+:root:not([data-theme="light"]) .activity-button[aria-pressed="true"] .sidebar-icon {
   filter: invert(1);
 }
 
