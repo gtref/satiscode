@@ -14,6 +14,7 @@ export async function applyTheme(themeId) {
 
     // 1. Apply colors to UI elements
     const root = document.documentElement;
+    root.setAttribute('data-theme', themeId);
     Object.entries(theme.colors).forEach(([key, value]) => {
         root.style.setProperty(`--${key}`, value);
     });

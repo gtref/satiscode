@@ -228,6 +228,7 @@ require(['vs/editor/editor.main'], async function (monaco) {
   }
 
   async function applyWebTheme(themeId) {
+    document.documentElement.setAttribute('data-theme', themeId);
     try {
       const theme = await loadWebTheme(themeId);
       const root = document.documentElement;
