@@ -44,7 +44,7 @@
     "depcheck": "^1.4.7",
     "electron": "^45.3.3",
     "electron-builder": "^26.18.0",
-    "eslint": "^10.13.0",
+    "eslint": "^10.15.0",
     "globals": "^17.14.0"
   },
   "overrides": {
