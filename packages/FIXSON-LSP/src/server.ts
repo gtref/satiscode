@@ -12,6 +12,31 @@ import {
 } from "vscode-languageserver/node";
 
 import { TextDocument } from "vscode-languageserver-textdocument";
+// Simple interface for parse errors used by our lightweight JSONC parser
+interface ParseError {
+  error: number;
+  offset: number;
+  length: number;
+}
+
+function parseJsonc(text: string, errors: ParseError[], options?: { allowTrailingComma?: boolean }) {
+  // Remove // line comments
+  let stripped = text.replace(/\/\/.*$/gm, "");
+  // Remove /* block comments */
+  stripped = stripped.replace(/\/\*[\s\S]*?\*\//g, "");
+  // Optionally handle trailing commas (basic support)
+  if (options?.allowTrailingComma) {
+    stripped = stripped.replace(/,\s*([}\]])/g, "$1");
+  }
+  try {
+    JSON.parse(stripped);
+  } catch (e) {
+    // Populate a generic parse error. Offset handling is approximate.
+    const err = { error: 1, offset: 0, length: 1 } as ParseError;
+    errors.push(err);
+  }
+}
+
 
 const connection = createConnection(ProposedFeatures.all);
 
@@ -89,28 +114,23 @@ function validateDocument(document: TextDocument) {
     const text = document.getText();
     const diagnostics: Diagnostic[] = [];
 
-    try {
-        JSON.parse(text);
-    } catch (error: unknown) {
-        const message = error instanceof Error ? error.message : String(error);
-        const offset = getParseErrorOffset(text, message);
-        const endOffset = Math.min(offset + 1, text.length);
-
+    const errors: ParseError[] = [];
+    parseJsonc(text, errors, { allowTrailingComma: true });
+    for (const err of errors) {
+        const offset = err.offset;
+        const end = offset + err.length;
         diagnostics.push({
             severity: DiagnosticSeverity.Error,
             range: {
                 start: document.positionAt(offset),
-                end: document.positionAt(endOffset)
+                end: document.positionAt(end)
             },
-            message,
+            message: `Parse error code ${err.error}`,
             source: "fixson"
         });
     }
 
-    connection.sendDiagnostics({
-        uri: document.uri,
-        diagnostics
-    });
+    connection.sendDiagnostics({ uri: document.uri, diagnostics });
 }
 
 const PROPERTY_SUGGESTIONS = [
