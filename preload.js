@@ -24,10 +24,13 @@ contextBridge.exposeInMainWorld('api', {
   openFolder: () => ipcRenderer.invoke('dialog:openFolder'),
   setGitWorkspace: (workspace) => gitUi?.setWorkspace(workspace),
   gitBlame: (workspace, filePath) => gitApi.run('blame', workspace, [filePath]),
-  getSettings: () => ipcRenderer.invoke('settings:get'),
+  updaterCheck: () => ipcRenderer.invoke('updater:check'),
+  updaterDownload: () => ipcRenderer.invoke('updater:download'),
+  updaterQuitAndInstall: () => ipcRenderer.invoke('updater:quitAndInstall'),
+  onUpdaterStatus: (callback) => ipcRenderer.on('updater:status', (_event, status) => callback(status)),
   setUserName: (userName) => ipcRenderer.invoke('settings:setUserName', userName),
   setTheme: (theme) => ipcRenderer.invoke('settings:setTheme', theme),
-  setLanguage: (language) => ipcRenderer.invoke('settings:setLanguage', language),
+  getSettings: () => ipcRenderer.invoke('settings:get'),
 
   exit: () => ipcRenderer.invoke('app:exit'),
 

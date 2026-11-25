@@ -59,6 +59,8 @@ jobs:
           npm --prefix packages/FIXSON-LSP ci
           npm --prefix packages/FIXML-LSP ci
 
+      - name: Install TypeScript compiler
+        run: npm install -g typescript
       - name: Run TypeScript compiler (no emit)
         run: npm run typecheck
 

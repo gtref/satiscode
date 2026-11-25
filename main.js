@@ -1,5 +1,6 @@
 process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = 'true';
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, Menu } = require('electron');
+const { autoUpdater } = require('electron-updater');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -16,6 +17,56 @@ let fixsonBuffer = Buffer.alloc(0);
 let fixmlProcess = null;
 let fixmlBuffer = Buffer.alloc(0);
 let settingsManager = null;
+
+// Auto-updater setup (disabled in development)
+if (app.isPackaged) {
+  autoUpdater.autoDownload = true;
+
+  function sendUpdaterStatus(status, details = {}) {
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send('updater:status', { status, ...details });
+    }
+  }
+
+  autoUpdater.on('checking-for-update', () => sendUpdaterStatus('checking'));
+  autoUpdater.on('update-available', (info) => sendUpdaterStatus('available', { version: info.version }));
+  autoUpdater.on('update-not-available', () => sendUpdaterStatus('not-available'));
+  autoUpdater.on('error', (err) => sendUpdaterStatus('error', { message: err == null ? 'unknown' : err.message }));
+  autoUpdater.on('download-progress', (progress) => {
+    sendUpdaterStatus('downloading', {
+      percent: progress.percent,
+      bytesPerSecond: progress.bytesPerSecond,
+      transferred: progress.transferred,
+      total: progress.total
+    });
+  });
+  autoUpdater.on('update-downloaded', (info) => {
+  sendUpdaterStatus('downloaded', { version: info.version });
+  const result = dialog.showMessageBoxSync({
+    type: 'question',
+    buttons: ['Restart', 'Later'],
+    defaultId: 0,
+    cancelId: 1,
+    title: 'Update Ready',
+    message: `Version ${info.version} has been downloaded. Restart to install?`
+  });
+  if (result === 0) {
+    autoUpdater.quitAndInstall();
+  }
+});
+}
+
+
+// IPC handlers
+ipcMain.handle('updater:check', () => {
+  autoUpdater.checkForUpdates();
+});
+ipcMain.handle('updater:download', () => {
+  autoUpdater.downloadUpdate();
+});
+ipcMain.handle('updater:quitAndInstall', () => {
+  autoUpdater.quitAndInstall();
+});
 
 
 function sendToClangd(message) {
@@ -467,8 +518,9 @@ function startFixml(event, rootPath) {
 }
 
 
+let mainWindow;
 function createWindow() {
-  const win = new BrowserWindow({
+  mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     icon: path.join(__dirname, 'assets', 'satiacode.png'),
@@ -480,20 +532,80 @@ function createWindow() {
     }
   });
 
-  win.webContents.on('console-message', (event) => {
+  // Build application menu with Update check
+const isMac = process.platform === 'darwin';
+  const menuTemplate = [
+    // File menu
+    {
+      label: isMac ? app.name : 'File',
+      submenu: [
+        { label: 'New', accelerator: 'CmdOrCtrl+N', click: () => mainWindow.webContents.send('menu:new') },
+        { label: 'Open…', accelerator: 'CmdOrCtrl+O', click: () => mainWindow.webContents.send('menu:open') },
+        { label: 'Open Folder…', click: () => mainWindow.webContents.send('menu:openFolder') },
+        { type: 'separator' },
+        { label: 'Save', accelerator: 'CmdOrCtrl+S', click: () => mainWindow.webContents.send('menu:save') },
+        { label: 'Save As…', accelerator: 'CmdOrCtrl+Shift+S', click: () => mainWindow.webContents.send('menu:saveAs') },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    },
+    // Edit menu
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' },
+        { role: 'selectAll' }
+      ]
+    },
+    // View menu (reload / dev tools)
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { role: 'toggleDevTools' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    },
+    // Help menu (already present)
+    {
+      label: 'Help',
+      submenu: [
+        { label: 'Check for Updates', click: () => { autoUpdater.checkForUpdates(); } }
+      ]
+    }
+  ];
+  const menu = Menu.buildFromTemplate(menuTemplate);
+  Menu.setApplicationMenu(menu);
+
+  // Set up mainWindow event handlers
+  mainWindow.webContents.on('console-message', (event) => {
     const { level, message, line, sourceId } = event;
     console.log(`[renderer:${level}] ${message} (${sourceId}:${line})`);
   });
-  win.webContents.on('render-process-gone', (_event, details) => {
+  mainWindow.webContents.on('render-process-gone', (_event, details) => {
     console.error('Renderer process exited:', details.reason);
   });
 
-  win.loadFile('index.html');
+  mainWindow.loadFile('index.html');
 }
+
 
 app.whenReady().then(() => {
   settingsManager = new SettingsManager(app.getPath('userData'));
   createWindow();
+  // Automatically check for updates on startup
+  autoUpdater.checkForUpdatesAndNotify();
 });
 
 ipcMain.handle('settings:get', () => settingsManager.getSettings());

@@ -37,13 +37,15 @@
     "marked": "^18.2.1",
     "monaco-editor": "0.57.0",
     "monaco-languageclient": "^11.0.3",
-    "vscode-ws-jsonrpc": "^4.0.2"
+    "vscode-ws-jsonrpc": "^4.0.2",
+    "electron-updater": "^6.8.11"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "depcheck": "^1.4.7",
     "electron": "^45.3.3",
     "electron-builder": "^26.18.0",
+
     "eslint": "^10.15.0",
     "globals": "^17.14.0"
   },
@@ -72,7 +74,9 @@
       "styles/**/*",
       "themes/**/*",
       "themes.js",
-      "main/**/*"
+      "main/**/*",
+    "bin/**/*",
+    "assets/**/*"
     ],
     "extraResources": [
       {
@@ -105,11 +109,13 @@
         }
       ]
     },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true
-    }
+        "publish": [
+      {
+        "provider": "github",
+        "owner": "gtref",
+        "repo": "satiscode",
+        "releaseType": "draft"
+      }
+    ]
   }
 }
